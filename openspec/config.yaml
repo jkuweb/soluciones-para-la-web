@@ -1,0 +1,57 @@
+# openspec/config.yaml — agencia
+schema: spec-driven
+
+context: |
+  Tech stack: TypeScript/Node.js, Payload CMS 3.x (backend), PostgreSQL, Astro 4.x (static fronts), Next.js 14.x (dynamic fronts)
+  Architecture: Multi-tenant SaaS — centralized Payload backend + separate frontend projects per client, Cloudinary media, Stripe payments, Notion/Airtable CRM
+  Testing: None configured (greenfield — no test runner, no lint, no coverage)
+  Style: Vanilla CSS / SCSS / CSS Modules per project. NO Tailwind. Convention-driven — no code exists yet.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Reference the architecture design doc at docs/superpowers/specs/2026-06-08-agencia-saas-design.md
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    - Default TDD: false (test runner must be configured first)
+    - No TypeScript compiler configured yet — use tsc --noEmit once set up
+    - No linter/formatter configured — set up ESLint + Prettier before first apply task
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+# SDD — Testing Capabilities (detected 2026-06-09)
+testing:
+  strict_tdd: false
+  reason: "Greenfield project — no test runner, test framework, or test files exist yet."
+  test_runner:
+    available: false
+    command: ""
+    framework: ""
+  layers:
+    unit: { available: false, tool: "" }
+    integration: { available: false, tool: "" }
+    e2e: { available: false, tool: "" }
+  coverage:
+    available: false
+    command: ""
+  quality:
+    linter: { available: false, command: "" }
+    type_checker: { available: false, command: "" }
+    formatter: { available: false, command: "" }
+  recommendation: >-
+    Set up Vitest for unit/integration testing, TypeScript for type checking,
+    ESLint + Prettier for lint/format, and Playwright for E2E before starting
+    implementation. Re-run sdd-init to refresh testing capabilities afterward.

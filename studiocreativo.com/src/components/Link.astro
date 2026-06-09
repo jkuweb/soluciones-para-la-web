@@ -1,0 +1,34 @@
+---
+interface Props {
+  link: {
+    type?: 'reference' | 'custom'
+    reference?: {
+      relationTo: string
+      value: any
+    }
+    url?: string
+    label?: string
+    newTab?: boolean
+  }
+  className?: string
+}
+
+const { link, className } = Astro.props
+
+const href =
+  link.type === 'reference' &&
+  typeof link.reference?.value === 'object' &&
+  link.reference.value?.slug
+    ? `/${link.reference.value.slug}`
+    : link.url
+
+const newTabProps = link.newTab
+  ? { rel: 'noopener noreferrer', target: '_blank' }
+  : {}
+---
+
+{href && (
+  <a href={href} class={className} {...newTabProps}>
+    {link.label}
+  </a>
+)}

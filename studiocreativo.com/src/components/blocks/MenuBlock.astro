@@ -1,0 +1,73 @@
+---
+import { getMediaUrl } from '@/lib/payload'
+import type { MenuBlock } from '@/lib/types'
+
+interface Props {
+  data: MenuBlock
+}
+
+const { data } = Astro.props
+---
+
+<section class="menu-block">
+  {data.category && <h2 class="category">{data.category}</h2>}
+  {data.items && data.items.length > 0 && (
+    <ul class="menu-items">
+      {data.items.map((item) => (
+        <li class="menu-item">
+          {item.image?.url && <img src={getMediaUrl(item.image.url)} alt={item.name} loading="lazy" />}
+          <div class="item-info">
+            <h3>{item.name}</h3>
+            {item.description && <p>{item.description}</p>}
+            {item.price && <span class="price">{item.price}€</span>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
+
+<style>
+  .menu-block {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .category {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .menu-items {
+    list-style: none;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .menu-item {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+  }
+
+  .menu-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .item-info h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  .price {
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+</style>

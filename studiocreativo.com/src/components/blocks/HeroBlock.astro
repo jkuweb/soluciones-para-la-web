@@ -1,0 +1,63 @@
+---
+import Link from '@/components/Link.astro'
+import { getMediaUrl } from '@/lib/payload'
+import type { HeroBlock } from '@/lib/types'
+
+interface Props {
+  data: HeroBlock
+}
+
+const { data } = Astro.props
+const backgroundImage =
+  data.backgroundImage?.sizes?.hero?.url || data.backgroundImage?.url || ''
+const fullImageUrl = backgroundImage ? getMediaUrl(backgroundImage) : ''
+---
+
+<section
+  class="hero-block"
+  style={backgroundImage
+    ? `background-image: url(${fullImageUrl}); background-size: cover; background-position: center;`
+    : undefined}
+>
+  <div class="hero-content">
+    <h1>{data.title}</h1>
+    {data.subtitle && <p class="subtitle">{data.subtitle}</p>}
+    {data.cta && data.cta.label && (
+      <Link link={data.cta} className="cta-button" />
+    )}
+  </div>
+</section>
+
+<style>
+  .hero-block {
+    background: var(--hero-bg, #f5f5f5);
+    color: var(--hero-text, #333);
+    padding: 4rem 2rem;
+    text-align: center;
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-content h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .cta-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-color, #007bff);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+</style>

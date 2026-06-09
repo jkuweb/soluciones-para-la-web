@@ -1,0 +1,3 @@
+module.exports=[80690,a=>{"use strict";var b=a.i(16664);a.s(["default",0,function({children:a}){return(0,b.jsxs)("html",{lang:"es",children:[(0,b.jsxs)("head",{children:[(0,b.jsx)("title",{children:"Next.js Starter"}),(0,b.jsx)("meta",{name:"viewport",content:"width=device-width, initial-scale=1"})]}),(0,b.jsx)("body",{children:(0,b.jsx)("main",{children:a})})]})}])},69578,a=>{a.n(a.i(80690))}];
+
+//# sourceMappingURL=Clientes_agencia_nextjs-starter_src_app_layout_tsx_0g3d7p1._.js.map
