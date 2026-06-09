@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const MenuBlock: Block = {
   slug: 'menu',
@@ -14,6 +14,7 @@ export const MenuBlock: Block = {
         {
           name: 'name',
           type: 'text',
+          required: true,
         },
         {
           name: 'description',
@@ -31,8 +32,4 @@ export const MenuBlock: Block = {
       ],
     },
   ],
-  labels: {
-    singular: 'Menu',
-    plural: 'Menu Blocks',
-  },
 }

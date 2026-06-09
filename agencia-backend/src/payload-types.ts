@@ -130,9 +130,9 @@ export interface Tenant {
   name: string;
   slug: string;
   domain: string;
-  serviceType?: ('web-estatica' | 'tienda-online' | 'academia-online') | null;
-  frontendType?: ('astro' | 'nextjs') | null;
-  status?: ('active' | 'pending' | 'suspended') | null;
+  serviceType: 'web-estatica' | 'tienda-online' | 'academia-online';
+  frontendType: 'astro' | 'nextjs';
+  status: 'active' | 'pending' | 'suspended';
   maintenanceFee?: number | null;
   projectPrice?: number | null;
   paymentStatus?: ('initial-paid' | 'fully-paid') | null;
@@ -146,7 +146,7 @@ export interface Tenant {
 export interface User {
   id: number;
   name?: string | null;
-  roles?: ('super-admin' | 'editor')[] | null;
+  roles: 'super-admin' | 'editor';
   tenants?:
     | {
         tenant: number | Tenant;
@@ -234,7 +234,7 @@ export interface Page {
             category?: string | null;
             items?:
               | {
-                  name?: string | null;
+                  name: string;
                   description?: string | null;
                   price?: number | null;
                   image?: (number | null) | Media;
@@ -303,7 +303,7 @@ export interface Page {
             duration?: string | null;
             lessons?:
               | {
-                  title?: string | null;
+                  title: string;
                   videoUrl?: string | null;
                   description?: string | null;
                   id?: string | null;
@@ -328,11 +328,10 @@ export interface Page {
           }
       )[]
     | null;
-  status?: ('draft' | 'published') | null;
+  status: 'draft' | 'published';
   meta?: {
     title?: string | null;
     description?: string | null;
-    ogImage?: (number | null) | Media;
   };
   updatedAt: string;
   createdAt: string;
@@ -344,7 +343,7 @@ export interface Page {
 export interface Media {
   id: number;
   tenant?: (number | null) | Tenant;
-  alt?: string | null;
+  alt: string;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -640,7 +639,6 @@ export interface PagesSelect<T extends boolean = true> {
     | {
         title?: T;
         description?: T;
-        ogImage?: T;
       };
   updatedAt?: T;
   createdAt?: T;

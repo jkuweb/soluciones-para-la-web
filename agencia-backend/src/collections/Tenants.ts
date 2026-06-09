@@ -4,27 +4,23 @@ export const Tenants: CollectionConfig = {
   slug: 'tenants',
   admin: {
     useAsTitle: 'name',
-    group: 'Multi-Tenant',
   },
   fields: [
     {
       name: 'name',
       type: 'text',
       required: true,
-      label: 'Name',
     },
     {
       name: 'slug',
       type: 'text',
       required: true,
       unique: true,
-      label: 'Slug',
     },
     {
       name: 'domain',
       type: 'text',
       required: true,
-      label: 'Domain',
     },
     {
       name: 'serviceType',
@@ -34,7 +30,7 @@ export const Tenants: CollectionConfig = {
         { label: 'Tienda Online', value: 'tienda-online' },
         { label: 'Academia Online', value: 'academia-online' },
       ],
-      label: 'Service Type',
+      required: true,
     },
     {
       name: 'frontendType',
@@ -43,7 +39,7 @@ export const Tenants: CollectionConfig = {
         { label: 'Astro', value: 'astro' },
         { label: 'Next.js', value: 'nextjs' },
       ],
-      label: 'Frontend Type',
+      required: true,
     },
     {
       name: 'status',
@@ -54,17 +50,17 @@ export const Tenants: CollectionConfig = {
         { label: 'Suspendido', value: 'suspended' },
       ],
       defaultValue: 'pending',
-      label: 'Status',
+      required: true,
     },
     {
       name: 'maintenanceFee',
       type: 'number',
-      label: 'Maintenance Fee (€)',
+      label: 'Cuota de mantenimiento (€)',
     },
     {
       name: 'projectPrice',
       type: 'number',
-      label: 'Project Price (€)',
+      label: 'Presupuesto total (€)',
     },
     {
       name: 'paymentStatus',
@@ -73,7 +69,6 @@ export const Tenants: CollectionConfig = {
         { label: '50% Inicial', value: 'initial-paid' },
         { label: '100% Pagado', value: 'fully-paid' },
       ],
-      label: 'Payment Status',
     },
   ],
 }

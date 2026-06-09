@@ -1,35 +1,30 @@
 import type { CollectionConfig } from 'payload'
-import {
-  HeroBlock,
-  TextBlock,
-  ImageBlock,
-  ContactBlock,
-  MenuBlock,
-  ProductBlock,
-  CartBlock,
-  CourseBlock,
-  FooterBlock,
-} from '../blocks'
+
+import { HeroBlock } from '@/blocks/HeroBlock'
+import { TextBlock } from '@/blocks/TextBlock'
+import { ImageBlock } from '@/blocks/ImageBlock'
+import { ContactBlock } from '@/blocks/ContactBlock'
+import { MenuBlock } from '@/blocks/MenuBlock'
+import { ProductBlock } from '@/blocks/ProductBlock'
+import { CartBlock } from '@/blocks/CartBlock'
+import { CourseBlock } from '@/blocks/CourseBlock'
+import { FooterBlock } from '@/blocks/FooterBlock'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
-    group: 'Multi-Tenant',
-    defaultColumns: ['title', 'slug', 'status', 'tenant'],
   },
   fields: [
     {
       name: 'slug',
       type: 'text',
       required: true,
-      label: 'Slug',
     },
     {
       name: 'title',
       type: 'text',
       required: true,
-      label: 'Title',
     },
     {
       name: 'layout',
@@ -45,7 +40,6 @@ export const Pages: CollectionConfig = {
         CourseBlock,
         FooterBlock,
       ],
-      label: 'Layout',
     },
     {
       name: 'status',
@@ -55,12 +49,11 @@ export const Pages: CollectionConfig = {
         { label: 'Publicado', value: 'published' },
       ],
       defaultValue: 'draft',
-      label: 'Status',
+      required: true,
     },
     {
       name: 'meta',
       type: 'group',
-      label: 'Meta',
       fields: [
         {
           name: 'title',
@@ -71,12 +64,6 @@ export const Pages: CollectionConfig = {
           name: 'description',
           type: 'textarea',
           label: 'Meta Description',
-        },
-        {
-          name: 'ogImage',
-          type: 'upload',
-          relationTo: 'media',
-          label: 'OG Image',
         },
       ],
     },

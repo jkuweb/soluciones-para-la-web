@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const FooterBlock: Block = {
   slug: 'footer',
@@ -22,8 +22,4 @@ export const FooterBlock: Block = {
       ],
     },
   ],
-  labels: {
-    singular: 'Footer',
-    plural: 'Footer Blocks',
-  },
 }

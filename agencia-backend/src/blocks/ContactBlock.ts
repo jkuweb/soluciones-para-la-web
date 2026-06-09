@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const ContactBlock: Block = {
   slug: 'contact',
@@ -18,10 +18,7 @@ export const ContactBlock: Block = {
     {
       name: 'mapUrl',
       type: 'text',
+      label: 'Map URL',
     },
   ],
-  labels: {
-    singular: 'Contact',
-    plural: 'Contact Blocks',
-  },
 }

@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const ImageBlock: Block = {
   slug: 'image',
@@ -14,8 +14,4 @@ export const ImageBlock: Block = {
       type: 'text',
     },
   ],
-  labels: {
-    singular: 'Image',
-    plural: 'Image Blocks',
-  },
 }

@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const CartBlock: Block = {
   slug: 'cart',
@@ -6,14 +6,12 @@ export const CartBlock: Block = {
     {
       name: 'emptyMessage',
       type: 'text',
+      defaultValue: 'Tu carrito está vacío',
     },
     {
       name: 'checkoutButton',
       type: 'text',
+      defaultValue: 'Finalizar compra',
     },
   ],
-  labels: {
-    singular: 'Cart',
-    plural: 'Cart Blocks',
-  },
 }

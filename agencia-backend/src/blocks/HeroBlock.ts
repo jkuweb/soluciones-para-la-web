@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const HeroBlock: Block = {
   slug: 'hero',
@@ -20,14 +20,12 @@ export const HeroBlock: Block = {
     {
       name: 'ctaText',
       type: 'text',
+      label: 'CTA Text',
     },
     {
       name: 'ctaLink',
       type: 'text',
+      label: 'CTA Link',
     },
   ],
-  labels: {
-    singular: 'Hero',
-    plural: 'Hero Blocks',
-  },
 }

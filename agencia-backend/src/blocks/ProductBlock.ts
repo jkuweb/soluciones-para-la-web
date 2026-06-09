@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const ProductBlock: Block = {
   slug: 'product',
@@ -37,8 +37,4 @@ export const ProductBlock: Block = {
       type: 'text',
     },
   ],
-  labels: {
-    singular: 'Product',
-    plural: 'Product Blocks',
-  },
 }

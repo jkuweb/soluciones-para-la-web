@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const TextBlock: Block = {
   slug: 'text',
@@ -12,8 +12,4 @@ export const TextBlock: Block = {
       type: 'richText',
     },
   ],
-  labels: {
-    singular: 'Text',
-    plural: 'Text Blocks',
-  },
 }

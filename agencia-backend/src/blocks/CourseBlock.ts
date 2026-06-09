@@ -1,4 +1,4 @@
-import type { Block } from 'payload'
+import { Block } from 'payload'
 
 export const CourseBlock: Block = {
   slug: 'course',
@@ -27,6 +27,7 @@ export const CourseBlock: Block = {
         {
           name: 'title',
           type: 'text',
+          required: true,
         },
         {
           name: 'videoUrl',
@@ -39,8 +40,4 @@ export const CourseBlock: Block = {
       ],
     },
   ],
-  labels: {
-    singular: 'Course',
-    plural: 'Course Blocks',
-  },
 }
