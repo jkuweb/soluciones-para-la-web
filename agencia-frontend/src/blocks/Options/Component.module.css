@@ -1,0 +1,44 @@
+.options {
+  display: flex;
+  gap: 16px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+	flex-basis: 50%;
+}
+
+.item > a {
+	display: grid;
+	grid-template-rows: 8rem 24vh auto;
+  height: 39rem;
+  background-repeat: no-repeat;
+  background-image: url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%20160%20470%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%22159%22%20height%3D%22469%22%20rx%3D%2259.5%22%20stroke%3D%22%231B2735%22%2F%3E%3Cpath%20d%3D%22M0%20364C0%20364%2046.5111%20361.825%2075.5%20355.5C109.649%20348.049%20160%20326%20160%20326V364V410C160%20443.137%20133.137%20470%20100%20470H60C26.8629%20470%200%20443.137%200%20410V364Z%22%20fill%3D%22%231B2735%22%2F%3E%3C%2Fsvg%3E');
+}
+
+.media {
+  margin-top: 16px;
+	justify-self: center;
+}
+
+.media > div > svg {
+  width: 100px;
+  height: 100px;
+}
+
+.content {
+  flex: 1;
+	& > div {
+		text-align: center;
+		padding: .2rem;
+	}
+}
+
+.price {
+  color: var(--color-secondary);
+  font-weight: 900;
+  font-size: 26px;
+	justify-self: center;
+}
