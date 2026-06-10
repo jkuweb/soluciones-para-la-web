@@ -2,10 +2,10 @@
 schema: spec-driven
 
 context: |
-  Tech stack: TypeScript/Node.js, Payload CMS 3.x (backend), PostgreSQL, Astro 4.x (static fronts), Next.js 14.x (dynamic fronts)
+  Tech stack: TypeScript/Node.js, Payload CMS 3.x (backend), PostgreSQL, Astro 4.x (static fronts), Next.js 16.x (dynamic fronts)
   Architecture: Multi-tenant SaaS — centralized Payload backend + separate frontend projects per client, Cloudinary media, Stripe payments, Notion/Airtable CRM
-  Testing: None configured (greenfield — no test runner, no lint, no coverage)
-  Style: Vanilla CSS / SCSS / CSS Modules per project. NO Tailwind. Convention-driven — no code exists yet.
+  Testing: Vitest (integration), Playwright (E2E), ESLint + Prettier, TypeScript strict
+  Style: Vanilla CSS / SCSS / CSS Modules per project. NO Tailwind. Convention-driven.
 
 rules:
   proposal:
@@ -22,36 +22,32 @@ rules:
     - Keep tasks completable in one session
   apply:
     - Follow existing code patterns
-    - Default TDD: false (test runner must be configured first)
-    - No TypeScript compiler configured yet — use tsc --noEmit once set up
-    - No linter/formatter configured — set up ESLint + Prettier before first apply task
+    - Default TDD: true
+    - TypeScript: strict, use tsc --noEmit for type checking
+    - ESLint + Prettier configured — run lint before commit
   verify:
-    test_command: ""
-    build_command: ""
+    test_command: "pnpm test"
+    build_command: "pnpm build"
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas
 
-# SDD — Testing Capabilities (detected 2026-06-09)
+# SDD — Testing Capabilities (detected 2026-06-10)
 testing:
   strict_tdd: false
-  reason: "Greenfield project — no test runner, test framework, or test files exist yet."
+  reason: "Testing infrastructure configured. TDD optional per task."
   test_runner:
-    available: false
-    command: ""
-    framework: ""
+    available: true
+    command: "pnpm test"
+    framework: "Vitest"
   layers:
-    unit: { available: false, tool: "" }
-    integration: { available: false, tool: "" }
-    e2e: { available: false, tool: "" }
+    unit: { available: true, tool: "Vitest" }
+    integration: { available: true, tool: "Vitest" }
+    e2e: { available: true, tool: "Playwright" }
   coverage:
-    available: false
-    command: ""
+    available: true
+    command: "vitest run --coverage"
   quality:
-    linter: { available: false, command: "" }
-    type_checker: { available: false, command: "" }
-    formatter: { available: false, command: "" }
-  recommendation: >-
-    Set up Vitest for unit/integration testing, TypeScript for type checking,
-    ESLint + Prettier for lint/format, and Playwright for E2E before starting
-    implementation. Re-run sdd-init to refresh testing capabilities afterward.
+    linter: { available: true, command: "pnpm lint" }
+    type_checker: { available: true, command: "pnpm typecheck" }
+    formatter: { available: true, command: "pnpm prettier --check ." }

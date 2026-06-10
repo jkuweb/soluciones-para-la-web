@@ -43,6 +43,12 @@ export default buildConfig({
       userHasAccessToAllTenants: (user) => {
         return user?.roles?.includes('super-admin') ?? false
       },
+      tenantField: {
+        admin: {
+          disableListColumn: false,
+          disableListFilter: false,
+        },
+      },
     }),
   ],
 })

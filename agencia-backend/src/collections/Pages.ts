@@ -14,6 +14,34 @@ export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
+    defaultColumns: ['title', 'tenant', 'slug', 'status', 'updatedAt'],
+    listSearchableFields: ['title', 'slug'],
+  },
+  access: {
+    read: ({ req: { user } }) => {
+      if (user?.roles?.includes('super-admin')) return true
+      return { tenant: { in: user?.tenants?.map((t) => {
+        const tenant = t.tenant
+        if (typeof tenant === 'string') return tenant
+        if (typeof tenant === 'number') return String(tenant)
+        return tenant.id
+      }) } }
+    },
+    create: ({ req: { user } }) => {
+      return user?.roles?.includes('super-admin') ?? false
+    },
+    update: ({ req: { user } }) => {
+      if (user?.roles?.includes('super-admin')) return true
+      return { tenant: { in: user?.tenants?.map((t) => {
+        const tenant = t.tenant
+        if (typeof tenant === 'string') return tenant
+        if (typeof tenant === 'number') return String(tenant)
+        return tenant.id
+      }) } }
+    },
+    delete: ({ req: { user } }) => {
+      return user?.roles?.includes('super-admin') ?? false
+    },
   },
   fields: [
     {

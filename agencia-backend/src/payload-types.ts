@@ -146,7 +146,7 @@ export interface Tenant {
 export interface User {
   id: number;
   name?: string | null;
-  roles: 'super-admin' | 'editor';
+  roles: 'super-admin' | 'tenant-admin' | 'tenant-editor';
   tenants?:
     | {
         tenant: number | Tenant;

@@ -1,0 +1,33 @@
+---
+import type { TextBlock } from '@/lib/types'
+import { serializeLexical } from '@/lib/lexical'
+
+interface Props {
+  data: TextBlock
+}
+
+const { data } = Astro.props
+const html = data.content ? serializeLexical(data.content) : ''
+---
+
+<section class="text-block">
+  {data.heading && <h2>{data.heading}</h2>}
+  {html && <div class="content" set:html={html} />}
+</section>
+
+<style>
+  .text-block {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .text-block h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .content {
+    line-height: 1.6;
+  }
+</style>

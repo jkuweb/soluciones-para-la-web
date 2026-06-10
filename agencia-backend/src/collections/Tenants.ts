@@ -5,6 +5,26 @@ export const Tenants: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
   },
+  access: {
+    read: ({ req: { user } }) => {
+      if (user?.roles?.includes('super-admin')) return true
+      return { id: { in: user?.tenants?.map((t) => {
+        const tenant = t.tenant
+        if (typeof tenant === 'string') return tenant
+        if (typeof tenant === 'number') return String(tenant)
+        return tenant.id
+      }) } }
+    },
+    create: ({ req: { user } }) => {
+      return user?.roles?.includes('super-admin') ?? false
+    },
+    update: ({ req: { user } }) => {
+      return user?.roles?.includes('super-admin') ?? false
+    },
+    delete: ({ req: { user } }) => {
+      return user?.roles?.includes('super-admin') ?? false
+    },
+  },
   fields: [
     {
       name: 'name',

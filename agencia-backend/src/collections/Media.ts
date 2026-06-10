@@ -3,7 +3,36 @@ import type { CollectionConfig } from 'payload'
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => {
+      if (user?.roles?.includes('super-admin')) return true
+      return { tenant: { in: user?.tenants?.map((t) => {
+        const tenant = t.tenant
+        if (typeof tenant === 'string') return tenant
+        if (typeof tenant === 'number') return String(tenant)
+        return tenant.id
+      }) } }
+    },
+    create: ({ req: { user } }) => {
+      if (user?.roles?.includes('super-admin')) return true
+      return { tenant: { in: user?.tenants?.map((t) => {
+        const tenant = t.tenant
+        if (typeof tenant === 'string') return tenant
+        if (typeof tenant === 'number') return String(tenant)
+        return tenant.id
+      }) } }
+    },
+    update: ({ req: { user } }) => {
+      if (user?.roles?.includes('super-admin')) return true
+      return { tenant: { in: user?.tenants?.map((t) => {
+        const tenant = t.tenant
+        if (typeof tenant === 'string') return tenant
+        if (typeof tenant === 'number') return String(tenant)
+        return tenant.id
+      }) } }
+    },
+    delete: ({ req: { user } }) => {
+      return user?.roles?.includes('super-admin') ?? false
+    },
   },
   fields: [
     {

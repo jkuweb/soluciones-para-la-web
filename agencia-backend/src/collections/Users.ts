@@ -16,9 +16,10 @@ export const Users: CollectionConfig = {
       type: 'select',
       options: [
         { label: 'Super Admin', value: 'super-admin' },
-        { label: 'Editor', value: 'editor' },
+        { label: 'Tenant Admin', value: 'tenant-admin' },
+        { label: 'Tenant Editor', value: 'tenant-editor' },
       ],
-      defaultValue: 'editor',
+      defaultValue: 'tenant-editor',
       required: true,
     },
   ],

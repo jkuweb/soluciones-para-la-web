@@ -1,0 +1,31 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import { getPageBySlug } from '@/lib/payload'
+import HeroBlock from '@/components/blocks/HeroBlock.astro'
+import TextBlock from '@/components/blocks/TextBlock.astro'
+import ImageBlock from '@/components/blocks/ImageBlock.astro'
+import FooterBlock from '@/components/blocks/FooterBlock.astro'
+
+const page = await getPageBySlug('home')
+
+if (!page) {
+  return new Response('Not Found', { status: 404 })
+}
+
+const components = {
+  hero: HeroBlock,
+  text: TextBlock,
+  image: ImageBlock,
+  footer: FooterBlock,
+}
+---
+
+<Layout title={page.meta?.title || page.title} description={page.meta?.description}>
+  <article>
+    {page.layout.map((block) => {
+      const Component = components[block.blockType as keyof typeof components]
+      if (!Component) return null
+      return <Component data={block} />
+    })}
+  </article>
+</Layout>
