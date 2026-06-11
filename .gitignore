@@ -50,3 +50,34 @@ node_modules/
 /playwright/.cache/
 
 opencode.txt
+
+# Coverage
+coverage/
+
+# Payload CMS
+# Generated types - these are generated on build and can be regenerated
+# Uncomment if you want to regenerate them in CI:
+# src/payload-types.ts
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Sharp/esbuild native builds
+node_modules/.pnpm/*/node_modules/sharp/
+node_modules/.pnpm/*/node_modules/esbuild/
+
+# Local tooling registries
+.atl/
