@@ -86,7 +86,7 @@ create_page() {
       \"slug\": \"$PAGE_SLUG\",
       \"title\": \"$PAGE_TITLE\",
       \"tenant\": $TENANT_ID,
-      \"status\": \"published\",
+      \"_status\": \"published\",
       \"layout\": $PAGE_BLOCKS
     }" > /dev/null && echo "  ✓ Página '$PAGE_SLUG' creada"
 }
