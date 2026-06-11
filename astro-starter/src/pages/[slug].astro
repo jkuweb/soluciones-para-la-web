@@ -1,10 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro'
 import { getPages, getPageBySlug } from '@/lib/payload'
-import HeroBlock from '@/components/blocks/HeroBlock.astro'
-import TextBlock from '@/components/blocks/TextBlock.astro'
-import ImageBlock from '@/components/blocks/ImageBlock.astro'
-import FooterBlock from '@/components/blocks/FooterBlock.astro'
+import BlockRenderer from '@/components/BlockRenderer.astro'
 
 export async function getStaticPaths() {
   const pages = await getPages()
@@ -15,21 +12,12 @@ export async function getStaticPaths() {
 }
 
 const { page } = Astro.props
-
-const components = {
-  hero: HeroBlock,
-  text: TextBlock,
-  image: ImageBlock,
-  footer: FooterBlock,
-}
 ---
 
-<Layout title={page.meta?.title || page.title} description={page.meta?.description}>
-  <article>
-    {page.layout.map((block) => {
-      const Component = components[block.blockType as keyof typeof components]
-      if (!Component) return null
-      return <Component data={block} />
-    })}
-  </article>
+<Layout 
+  title={page.meta?.title || page.title} 
+  description={page.meta?.description}
+  seo={page.meta}
+>
+  <BlockRenderer layout={page.layout} />
 </Layout>

@@ -1,4 +1,5 @@
 ---
+import Link from '@/components/Link.astro'
 import type { FooterBlock } from '@/lib/types'
 
 interface Props {
@@ -14,9 +15,7 @@ const { data } = Astro.props
     {data.socialLinks && data.socialLinks.length > 0 && (
       <div class="social-links">
         {data.socialLinks.map((link) => (
-          <a href={link.url} target="_blank" rel="noopener noreferrer">
-            {link.platform}
-          </a>
+          <Link link={link} />
         ))}
       </div>
     )}

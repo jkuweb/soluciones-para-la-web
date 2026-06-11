@@ -1,25 +1,74 @@
 ---
-interface Props {
-  title: string
-  description?: string
+import Link from "@/components/Link.astro";
+import { getHeader, getFooter } from "@/lib/payload";
+
+interface SEO {
+  title?: string;
+  description?: string;
+  image?: { url?: string };
 }
 
-const { title, description = '' } = Astro.props
+interface Props {
+  title: string;
+  description?: string;
+  seo?: SEO;
+}
+
+const { title, description = "", seo } = Astro.props;
+
+const seoTitle = seo?.title || title;
+const seoDescription = seo?.description || description;
+const seoImage = seo?.image?.url;
+
+const header = await getHeader();
+const footer = await getFooter();
 ---
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{title}</title>
-  {description && <meta name="description" content={description} />}
-  <link rel="stylesheet" href="/styles/variables.css" />
-  <link rel="stylesheet" href="/styles/global.css" />
-</head>
-<body>
-  <main>
-    <slot />
-  </main>
-</body>
+<!doctype html>
+<html lang='es'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>{seoTitle}</title>
+    {seoDescription && <meta name='description' content={seoDescription} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={seoTitle} />
+    {seoDescription && <meta property="og:description" content={seoDescription} />}
+    {seoImage && <meta property="og:image" content={seoImage} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="index, follow" />
+    <link rel='stylesheet' href='/styles/variables.css' />
+    <link rel='stylesheet' href='/styles/global.css' />
+  </head>
+  <body>
+    {
+      header?.navItems && header.navItems.length > 0 && (
+        <header>
+          <nav>
+            {header.navItems.map((item) => (
+              <Link link={item.link} />
+            ))}
+          </nav>
+        </header>
+      )
+    }
+    <main>
+      <slot />
+    </main>
+    {
+      footer && (
+        <footer>
+          <div>
+            {footer.navItems?.map((item) => (
+              <Link link={item.link} />
+            ))}
+          </div>
+          {footer.copyright && <p>{footer.copyright}</p>}
+          {footer.socialLinks?.map((item) => (
+            <Link link={item.link} />
+          ))}
+        </footer>
+      )
+    }
+  </body>
 </html>
