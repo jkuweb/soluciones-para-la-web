@@ -65,27 +65,28 @@ describe('validateLayoutStructure', () => {
       overrideAccess: true,
     })
 
-    // Create a page as super-admin with 2 blocks
+    // Create a page as super-admin with 2 blocks (creates as draft with versions)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pageData: any = {
+      slug: `vls-page-${ts}`,
+      title: 'Test Page',
+      tenant: tenant.id,
+      layout: [
+        {
+          blockType: 'hero',
+          title: 'Original Hero Title',
+          subtitle: 'Original Subtitle',
+          cta: { type: 'custom', url: '#', label: 'Click' },
+        },
+        {
+          blockType: 'text',
+          heading: 'Original Heading',
+        },
+      ],
+    }
     const createdPage = await payload.create({
       collection: 'pages',
-      data: {
-        slug: `vls-page-${ts}`,
-        title: 'Test Page',
-        status: 'draft',
-        tenant: tenant.id,
-        layout: [
-          {
-            blockType: 'hero',
-            title: 'Original Hero Title',
-            subtitle: 'Original Subtitle',
-            cta: { type: 'custom', url: '#', label: 'Click' },
-          },
-          {
-            blockType: 'text',
-            heading: 'Original Heading',
-          },
-        ],
-      },
+      data: pageData,
       overrideAccess: true,
     })
     pageId = createdPage.id as number
@@ -100,7 +101,7 @@ describe('validateLayoutStructure', () => {
       collection: 'pages',
       id: pageId,
       overrideAccess: true,
-    }) as Page
+    }) as unknown as Page
     return fresh.layout ?? []
   }
 
@@ -111,10 +112,8 @@ describe('validateLayoutStructure', () => {
     const originalCount = layout.length
 
     // 1a. Adding a block
-    const addLayout = [
-      ...layout,
-      { blockType: 'text', heading: 'New Block' } as any,
-    ]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const addLayout: any = [...layout, { blockType: 'text', heading: 'New Block' }]
     await expect(
       payload.update({
         collection: 'pages',
@@ -133,7 +132,8 @@ describe('validateLayoutStructure', () => {
       payload.update({
         collection: 'pages',
         id: pageId,
-        data: { layout: removeLayout },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: { layout: removeLayout } as any,
         user: tenantAdminUser,
         overrideAccess: true,
       }),
@@ -147,7 +147,8 @@ describe('validateLayoutStructure', () => {
       payload.update({
         collection: 'pages',
         id: pageId,
-        data: { layout: reorderLayout },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: { layout: reorderLayout } as any,
         user: tenantAdminUser,
         overrideAccess: true,
       }),
@@ -162,7 +163,9 @@ describe('validateLayoutStructure', () => {
     const layout = await getFreshLayout()
 
     // Change only the hero title — keep everything else identical
-    const contentEditLayout = layout.map((block) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const contentEditLayout: any = layout.map((block) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((block as any).blockType === 'hero') {
         return {
           ...block,
@@ -175,10 +178,10 @@ describe('validateLayoutStructure', () => {
     const result = await payload.update({
       collection: 'pages',
       id: pageId,
-      data: { layout: contentEditLayout as any },
+      data: { layout: contentEditLayout },
       user: tenantAdminUser,
       overrideAccess: true,
-    }) as Page
+    })
 
     expect(result).toBeDefined()
     expect(result.id).toBe(pageId)
@@ -190,20 +193,23 @@ describe('validateLayoutStructure', () => {
     const layout = await getFreshLayout()
 
     // Super-admin adds a block
-    const newBlock = { blockType: 'text', heading: 'Added by Super Admin' } as any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newBlock: any = { blockType: 'text', heading: 'Added by Super Admin' }
     const superAdminLayout = [...layout, newBlock]
 
     const result = await payload.update({
       collection: 'pages',
       id: pageId,
-      data: { layout: superAdminLayout },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: { layout: superAdminLayout } as any,
       user: superAdminUser,
       overrideAccess: true,
-    }) as Page
+    })
+    const resultPage = result as unknown as Page
 
     expect(result).toBeDefined()
     // Verify the new block was actually stored
-    expect(result.layout).toHaveLength(layout.length + 1)
+    expect(resultPage.layout).toHaveLength(layout.length + 1)
   })
 
   // ── Test 4: Metadata-only changes pass for tenant-admin ────────────────
@@ -212,16 +218,13 @@ describe('validateLayoutStructure', () => {
     const result = await payload.update({
       collection: 'pages',
       id: pageId,
-      data: {
-        title: 'Updated Title',
-        status: 'published',
-      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: { title: 'Updated Title' } as any,
       user: tenantAdminUser,
       overrideAccess: true,
-    }) as Page
+    })
 
     expect(result).toBeDefined()
     expect(result.title).toBe('Updated Title')
-    expect(result.status).toBe('published')
   })
 })

@@ -14,9 +14,16 @@ import { validateLayoutStructure } from '@/hooks/validateLayoutStructure'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
+  versions: {
+    drafts: {
+      autosave: { interval: 1000 },
+      schedulePublish: true,
+    },
+    maxPerDoc: 50,
+  },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'tenant', 'slug', 'status', 'updatedAt'],
+    defaultColumns: ['title', 'tenant', 'slug', '_status', 'updatedAt'],
     listSearchableFields: ['title', 'slug'],
   },
   hooks: {
@@ -25,12 +32,16 @@ export const Pages: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (user?.roles?.includes('super-admin')) return true
-      return { tenant: { in: user?.tenants?.map((t) => {
-        const tenant = t.tenant
-        if (typeof tenant === 'string') return tenant
-        if (typeof tenant === 'number') return String(tenant)
-        return tenant.id
-      }) } }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const constraints: any = user
+        ? { tenant: { in: user?.tenants?.map((t) => {
+            const tenant = t.tenant
+            if (typeof tenant === 'string') return tenant
+            if (typeof tenant === 'number') return String(tenant)
+            return tenant.id
+          }) } }
+        : { _status: { equals: 'published' } }
+      return constraints
     },
     create: ({ req: { user } }) => {
       return user?.roles?.includes('super-admin') ?? false
@@ -79,16 +90,6 @@ export const Pages: CollectionConfig = {
           Field: RestrictedBlocksField as any,
         },
       },
-    },
-    {
-      name: 'status',
-      type: 'select',
-      options: [
-        { label: 'Borrador', value: 'draft' },
-        { label: 'Publicado', value: 'published' },
-      ],
-      defaultValue: 'draft',
-      required: true,
     },
     {
       name: 'meta',
