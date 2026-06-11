@@ -3,7 +3,6 @@ export interface Page {
   slug: string
   title: string
   layout: Block[]
-  status: 'draft' | 'published'
   meta?: {
     title?: string
     description?: string

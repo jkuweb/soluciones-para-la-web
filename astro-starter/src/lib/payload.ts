@@ -5,7 +5,7 @@ const TENANT_SLUG = import.meta.env.TENANT_SLUG || 'mi-cliente'
 
 export async function getPages(): Promise<Page[]> {
   const res = await fetch(
-    `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[status][equals]=published&depth=1`,
+    `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[_status][equals]=published&depth=1`,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -23,7 +23,7 @@ export async function getPages(): Promise<Page[]> {
 
 export async function getPageBySlug(slug: string): Promise<Page | null> {
   const res = await fetch(
-    `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[slug][equals]=${slug}&where[status][equals]=published&depth=1`,
+    `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[slug][equals]=${slug}&where[_status][equals]=published&depth=1`,
     {
       headers: {
         'Content-Type': 'application/json',
