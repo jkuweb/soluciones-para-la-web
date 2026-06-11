@@ -1,4 +1,5 @@
 import { Block } from 'payload'
+import { linkGroup } from '@/fields/linkGroup'
 
 export const FooterBlock: Block = {
   slug: 'footer',
@@ -7,19 +8,11 @@ export const FooterBlock: Block = {
       name: 'copyright',
       type: 'text',
     },
-    {
-      name: 'socialLinks',
-      type: 'array',
-      fields: [
-        {
-          name: 'platform',
-          type: 'text',
-        },
-        {
-          name: 'url',
-          type: 'text',
-        },
-      ],
-    },
+    linkGroup({
+      overrides: {
+        name: 'socialLinks',
+        label: 'Social Links',
+      },
+    }),
   ],
 }

@@ -1,4 +1,5 @@
 import { Block } from 'payload'
+import { link } from '@/fields/link'
 
 export const HeroBlock: Block = {
   slug: 'hero',
@@ -17,15 +18,11 @@ export const HeroBlock: Block = {
       type: 'upload',
       relationTo: 'media',
     },
-    {
-      name: 'ctaText',
-      type: 'text',
-      label: 'CTA Text',
-    },
-    {
-      name: 'ctaLink',
-      type: 'text',
-      label: 'CTA Link',
-    },
+    link({
+      overrides: {
+        name: 'cta',
+        label: 'Call to Action Link',
+      },
+    }),
   ],
 }
