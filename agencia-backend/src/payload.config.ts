@@ -11,8 +11,8 @@ import { Pages } from './collections/Pages'
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
 
-import { Header } from './globals/Header'
-import { Footer } from './globals/Footer'
+import { Header } from './globals/Header/config'
+import { Footer } from './globals/Footer/config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -36,6 +36,10 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
+  jobs: {
+    autoRun: [],
+    shouldAutoRun: async () => process.env.ENABLE_JOBS === 'true',
+  },
   sharp,
   plugins: [
     multiTenantPlugin<Config>({
