@@ -1,13 +1,14 @@
 import { getPayload, Payload } from 'payload'
 import config from '@/payload.config'
 
-import { describe, it, beforeAll, expect } from 'vitest'
+import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 
 let payload: Payload
 
-// Track created page slugs for cross-test reference
-let publishedSlug: string
-let draftSlug: string
+// Track created IDs for cleanup
+let tenantId: number | string
+let publishedPageId: number | string
+let draftPageId: number | string
 
 describe('API', () => {
   beforeAll(async () => {
@@ -28,6 +29,7 @@ describe('API', () => {
       },
       overrideAccess: true,
     })
+    tenantId = tenant.id
 
     // Create a published page (_status is a Payload internal field not in Page type)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,7 +45,7 @@ describe('API', () => {
       data: publishedPageData,
       overrideAccess: true,
     })
-    publishedSlug = publishedPage.slug as string
+    publishedPageId = publishedPage.id
     // Payload 3 with versions.drafts may create as draft even with _status: 'published'.
     // Ensure it's truly published so unauthenticated reads can find it.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +58,7 @@ describe('API', () => {
         data: { _status: 'published' } as any,
         overrideAccess: true,
       })
-      publishedSlug = updated.slug as string
+      publishedPageId = updated.id
     }
 
     // Create a draft page (Payload auto-creates as draft with versions)
@@ -72,7 +74,15 @@ describe('API', () => {
       data: draftPageData,
       overrideAccess: true,
     })
-    draftSlug = draftPage.slug as string
+    draftPageId = draftPage.id
+  })
+
+  afterAll(async () => {
+    if (payload) {
+      try { await payload.delete({ collection: 'pages', id: publishedPageId, overrideAccess: true }) } catch { /* ignore */ }
+      try { await payload.delete({ collection: 'pages', id: draftPageId, overrideAccess: true }) } catch { /* ignore */ }
+      try { await payload.delete({ collection: 'tenants', id: tenantId, overrideAccess: true }) } catch { /* ignore */ }
+    }
   })
 
   it('fetches users', async () => {

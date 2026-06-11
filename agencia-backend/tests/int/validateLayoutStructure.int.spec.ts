@@ -1,13 +1,14 @@
 import { getPayload, type Payload } from 'payload'
 import config from '@/payload.config'
 import { validateLayoutStructure } from '@/hooks/validateLayoutStructure'
-import { describe, it, beforeAll, expect } from 'vitest'
+import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 import type { Page, User } from '@/payload-types'
 
 let payload: Payload
 let pageId: number
 let superAdminUser: User
 let tenantAdminUser: User
+let cleanupTenantId: number | string
 
 describe('validateLayoutStructure', () => {
   beforeAll(async () => {
@@ -39,6 +40,7 @@ describe('validateLayoutStructure', () => {
       },
       overrideAccess: true,
     })
+    cleanupTenantId = tenant.id
 
     // Create super-admin user
     superAdminUser = await payload.create({
@@ -226,5 +228,14 @@ describe('validateLayoutStructure', () => {
 
     expect(result).toBeDefined()
     expect(result.title).toBe('Updated Title')
+  })
+
+  afterAll(async () => {
+    if (payload) {
+      try { await payload.delete({ collection: 'pages', id: pageId, overrideAccess: true }) } catch { /* ignore */ }
+      try { await payload.delete({ collection: 'users', id: superAdminUser.id, overrideAccess: true }) } catch { /* ignore */ }
+      try { await payload.delete({ collection: 'users', id: tenantAdminUser.id, overrideAccess: true }) } catch { /* ignore */ }
+      try { await payload.delete({ collection: 'tenants', id: cleanupTenantId, overrideAccess: true }) } catch { /* ignore */ }
+    }
   })
 })
