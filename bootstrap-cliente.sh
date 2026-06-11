@@ -6,7 +6,7 @@ set -euo pipefail
 # ============================================================
 # Uso:
 #   PAYLOAD_ADMIN_EMAIL=admin@agencia.com PAYLOAD_ADMIN_PASS=xxx \
-#     ./bootstrap-cliente.sh "Restaurante Pepito" restaurante-pepito restaurantepepito.com web-estatica
+#     ./bootstrap-cliente.sh "Cliente Ejemplo" cliente-ejemplo cliente-ejemplo.com web-estatica
 #
 # Tipos: web-estatica, tienda-online, academia-online
 # ============================================================

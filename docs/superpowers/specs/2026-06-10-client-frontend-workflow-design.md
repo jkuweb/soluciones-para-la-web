@@ -24,8 +24,8 @@ agencia/                        ← Monorepo principal
 └── docs/
 
 Cada cliente: repo independiente
-├── restaurantepepito.com/      ← Clonado de astro-starter
-├── tiendademoda.com/           ← Clonado de nextjs-starter
+├── cliente-ejemplo.com/      ← Clonado de astro-starter
+├── tienda-ejemplo.com/       ← Clonado de nextjs-starter
 └── ...
 ```
 
@@ -92,9 +92,9 @@ Cada página se renderiza como ruta estática (`[slug].astro`). Los bloques de l
 
 1. Acceder al panel de admin de Payload
 2. Crear documento en colección `Tenants`
-   - Nombre: "Restaurante Pepito"
-   - Slug: `restaurante-pepito`
-   - Dominio: `restaurantepepito.com`
+   - Nombre: "Cliente Ejemplo"
+   - Slug: `cliente-ejemplo`
+   - Dominio: `cliente-ejemplo.com`
    - Tipo de servicio: Web Estática
    - Tipo de frontend: Astro
 
@@ -103,8 +103,8 @@ Cada página se renderiza como ruta estática (`[slug].astro`). Los bloques de l
 1. En colección `Pages`, crear páginas asignadas al tenant
    - Ej: "Inicio", "Menú", "Contacto"
 2. Agregar bloques de layout según el tipo de negocio
-   - Restaurante: Hero, MenuBlock, ContactBlock, Footer
-   - Tienda: Hero, ProductBlock, CartBlock, Footer
+   - Web estática: Hero, TextBlock, ImageBlock, ContactBlock, Footer
+   - Tienda: Hero, ProductBlock, CartBlock, ContactBlock, Footer
 3. Introducir contenido inicial (textos, fotos, datos de contacto)
 
 ### 4.3 Clonar template y configurar
@@ -112,14 +112,14 @@ Cada página se renderiza como ruta estática (`[slug].astro`). Los bloques de l
 ```bash
 # Copiar el template desde el monorepo agencia
 # Desde fuera del monorepo:
-cp -r agencia/templates/astro-starter restaurantepepito.com
+cp -r agencia/templates/astro-starter cliente-ejemplo.com
 
 # O bien: clonar el repo completo y copiar desde ahí
-cd restaurantepepito.com
+cd cliente-ejemplo.com
 
 # Configurar .env
 PAYLOAD_URL=http://localhost:3000  # O la URL del backend en producción
-TENANT_SLUG=restaurante-pepito
+TENANT_SLUG=cliente-ejemplo
 
 # Instalar dependencias
 npm install

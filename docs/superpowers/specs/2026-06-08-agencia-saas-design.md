@@ -52,11 +52,11 @@ Plataforma para agencia de desarrollo web donde el programador (super-admin) ges
 │  │ Tenant: "mi-agencia" (tuagencia.com)                     ││
 │  │   • Placeholder en BD. No usado para frontend.           ││
 │  └─────────────────────────────────────────────────────────┘│
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │ Tenant: "restaurante-pepito" (restaurantepepito.com)     ││
-│  │   • Pages: Inicio, Menú, Contacto, Reservas              ││
-│  │   • Frontend: Astro (web estática)                       ││
-│  └─────────────────────────────────────────────────────────┘│
+  │  ┌─────────────────────────────────────────────────────────┐│
+  │  │ Tenant: "cliente-ejemplo" (cliente-ejemplo.com)           ││
+  │  │   • Pages: Inicio, Servicios, Contacto                   ││
+  │  │   • Frontend: Astro (web estática)                       ││
+  │  └─────────────────────────────────────────────────────────┘│
 │  ┌─────────────────────────────────────────────────────────┐│
 │  │ Tenant: "tienda-moda" (tiendademoda.com)                ││
 │  │   • Pages: Inicio, Catálogo, Producto, Carrito, Checkout ││
@@ -85,9 +85,9 @@ Plataforma para agencia de desarrollo web donde el programador (super-admin) ges
 {
   name: 'Tenants',
   fields: [
-    { name: 'name', type: 'text', required: true },        // "Restaurante Pepito"
-    { name: 'slug', type: 'text', required: true },        // "restaurante-pepito"
-    { name: 'domain', type: 'text', required: true },      // "restaurantepepito.com"
+    { name: 'name', type: 'text', required: true },        // "Cliente Ejemplo"
+    { name: 'slug', type: 'text', required: true },        // "cliente-ejemplo"
+    { name: 'domain', type: 'text', required: true },      // "cliente-ejemplo.com"
     { name: 'serviceType', type: 'select', options: [
       { label: 'Web Estática', value: 'web-estatica' },
       { label: 'Tienda Online', value: 'tienda-online' },
@@ -255,7 +255,7 @@ const ContactBlock = {
   ]
 }
 
-// MenuBlock (para restaurantes)
+// MenuBlock (para negocios con carta/menú)
 const MenuBlock = {
   slug: 'menu',
   fields: [
@@ -367,7 +367,7 @@ const clientAccess = {
 
 ```typescript
 // src/pages/[slug].astro
-const TENANT_SLUG = 'restaurante-pepito'; // Configurado por proyecto
+const TENANT_SLUG = 'cliente-ejemplo'; // Configurado por proyecto
 
 export async function getStaticPaths() {
   const payload = await getPayloadClient();
@@ -536,7 +536,7 @@ El plugin multi-tenant requiere CORS abierto porque los dominios son dinámicos.
 2. **Crear tenant en Payload**
    - Nombre, slug, dominio, tipo de servicio, tipo de frontend
 3. **Configurar bloques disponibles**
-   - Según el tipo de web: restaurante → Hero, Menu, Contact, Footer
+   - Según el tipo de web: web estática → Hero, Text, Contact, Footer
    - Tienda → Hero, Product, Cart, Contact, Footer
 4. **Crear páginas**
    - Inicio, Menú, Contacto, etc.
@@ -584,7 +584,7 @@ agencia-backend/                    ← Payload CMS (único)
 │   └── server.ts
 └── package.json
 
-restaurantepepito.com/              ← Frontend Astro (cliente 1)
+cliente-ejemplo.com/              ← Frontend Astro (cliente 1)
 ├── src/
 │   ├── components/                  ← Hero, Menu, Footer
 │   ├── styles/                      ← CSS vanilla
@@ -604,7 +604,7 @@ tiendademoda.com/                   ← Frontend Next.js (cliente 2)
 **Flujo de datos:**
 1. Payload (backend) guarda todos los datos de todos los clientes
 2. Cada frontend (Astro/Next.js) se conecta a Payload vía API REST
-3. El frontend pide solo los datos de su tenant (`?where[tenant][equals]=restaurante-pepito`)
+3. El frontend pide solo los datos de su tenant (`?where[tenant][equals]=cliente-ejemplo`)
 4. El frontend genera el sitio estático (Astro) o SSR (Next.js)
 
 ### 7.2 Cada Web es Única
@@ -625,7 +625,7 @@ agencia-backend/
 │   └── server.ts
 └── package.json
 
-restaurantepepito.com/ (frontend Astro)
+cliente-ejemplo.com/ (frontend Astro)
 ├── src/
 │   ├── components/
 │   │   ├── Hero/
@@ -640,7 +640,7 @@ restaurantepepito.com/ (frontend Astro)
 │   ├── styles/
 │   │   ├── variables.css           ← Colores, tipografía, espaciado
 │   │   ├── global.css              ← Reset, base
-│   │   └── theme.css               ← Tema específico del restaurante
+  │   │   └── theme.css               ← Tema específico del cliente
 │   └── pages/
 │       └── index.astro
 └── package.json
