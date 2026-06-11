@@ -81,3 +81,8 @@ node_modules/.pnpm/*/node_modules/esbuild/
 
 # Local tooling registries
 .atl/
+
+# Generated docs / external repos
+capa-1-sincronizacion-templates.pdf
+openspec/specs/versions-drafts-pages/
+studiocreativo.com/
