@@ -1,10 +1,9 @@
 'use client'
+import Link from '@/components/Link'
+import type { FooterBlock } from '@/lib/types'
+
 interface FooterBlockProps {
-  data: {
-    blockType: 'footer'
-    copyright?: string
-    socialLinks?: { platform: string; url: string }[]
-  }
+  data: FooterBlock
 }
 
 export default function FooterBlock({ data }: FooterBlockProps) {
@@ -14,10 +13,8 @@ export default function FooterBlock({ data }: FooterBlockProps) {
         {data.copyright && <p className="copyright">{data.copyright}</p>}
         {data.socialLinks && data.socialLinks.length > 0 && (
           <div className="social-links">
-            {data.socialLinks.map((link, i) => (
-              <a key={i} href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.platform}
-              </a>
+            {data.socialLinks.map((item) => (
+              <Link key={item.id} link={item.link} />
             ))}
           </div>
         )}

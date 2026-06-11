@@ -1,5 +1,6 @@
 'use client'
 import type { HeroBlock } from '@/lib/types'
+import Link from '@/components/Link'
 
 interface HeroBlockProps {
   data: HeroBlock
@@ -11,10 +12,8 @@ export default function HeroBlock({ data }: HeroBlockProps) {
       <div className="hero-content">
         <h1>{data.title}</h1>
         {data.subtitle && <p className="subtitle">{data.subtitle}</p>}
-        {data.ctaText && data.ctaLink && (
-          <a href={data.ctaLink} className="cta-button">
-            {data.ctaText}
-          </a>
+        {data.cta?.label && (
+          <Link link={data.cta} className="cta-button" />
         )}
       </div>
       <style jsx>{`

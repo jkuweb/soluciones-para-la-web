@@ -1,12 +1,8 @@
 'use client'
+import type { ContactBlock } from '@/lib/types'
+
 interface ContactBlockProps {
-  data: {
-    blockType: 'contact'
-    email?: string
-    phone?: string
-    address?: string
-    mapUrl?: string
-  }
+  data: ContactBlock
 }
 
 export default function ContactBlock({ data }: ContactBlockProps) {

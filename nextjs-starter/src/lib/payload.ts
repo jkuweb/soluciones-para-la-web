@@ -1,4 +1,4 @@
-import type { Page, Block } from './types'
+import type { Page, Block, Header, Footer } from './types'
 
 const PAYLOAD_API_URL = process.env.PAYLOAD_API_URL || 'http://localhost:3000/api'
 const TENANT_SLUG = process.env.TENANT_SLUG || 'mi-tienda'
@@ -39,6 +39,36 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
 
   const data = await res.json()
   return data.docs?.[0] || null
+}
+
+export async function getHeader(): Promise<Header | null> {
+  const res = await fetch(`${PAYLOAD_API_URL}/globals/header`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    next: { revalidate: 60 },
+  })
+
+  if (!res.ok) {
+    return null
+  }
+
+  return res.json()
+}
+
+export async function getFooter(): Promise<Footer | null> {
+  const res = await fetch(`${PAYLOAD_API_URL}/globals/footer`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    next: { revalidate: 60 },
+  })
+
+  if (!res.ok) {
+    return null
+  }
+
+  return res.json()
 }
 
 export function renderBlock(block: Block) {

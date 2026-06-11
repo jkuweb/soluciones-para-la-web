@@ -7,6 +7,7 @@ export interface Page {
   meta?: {
     title?: string
     description?: string
+    image?: { url?: string }
   }
 }
 
@@ -16,13 +17,39 @@ export interface Block {
   [key: string]: unknown
 }
 
+export interface MediaImage {
+  id: string
+  url: string
+  alt: string
+  filename?: string
+  mimeType?: string
+  filesize?: number
+  width?: number
+  height?: number
+  sizes?: {
+    thumbnail?: { url: string; width: number; height: number }
+    card?: { url: string; width: number; height: number }
+    hero?: { url: string; width: number; height: number }
+  }
+}
+
+export interface Link {
+  type?: 'reference' | 'custom'
+  reference?: {
+    relationTo: string
+    value: Page | string | number
+  }
+  url?: string
+  label?: string
+  newTab?: boolean
+}
+
 export interface HeroBlock extends Block {
   blockType: 'hero'
   title: string
   subtitle?: string
   backgroundImage?: string
-  ctaText?: string
-  ctaLink?: string
+  cta?: Link
 }
 
 export interface TextBlock extends Block {
@@ -79,6 +106,14 @@ export interface CourseBlock extends Block {
   lessons?: { title: string; videoUrl?: string; description?: string }[]
 }
 
+export interface ContactBlock extends Block {
+  blockType: 'contact'
+  email?: string
+  phone?: string
+  address?: string
+  mapUrl?: string
+}
+
 export interface MenuBlock extends Block {
   blockType: 'menu'
   category?: string
@@ -88,5 +123,15 @@ export interface MenuBlock extends Block {
 export interface FooterBlock extends Block {
   blockType: 'footer'
   copyright?: string
-  socialLinks?: { platform: string; url: string }[]
+  socialLinks?: Link[]
+}
+
+export interface Header {
+  navItems: { id: string; link: Link }[]
+}
+
+export interface Footer {
+  navItems: { id: string; link: Link }[]
+  copyright?: string
+  socialLinks: { id: string; link: Link }[]
 }
