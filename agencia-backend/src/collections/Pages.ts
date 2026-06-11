@@ -9,6 +9,8 @@ import { ProductBlock } from '@/blocks/ProductBlock'
 import { CartBlock } from '@/blocks/CartBlock'
 import { CourseBlock } from '@/blocks/CourseBlock'
 import { FooterBlock } from '@/blocks/FooterBlock'
+import { RestrictedBlocksField } from '@/components/RestrictedBlocksField'
+import { validateLayoutStructure } from '@/hooks/validateLayoutStructure'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -16,6 +18,9 @@ export const Pages: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'tenant', 'slug', 'status', 'updatedAt'],
     listSearchableFields: ['title', 'slug'],
+  },
+  hooks: {
+    beforeChange: [validateLayoutStructure],
   },
   access: {
     read: ({ req: { user } }) => {
@@ -68,6 +73,12 @@ export const Pages: CollectionConfig = {
         CourseBlock,
         FooterBlock,
       ],
+      admin: {
+        components: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Field: RestrictedBlocksField as any,
+        },
+      },
     },
     {
       name: 'status',

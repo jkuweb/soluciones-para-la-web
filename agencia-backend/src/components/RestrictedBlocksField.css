@@ -1,0 +1,24 @@
+/* RestrictedBlocksField — hides structural controls for tenant-admin users */
+
+.restricted-blocks-field--tenant-admin .blocks-field__drawer-toggler {
+  display: none;
+}
+
+.restricted-blocks-field--tenant-admin .collapsible__drag {
+  display: none;
+}
+
+.restricted-blocks-field--tenant-admin .array-actions {
+  display: none;
+}
+
+/* Info banner for restricted users */
+.restricted-blocks-field__banner {
+  background: #f0f9ff;
+  border-left: 3px solid #0ea5e9;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #0369a1;
+  line-height: 1.5;
+}
