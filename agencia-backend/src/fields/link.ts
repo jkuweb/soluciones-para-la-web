@@ -1,10 +1,28 @@
-import { type Field } from 'payload'
+import { type Field, type GroupField } from 'payload'
+
+export type LinkAppearances = 'default' | 'outline'
+
+export const appearanceOptions: Record<
+  LinkAppearances,
+  { label: string; value: string }
+> = {
+  default: {
+    label: 'Default',
+    value: 'default',
+  },
+  outline: {
+    label: 'Outline',
+    value: 'outline',
+  },
+}
 
 type LinkFieldOptions = {
   /** When true, the label field will not be rendered */
   disableLabel?: boolean
   /** Override any field properties */
-  overrides?: Partial<Field>
+  overrides?: Partial<GroupField>
+  /** Appearance options. Set to false to disable */
+  appearances?: LinkAppearances[] | false
 }
 
 /**
@@ -16,12 +34,12 @@ type LinkFieldOptions = {
  * - reference: relationship to pages (conditional on type === 'reference')
  * - url: text (conditional on type === 'custom')
  * - label: text (optional, can be disabled)
- *
- * No appearance/styling options — this is a pure link field.
+ * - appearance: select (optional, can be disabled with appearances: false)
  */
 export const link = ({
   disableLabel = false,
   overrides = {},
+  appearances,
 }: LinkFieldOptions = {}): Field => {
   const linkFields: Field[] = [
     {
@@ -83,6 +101,29 @@ export const link = ({
       name: 'label',
       type: 'text',
       required: true,
+    })
+  }
+
+  if (appearances !== false) {
+    let appearanceOptionsToUse = [
+      appearanceOptions.default,
+      appearanceOptions.outline,
+    ]
+
+    if (appearances) {
+      appearanceOptionsToUse = appearances.map(
+        (appearance) => appearanceOptions[appearance],
+      )
+    }
+
+    linkFields.push({
+      name: 'appearance',
+      type: 'select',
+      admin: {
+        description: 'Choose how the link should be rendered.',
+      },
+      defaultValue: 'default',
+      options: appearanceOptionsToUse,
     })
   }
 

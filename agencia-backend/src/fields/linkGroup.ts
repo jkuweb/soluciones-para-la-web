@@ -1,11 +1,13 @@
 import { type Field } from 'payload'
-import { link } from './link'
+import { link, type LinkAppearances } from './link'
 
 type LinkGroupFieldOptions = {
   /** When true, the label field on individual links will not be rendered */
   disableLabel?: boolean
   /** Override any field properties */
   overrides?: Partial<Field>
+  /** Appearance options for each link. Set to false to disable */
+  appearances?: LinkAppearances[] | false
 }
 
 /**
@@ -18,6 +20,7 @@ type LinkGroupFieldOptions = {
 export const linkGroup = ({
   disableLabel = false,
   overrides = {},
+  appearances,
 }: LinkGroupFieldOptions = {}): Field => {
   const linkGroupField: Field = {
     name: 'links',
@@ -28,6 +31,7 @@ export const linkGroup = ({
     fields: [
       link({
         disableLabel,
+        appearances,
       }),
     ],
   }
