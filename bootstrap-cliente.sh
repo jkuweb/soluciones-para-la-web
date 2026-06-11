@@ -99,8 +99,10 @@ lexical_json() {
 
 HOME_CONTENT=$(lexical_json "Calidad y tradición desde 1990.")
 
+CTA='{"type":"custom","url":"#contacto","label":"Contáctanos"}'
+
 create_page "home" "Inicio" '[
-  {"blockType":"hero","title":"'"$NOMBRE"'","subtitle":"Bienvenido a nuestra web"},
+  {"blockType":"hero","title":"'"$NOMBRE"'","subtitle":"Bienvenido a nuestra web","cta": '"$CTA"'},
   {"blockType":"text","heading":"Sobre nosotros","content": '"$HOME_CONTENT"'},
   {"blockType":"footer","copyright":"© 2026 '"$NOMBRE"'"}
 ]'
