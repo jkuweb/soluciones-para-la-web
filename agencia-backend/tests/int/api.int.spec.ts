@@ -9,6 +9,8 @@ let payload: Payload
 let tenantId: number | string
 let publishedPageId: number | string
 let draftPageId: number | string
+let publishedSlug: string
+let draftSlug: string
 
 describe('API', () => {
   beforeAll(async () => {
@@ -46,6 +48,7 @@ describe('API', () => {
       overrideAccess: true,
     })
     publishedPageId = publishedPage.id
+    publishedSlug = publishedPageData.slug
     // Payload 3 with versions.drafts may create as draft even with _status: 'published'.
     // Ensure it's truly published so unauthenticated reads can find it.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,6 +78,7 @@ describe('API', () => {
       overrideAccess: true,
     })
     draftPageId = draftPage.id
+    draftSlug = draftPageData.slug
   })
 
   afterAll(async () => {
