@@ -1,4 +1,5 @@
 import { type Field, type GroupField } from 'payload'
+import { deepMerge } from '@/utilities/deepMerge'
 
 export type LinkAppearances = 'default' | 'outline'
 
@@ -136,17 +137,5 @@ export const link = ({
     fields: linkFields,
   }
 
-  // Apply overrides
-  const overridesRecord = overrides as Record<string, unknown>
-  const merged = {
-    ...linkField,
-    ...overridesRecord,
-    fields: (overridesRecord.fields as Field[]) ?? linkField.fields,
-    admin: {
-      ...(linkField.admin as object),
-      ...(overridesRecord.admin as object),
-    },
-  }
-
-  return merged as Field
+  return deepMerge(linkField, overrides as Record<string, unknown>) as Field
 }

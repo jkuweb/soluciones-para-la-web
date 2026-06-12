@@ -1,5 +1,6 @@
 import { type Field } from 'payload'
 import { link, type LinkAppearances } from './link'
+import { deepMerge } from '@/utilities/deepMerge'
 
 type LinkGroupFieldOptions = {
   /** When true, the label field on individual links will not be rendered */
@@ -8,6 +9,10 @@ type LinkGroupFieldOptions = {
   overrides?: Partial<Field>
   /** Appearance options for each link. Set to false to disable */
   appearances?: LinkAppearances[] | false
+  /** Field name (default: 'links') */
+  name?: string
+  /** Field label (default: 'Links') */
+  label?: string
 }
 
 /**
@@ -21,9 +26,12 @@ export const linkGroup = ({
   disableLabel = false,
   overrides = {},
   appearances,
+  name = 'links',
+  label = 'Links',
 }: LinkGroupFieldOptions = {}): Field => {
   const linkGroupField: Field = {
-    name: 'links',
+    name,
+    label,
     type: 'array',
     admin: {
       initCollapsed: true,
@@ -36,17 +44,5 @@ export const linkGroup = ({
     ],
   }
 
-  // Apply overrides
-  const overridesRecord = overrides as Record<string, unknown>
-  const merged = {
-    ...linkGroupField,
-    ...overridesRecord,
-    fields: (overridesRecord.fields as Field[]) ?? linkGroupField.fields,
-    admin: {
-      ...(linkGroupField.admin as object),
-      ...(overridesRecord.admin as object),
-    },
-  }
-
-  return merged as Field
+  return deepMerge(linkGroupField, overrides as Record<string, unknown>) as Field
 }
