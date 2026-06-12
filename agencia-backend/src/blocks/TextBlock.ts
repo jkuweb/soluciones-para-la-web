@@ -1,4 +1,5 @@
 import { Block } from 'payload'
+import { defaultLexical } from '@/fields'
 
 export const TextBlock: Block = {
   slug: 'text',
@@ -10,6 +11,7 @@ export const TextBlock: Block = {
     {
       name: 'content',
       type: 'richText',
+      editor: defaultLexical(),
     },
   ],
 }

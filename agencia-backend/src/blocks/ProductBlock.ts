@@ -1,4 +1,5 @@
 import { Block } from 'payload'
+import { defaultLexical } from '@/fields'
 
 export const ProductBlock: Block = {
   slug: 'product',
@@ -11,6 +12,7 @@ export const ProductBlock: Block = {
     {
       name: 'description',
       type: 'richText',
+      editor: defaultLexical(),
     },
     {
       name: 'price',
