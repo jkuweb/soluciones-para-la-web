@@ -10,7 +10,7 @@ import { CartBlock } from '@/blocks/CartBlock'
 import { CourseBlock } from '@/blocks/CourseBlock'
 import { FooterBlock } from '@/blocks/FooterBlock'
 import { RestrictedBlocksField } from '@/components/RestrictedBlocksField'
-import { validateLayoutStructure } from '@/hooks/validateLayoutStructure'
+import { validateLayoutStructure } from '@/collections/Pages/hooks/validateLayoutStructure'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -26,6 +26,7 @@ export const Pages: CollectionConfig = {
     defaultColumns: ['title', 'tenant', 'slug', '_status', 'updatedAt'],
     listSearchableFields: ['title', 'slug'],
   },
+  defaultPopulate: { title: true, slug: true },
   hooks: {
     beforeChange: [validateLayoutStructure],
   },

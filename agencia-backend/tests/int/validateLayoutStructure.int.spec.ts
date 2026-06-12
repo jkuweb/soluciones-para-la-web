@@ -1,6 +1,6 @@
 import { getPayload, type Payload } from 'payload'
 import config from '@/payload.config'
-import { validateLayoutStructure } from '@/hooks/validateLayoutStructure'
+import { validateLayoutStructure } from '@/collections/Pages/hooks/validateLayoutStructure'
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 import type { Page, User } from '@/payload-types'
 
