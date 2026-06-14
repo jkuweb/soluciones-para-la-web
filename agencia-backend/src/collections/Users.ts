@@ -17,7 +17,12 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
   },
-  auth: true,
+  auth: {
+    cookies: {
+      sameSite: 'None',
+      secure: false,
+    },
+  },
   fields: [
     {
       name: 'name',

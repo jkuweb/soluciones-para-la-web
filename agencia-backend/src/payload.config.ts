@@ -19,6 +19,14 @@ import { plugins } from './plugins'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+const livePreviewUrl = process.env.LIVE_PREVIEW_BASE_URL
+
+const corsOrigins = [getServerUrl()]
+if (livePreviewUrl) corsOrigins.push(livePreviewUrl)
+
+const csrfOrigins = [getServerUrl()]
+if (livePreviewUrl) csrfOrigins.push(livePreviewUrl)
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -44,8 +52,8 @@ export default buildConfig({
     autoRun: [],
     shouldAutoRun: async () => process.env.ENABLE_JOBS === 'true',
   },
-  cors: [getServerUrl()],
-  csrf: [getServerUrl()],
+  cors: corsOrigins,
+  csrf: csrfOrigins,
   sharp,
   plugins: [...(plugins ?? [])],
 })
