@@ -10,6 +10,7 @@ import { CartBlock } from '@/blocks/CartBlock'
 import { CourseBlock } from '@/blocks/CourseBlock'
 import { FooterBlock } from '@/blocks/FooterBlock'
 import { RestrictedBlocksField } from '@/components/RestrictedBlocksField'
+import { generateSlug } from '@/collections/Pages/hooks/generateSlug'
 import { validateLayoutStructure } from '@/collections/Pages/hooks/validateLayoutStructure'
 
 export const Pages: CollectionConfig = {
@@ -25,9 +26,17 @@ export const Pages: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'tenant', 'slug', '_status', 'updatedAt'],
     listSearchableFields: ['title', 'slug'],
+    livePreview: {
+      url: ({ data }) => {
+        const baseUrl = process.env.LIVE_PREVIEW_BASE_URL || 'http://localhost:3001'
+        const slug = data?.slug || ''
+        return `${baseUrl}/preview?slug=${slug}`
+      },
+    },
   },
   defaultPopulate: { title: true, slug: true },
   hooks: {
+    beforeValidate: [generateSlug],
     beforeChange: [validateLayoutStructure],
   },
   access: {
@@ -65,6 +74,7 @@ export const Pages: CollectionConfig = {
       name: 'slug',
       type: 'text',
       required: true,
+      index: true,
     },
     {
       name: 'title',
