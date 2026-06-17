@@ -69,9 +69,125 @@ export const generateEnvContent = (template: string, slug: string): string =>
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cp } from 'node:fs/promises'
+import * as p from '@clack/prompts'
 
 export const copyTemplate = async (srcDir: string, destDir: string): Promise<void> => {
   await cp(srcDir, destDir, { recursive: true })
+}
+
+// --- Interactive prompts ---
+const promptUntilFree = async <T>(
+  fetcher: () => Promise<T>,
+  isTaken: (v: T) => Promise<boolean>,
+  invalidMessage: string,
+): Promise<T> => {
+  for (;;) {
+    const value = await fetcher()
+    if (p.isCancel(value)) {
+      p.cancel('Operación cancelada.')
+      process.exit(0)
+    }
+    if (!(await isTaken(value))) return value
+    p.log.warn(invalidMessage)
+  }
+}
+
+export const promptTenant = async (): Promise<TenantInput> => {
+  const name = await p.text({ message: 'Nombre del cliente:' })
+  if (p.isCancel(name)) process.exit(0)
+
+  const slug = await promptUntilFree(
+    () =>
+      p.text({
+        message: 'Slug (sin espacios, solo minúsculas/números/guiones):',
+        validate: (v) => isValidSlug(v as string) || 'Formato inválido',
+      }) as Promise<string>,
+    isSlugTaken,
+    'Ese slug ya existe, probá con otro.',
+  )
+
+  const domain = await p.text({ message: 'Dominio (ej: cliente.com):' })
+  if (p.isCancel(domain)) process.exit(0)
+
+  const serviceType = (await p.select({
+    message: 'Tipo de servicio:',
+    options: [
+      { value: 'web-estatica', label: 'Web Estática' },
+      { value: 'tienda-online', label: 'Tienda Online' },
+      { value: 'academia-online', label: 'Academia Online' },
+    ],
+  })) as ServiceType
+
+  const frontendType = (await p.select({
+    message: 'Tipo de frontend:',
+    options: [
+      { value: 'astro', label: 'Astro' },
+      { value: 'nextjs', label: 'Next.js' },
+    ],
+  })) as FrontendType
+
+  const status = (await p.select({
+    message: 'Estado:',
+    initialValue: 'pending' as TenantStatus,
+    options: [
+      { value: 'pending', label: 'Pendiente' },
+      { value: 'active', label: 'Activo' },
+      { value: 'suspended', label: 'Suspendido' },
+    ],
+  })) as TenantStatus
+
+  const projectPriceStr = await p.text({
+    message: 'Precio del proyecto (Enter para omitir):',
+  })
+  if (p.isCancel(projectPriceStr)) process.exit(0)
+
+  const maintenanceFeeStr = await p.text({
+    message: 'Cuota mensual (Enter para omitir):',
+  })
+  if (p.isCancel(maintenanceFeeStr)) process.exit(0)
+
+  return {
+    name: String(name),
+    slug,
+    domain: String(domain),
+    serviceType,
+    frontendType,
+    status,
+    projectPrice: projectPriceStr ? Number(projectPriceStr) : undefined,
+    maintenanceFee: maintenanceFeeStr ? Number(maintenanceFeeStr) : undefined,
+  }
+}
+
+export const promptUser = async (): Promise<UserInput> => {
+  const email = await promptUntilFree(
+    () =>
+      p.text({
+        message: 'Email del admin del cliente:',
+        validate: (v) => isValidEmail(v as string) || 'Email inválido',
+      }) as Promise<string>,
+    isEmailTaken,
+    'Ese email ya existe, probá con otro.',
+  )
+
+  const name = await p.text({ message: 'Nombre del admin:' })
+  if (p.isCancel(name)) process.exit(0)
+
+  const password = await p.password({
+    message: 'Password (mínimo 8 caracteres):',
+    validate: (v) => v.length >= 8 || 'Mínimo 8 caracteres',
+  })
+  if (p.isCancel(password)) process.exit(0)
+
+  const role = (await p.select({
+    message: 'Rol:',
+    initialValue: 'tenant-admin' as UserRole,
+    options: [
+      { value: 'tenant-admin', label: 'Tenant Admin' },
+      { value: 'tenant-editor', label: 'Tenant Editor' },
+    ],
+  })) as UserRole
+
+  return { email, name: String(name), password: String(password), role }
 }
 
 export const createTenant = async (

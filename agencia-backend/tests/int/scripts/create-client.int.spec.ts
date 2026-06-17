@@ -13,6 +13,8 @@ import {
   isSlugTaken,
   isEmailTaken,
   copyTemplate,
+  promptTenant,
+  promptUser,
   type TenantInput,
   type UserInput,
 } from '../../../scripts/create-client'
@@ -26,7 +28,21 @@ vi.mock('payload', async (importOriginal) => {
   }
 })
 
+// Mock @clack/prompts
+vi.mock('@clack/prompts', () => ({
+  text: vi.fn(),
+  select: vi.fn(),
+  password: vi.fn(),
+  confirm: vi.fn(),
+  isCancel: vi.fn(() => false),
+  cancel: vi.fn(),
+  intro: vi.fn(),
+  outro: vi.fn(),
+  log: { info: vi.fn(), success: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}))
+
 import { getPayload } from 'payload'
+import * as prompts from '@clack/prompts'
 
 const mockPayload = {
   create: vi.fn(),
@@ -236,5 +252,29 @@ describe('copyTemplate', () => {
     expect(existsSync(join(destDir, '.env.example'))).toBe(true)
     expect(existsSync(join(destDir, 'package.json'))).toBe(true)
     expect(readFileSync(join(destDir, '.env.example'), 'utf-8')).toBe('TENANT_SLUG=placeholder\n')
+  })
+})
+
+describe('promptTenant', () => {
+  it('re-prompt el slug si está tomado, después acepta uno libre', async () => {
+    ;(prompts.text as any)
+      .mockResolvedValueOnce('Test Client') // name
+      .mockResolvedValueOnce('taken') // slug (taken)
+      .mockResolvedValueOnce('libre') // slug retry (libre)
+      .mockResolvedValueOnce('test.com') // domain
+    ;(prompts.select as any)
+      .mockResolvedValueOnce('web-estatica') // serviceType
+      .mockResolvedValueOnce('astro') // frontendType
+      .mockResolvedValueOnce('pending') // status
+
+    // mock isSlugTaken: true para 'taken', false para 'libre'
+    mockPayload.find
+      .mockResolvedValueOnce({ totalDocs: 1, docs: [{}] }) // taken
+      .mockResolvedValueOnce({ totalDocs: 0, docs: [] }) // libre
+
+    const result = await promptTenant()
+    expect(result.slug).toBe('libre')
+    expect(result.frontendType).toBe('astro')
+    expect(mockPayload.find).toHaveBeenCalledTimes(2)
   })
 })
