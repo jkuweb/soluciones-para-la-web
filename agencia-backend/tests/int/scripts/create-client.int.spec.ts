@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -14,7 +14,6 @@ import {
   isEmailTaken,
   copyTemplate,
   promptTenant,
-  promptUser,
   confirmSummary,
   printSuccess,
   run,
@@ -166,7 +165,7 @@ describe('createTenant', () => {
     const tenant = { id: 7, slug: 'test' }
     mockPayload.create.mockResolvedValue(tenant)
 
-    const result = await createTenant({ name: 'X', slug: 'test', domain: 'x.com' } as any)
+    const result = await createTenant({ name: 'X', slug: 'test', domain: 'x.com' })
 
     expect(mockPayload.create).toHaveBeenCalledWith({
       collection: 'tenants',
@@ -182,7 +181,7 @@ describe('createUser', () => {
     mockPayload.create.mockResolvedValue(user)
 
     const result = await createUser(
-      { email: 'a@b.com', name: 'A', password: 'pw1234', role: 'tenant-admin' } as any,
+      { email: 'a@b.com', name: 'A', password: 'pw1234', role: 'tenant-admin' },
       7,
     )
 
@@ -260,12 +259,12 @@ describe('copyTemplate', () => {
 
 describe('promptTenant', () => {
   it('re-prompt el slug si está tomado, después acepta uno libre', async () => {
-    ;(prompts.text as any)
+    ;(prompts.text as Mock)
       .mockResolvedValueOnce('Test Client') // name
       .mockResolvedValueOnce('taken') // slug (taken)
       .mockResolvedValueOnce('libre') // slug retry (libre)
       .mockResolvedValueOnce('test.com') // domain
-    ;(prompts.select as any)
+    ;(prompts.select as Mock)
       .mockResolvedValueOnce('web-estatica') // serviceType
       .mockResolvedValueOnce('astro') // frontendType
       .mockResolvedValueOnce('pending') // status
@@ -284,7 +283,7 @@ describe('promptTenant', () => {
 
 describe('confirmSummary', () => {
   it('devuelve true si el usuario confirma', async () => {
-    ;(prompts.confirm as any).mockResolvedValue(true)
+    ;(prompts.confirm as Mock).mockResolvedValue(true)
     const ok = await confirmSummary(
       {
         name: 'X',
@@ -300,7 +299,7 @@ describe('confirmSummary', () => {
   })
 
   it('devuelve false si el usuario cancela', async () => {
-    ;(prompts.confirm as any).mockResolvedValue(false)
+    ;(prompts.confirm as Mock).mockResolvedValue(false)
     const ok = await confirmSummary(
       {
         name: 'X',
@@ -309,8 +308,8 @@ describe('confirmSummary', () => {
         serviceType: 'web-estatica',
         frontendType: 'astro',
         status: 'pending',
-      } as any,
-      { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' } as any,
+      },
+      { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' },
     )
     expect(ok).toBe(false)
   })
@@ -334,7 +333,7 @@ describe('printSuccess', () => {
 describe('run orchestrator', () => {
   it('rollback del tenant si falla la creación del user', async () => {
     // prompts
-    ;(prompts.text as any)
+    ;(prompts.text as Mock)
       .mockResolvedValueOnce('Test') // name
       .mockResolvedValueOnce('test-slug') // slug
       .mockResolvedValueOnce('test.com') // domain
@@ -343,12 +342,12 @@ describe('run orchestrator', () => {
       .mockResolvedValueOnce('a@test.com') // email
       .mockResolvedValueOnce('Admin') // name
       .mockResolvedValueOnce('password123') // password
-    ;(prompts.select as any)
+    ;(prompts.select as Mock)
       .mockResolvedValueOnce('web-estatica')
       .mockResolvedValueOnce('astro')
       .mockResolvedValueOnce('pending')
       .mockResolvedValueOnce('tenant-admin')
-    ;(prompts.confirm as any).mockResolvedValue(true)
+    ;(prompts.confirm as Mock).mockResolvedValue(true)
 
     // DB: slug libre, email libre, tenant create OK, user create FALLA
     mockPayload.find
