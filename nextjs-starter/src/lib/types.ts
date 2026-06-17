@@ -77,7 +77,7 @@ export interface LexicalNode {
 
 export interface ImageBlock extends Block {
   blockType: 'image'
-  image: string
+  image: MediaImage
   caption?: string
 }
 
@@ -86,7 +86,7 @@ export interface ProductBlock extends Block {
   name: string
   description?: string
   price: number
-  images?: string[]
+  images?: MediaImage[]
   stock?: number
   category?: string
 }
@@ -117,7 +117,7 @@ export interface ContactBlock extends Block {
 export interface MenuBlock extends Block {
   blockType: 'menu'
   category?: string
-  items?: { name: string; description?: string; price?: number; image?: string }[]
+  items?: { name: string; description?: string; price?: number; image?: MediaImage }[]
 }
 
 export interface FooterBlock extends Block {

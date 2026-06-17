@@ -8,7 +8,7 @@ interface ImageBlockProps {
 export default function ImageBlock({ data }: ImageBlockProps) {
   return (
     <figure className="image-block">
-      <img src={data.image} alt={data.caption || ''} loading="lazy" />
+      <img src={data.image.url} alt={data.image.alt || data.caption || ''} loading="lazy" />
       {data.caption && <figcaption>{data.caption}</figcaption>}
       <style jsx>{`
         .image-block {

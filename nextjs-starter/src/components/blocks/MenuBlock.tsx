@@ -13,7 +13,9 @@ export default function MenuBlock({ data }: MenuBlockProps) {
         <ul className="menu-items">
           {data.items.map((item, i) => (
             <li key={i} className="menu-item">
-              {item.image && <img src={item.image} alt={item.name} loading="lazy" />}
+              {item.image && (
+                <img src={item.image.url} alt={item.image.alt || item.name} loading="lazy" />
+              )}
               <div className="item-info">
                 <h3>{item.name}</h3>
                 {item.description && <p>{item.description}</p>}

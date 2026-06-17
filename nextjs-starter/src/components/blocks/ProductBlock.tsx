@@ -17,7 +17,7 @@ export default function ProductBlock({ data }: ProductBlockProps) {
       {data.images && data.images.length > 0 && (
         <div className="product-images">
           {data.images.map((img, i) => (
-            <img key={i} src={img} alt={data.name} loading="lazy" />
+            <img key={i} src={img.url} alt={img.alt || data.name} loading="lazy" />
           ))}
         </div>
       )}

@@ -1,4 +1,14 @@
-import type { Page, Block, Header, Footer, MediaImage, HeroBlock } from './types'
+import type {
+  Page,
+  Block,
+  Header,
+  Footer,
+  MediaImage,
+  HeroBlock,
+  ImageBlock,
+  ProductBlock,
+  MenuBlock,
+} from './types'
 
 const PAYLOAD_API_URL = process.env.PAYLOAD_API_URL || 'http://localhost:3000/api'
 const TENANT_SLUG = process.env.TENANT_SLUG || 'mi-tienda'
@@ -14,17 +24,42 @@ function toAbsoluteMedia(media: MediaImage | undefined): MediaImage | undefined 
 }
 
 function normalizeBlock(block: Block): Block {
-  if (block.blockType === 'hero') {
-    const heroBlock = block as HeroBlock
-    return { ...heroBlock, backgroundImage: toAbsoluteMedia(heroBlock.backgroundImage) }
+  switch (block.blockType) {
+    case 'hero': {
+      const heroBlock = block as HeroBlock
+      return { ...heroBlock, backgroundImage: toAbsoluteMedia(heroBlock.backgroundImage) }
+    }
+    case 'image': {
+      const imageBlock = block as ImageBlock
+      return { ...imageBlock, image: toAbsoluteMedia(imageBlock.image) }
+    }
+    case 'product': {
+      const productBlock = block as ProductBlock
+      return {
+        ...productBlock,
+        images: productBlock.images?.map(toAbsoluteMedia),
+      }
+    }
+    case 'menu': {
+      const menuBlock = block as MenuBlock
+      return {
+        ...menuBlock,
+        items: menuBlock.items?.map((item) => ({
+          ...item,
+          image: toAbsoluteMedia(item.image),
+        })),
+      }
+    }
+    default:
+      return block
   }
-  return block
 }
 
 export function normalizePage(page: Page): Page {
   return {
     ...page,
     hero: page.hero?.map(normalizeBlock),
+    layout: page.layout.map(normalizeBlock),
   }
 }
 
