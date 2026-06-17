@@ -8,8 +8,9 @@ export async function generateStaticParams() {
   }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const page = await getPageBySlug(params.slug)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const page = await getPageBySlug(slug)
   const title = page?.meta?.title || page?.title
   const description = page?.meta?.description
   const image = page?.meta?.image?.url
@@ -31,8 +32,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function Page({ params }: { params: { slug: string } }) {
-  const page = await getPageBySlug(params.slug)
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const page = await getPageBySlug(slug)
 
   if (!page) {
     return (

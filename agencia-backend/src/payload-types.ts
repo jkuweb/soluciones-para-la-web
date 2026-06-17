@@ -186,27 +186,30 @@ export interface Page {
   id: number;
   tenant?: (number | null) | Tenant;
   slug: string;
+  generateSlug?: boolean | null;
   title: string;
+  hero?:
+    | {
+        title: string;
+        subtitle?: string | null;
+        backgroundImage?: (number | null) | Media;
+        cta: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?: {
+            relationTo: 'pages';
+            value: number | Page;
+          } | null;
+          url?: string | null;
+          label: string;
+        };
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'hero';
+      }[]
+    | null;
   layout?:
     | (
-        | {
-            title: string;
-            subtitle?: string | null;
-            backgroundImage?: (number | null) | Media;
-            cta: {
-              type?: ('reference' | 'custom') | null;
-              newTab?: boolean | null;
-              reference?: {
-                relationTo: 'pages';
-                value: number | Page;
-              } | null;
-              url?: string | null;
-              label: string;
-            };
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'hero';
-          }
         | {
             heading?: string | null;
             content?: {

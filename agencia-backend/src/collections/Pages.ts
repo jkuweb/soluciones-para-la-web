@@ -1,4 +1,5 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Condition } from 'payload'
+import { slugField } from 'payload'
 
 import { HeroBlock } from '@/blocks/HeroBlock'
 import { TextBlock } from '@/blocks/TextBlock'
@@ -12,12 +13,13 @@ import { FooterBlock } from '@/blocks/FooterBlock'
 import { RestrictedBlocksField } from '@/components/RestrictedBlocksField'
 import { generateSlug } from '@/collections/Pages/hooks/generateSlug'
 import { validateLayoutStructure } from '@/collections/Pages/hooks/validateLayoutStructure'
+import { validateUniqueSlug } from '@/collections/Pages/hooks/validateUniqueSlug'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
   versions: {
     drafts: {
-      autosave: { interval: 1000 },
+      autosave: { interval: 500 },
       schedulePublish: true,
     },
     maxPerDoc: 50,
@@ -29,15 +31,17 @@ export const Pages: CollectionConfig = {
     livePreview: {
       url: ({ data }) => {
         const baseUrl = process.env.LIVE_PREVIEW_BASE_URL || 'http://localhost:3001'
+        const previewSecret = process.env.PREVIEW_SECRET || ''
         const slug = data?.slug || ''
-        return `${baseUrl}/preview?slug=${slug}`
+        const path = `/${slug}`
+        return `${baseUrl}/preview?path=${path}&previewSecret=${previewSecret}`
       },
     },
   },
   defaultPopulate: { title: true, slug: true },
   hooks: {
     beforeValidate: [generateSlug],
-    beforeChange: [validateLayoutStructure],
+    beforeChange: [validateLayoutStructure, validateUniqueSlug],
   },
   access: {
     read: ({ req: { user } }) => {
@@ -71,50 +75,103 @@ export const Pages: CollectionConfig = {
   },
   fields: [
     {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      index: true,
-    },
-    {
       name: 'title',
       type: 'text',
       required: true,
     },
-    {
-      name: 'layout',
-      type: 'blocks',
-      blocks: [
-        HeroBlock,
-        TextBlock,
-        ImageBlock,
-        ContactBlock,
-        MenuBlock,
-        ProductBlock,
-        CartBlock,
-        CourseBlock,
-        FooterBlock,
-      ],
-      admin: {
-        components: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          Field: RestrictedBlocksField as any,
-        },
+    slugField({
+      disableUnique: true,
+      overrides: (baseField) => {
+        const condition: Condition = (_data, _siblingData, { user }) => {
+          return user?.roles?.includes('super-admin') ?? false
+        }
+        return {
+          ...baseField,
+          fields: baseField.fields.map((f) => {
+            if ('name' in f && f.name === 'generateSlug') {
+              return {
+                ...f,
+                admin: {
+                  ...f.admin,
+                  hidden: false,
+                  condition,
+                },
+              }
+            }
+            if ('name' in f && f.name === 'slug') {
+              return {
+                ...f,
+                admin: {
+                  ...f.admin,
+                  condition,
+                },
+              }
+            }
+            return f
+          }),
+        } as import('payload').RowField
       },
-    },
+    }),
     {
-      name: 'meta',
-      type: 'group',
-      fields: [
+      type: 'tabs',
+      tabs: [
         {
-          name: 'title',
-          type: 'text',
-          label: 'Meta Title',
+          label: 'Hero',
+          fields: [
+            {
+              name: 'hero',
+              type: 'blocks',
+              blocks: [HeroBlock],
+              maxRows: 1,
+              admin: {
+                components: {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  Field: RestrictedBlocksField as any,
+                },
+              },
+            },
+          ],
         },
         {
-          name: 'description',
-          type: 'textarea',
-          label: 'Meta Description',
+          label: 'Content',
+          fields: [
+            {
+              name: 'layout',
+              type: 'blocks',
+              blocks: [
+                TextBlock,
+                ImageBlock,
+                ContactBlock,
+                MenuBlock,
+                ProductBlock,
+                CartBlock,
+                CourseBlock,
+                FooterBlock,
+              ],
+              admin: {
+                components: {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  Field: RestrictedBlocksField as any,
+                },
+              },
+            },
+          ],
+        },
+        {
+          label: 'SEO',
+          name: 'meta',
+          fields: [
+            {
+              name: 'title',
+              type: 'text',
+              label: 'Meta Title',
+            },
+            {
+              name: 'description',
+              type: 'textarea',
+              label: 'Meta Description',
+            },
+          ],
         },
       ],
     },

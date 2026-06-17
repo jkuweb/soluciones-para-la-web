@@ -1,47 +1,53 @@
 import type { CollectionBeforeValidateHook } from 'payload'
 
 /**
- * Auto-generates slug and title when empty (for autosave/create flow).
- *
- * Priority for slug:
- * 1. Existing slug (already set by the form)
- * 2. Title → slugified
- * 3. Fallback: page-{timestamp} (autosave before user types anything)
- *
- * Title gets a fallback label when empty so it doesn't violate NOT NULL.
+ * Slugify a string: lowercase, replace special chars with hyphens.
  */
-export const generateSlug: CollectionBeforeValidateHook = async ({ data, operation }) => {
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/**
+ * Handles slug generation for non-super-admin users.
+ *
+ * Super-admin → the built-in `slugField()` handles slug generation via the
+ * `generateSlug` checkbox's beforeChange hook. This hook does nothing.
+ *
+ * Non-super-admin → the slug row is hidden from the admin UI, so we must
+ * auto-generate the slug from the title server-side.
+ *
+ * Also ensures the title has a fallback value (NOT NULL constraint during autosave).
+ */
+export const generateSlug: CollectionBeforeValidateHook = async ({
+  data,
+  operation,
+  req,
+}) => {
   if (operation !== 'create' && operation !== 'update') {
     return data
   }
 
   if (!data) return data
 
-  // Ensure title has a value for NOT NULL constraint
+  // Ensure title has a value for NOT NULL constraint during autosave
   if (!data.title || typeof data.title !== 'string' || data.title.trim().length === 0) {
-    data.title = data.slug && typeof data.slug === 'string'
-      ? data.slug
-      : `New Page ${new Date().toISOString().split('T')[0]}`
+    data.title = `New Page ${new Date().toISOString().split('T')[0]}`
   }
 
-  // Already has a slug, nothing else to do
-  if (data.slug && typeof data.slug === 'string' && data.slug.trim().length > 0) {
-    return data
+  // Non-super-admin: auto-generate slug from title (they can't see the field)
+  if (!req.user?.roles?.includes('super-admin')) {
+    if (typeof data.title === 'string' && data.title.trim().length > 0) {
+      data.slug = slugify(data.title)
+    }
   }
 
-  // Generate slug from title
-  data.slug = data.title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .trim()
-
-  // If title was just a fallback and produced an empty slug, use timestamp
-  if (!data.slug) {
-    data.slug = `page-${Date.now()}`
-  }
+  // Super-admin: the built-in slugField's generateSlug hook handles everything
 
   return data
 }

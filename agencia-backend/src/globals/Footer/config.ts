@@ -6,6 +6,7 @@ export const Footer: GlobalConfig = {
   slug: 'footer',
   access: {
     read: () => true,
+    update: () => true,
   },
   fields: [
     {
@@ -37,6 +38,7 @@ export const Footer: GlobalConfig = {
       fields: [
         link({
           disableLabel: true,
+          appearances: false,
         }),
       ],
       admin: {
