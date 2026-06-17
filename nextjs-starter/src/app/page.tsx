@@ -1,13 +1,5 @@
 import { getPageBySlug } from '@/lib/payload'
-import HeroBlock from '@/components/blocks/HeroBlock'
-import TextBlock from '@/components/blocks/TextBlock'
-import ImageBlock from '@/components/blocks/ImageBlock'
-import ProductBlock from '@/components/blocks/ProductBlock'
-import CartBlock from '@/components/blocks/CartBlock'
-import CourseBlock from '@/components/blocks/CourseBlock'
-import MenuBlock from '@/components/blocks/MenuBlock'
-import ContactBlock from '@/components/blocks/ContactBlock'
-import FooterBlock from '@/components/blocks/FooterBlock'
+import BlockRenderer from '@/components/BlockRenderer'
 
 export async function generateMetadata() {
   const page = await getPageBySlug('home')
@@ -15,18 +7,6 @@ export async function generateMetadata() {
     title: page?.meta?.title || page?.title,
     description: page?.meta?.description,
   }
-}
-
-const components = {
-  hero: HeroBlock,
-  text: TextBlock,
-  image: ImageBlock,
-  product: ProductBlock,
-  cart: CartBlock,
-  course: CourseBlock,
-  menu: MenuBlock,
-  contact: ContactBlock,
-  footer: FooterBlock,
 }
 
 export default async function HomePage() {
@@ -41,14 +21,5 @@ export default async function HomePage() {
     )
   }
 
-  return (
-    <article>
-      {page.layout.map((block) => {
-        const blockType = block.blockType as keyof typeof components
-        const Component = components[blockType]
-        if (!Component) return null
-        return <Component key={block.id} data={block as never} />
-      })}
-    </article>
-  )
+  return <BlockRenderer hero={page.hero} layout={page.layout} />
 }

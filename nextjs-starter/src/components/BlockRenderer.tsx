@@ -16,6 +16,7 @@ interface Block {
 }
 
 interface BlockRendererProps {
+  hero?: Block[]
   layout: Block[]
 }
 
@@ -31,19 +32,22 @@ const components: Record<string, React.ComponentType<{ data: unknown }>> = {
   footer: FooterBlock,
 }
 
-export default function BlockRenderer({ layout }: BlockRendererProps) {
+function renderBlock(block: Block) {
+  const Component = components[block.blockType]
+  if (!Component) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[BlockRenderer] Unknown block type: "${block.blockType}"`)
+    }
+    return null
+  }
+  return <Component key={block.id} data={block} />
+}
+
+export default function BlockRenderer({ hero, layout }: BlockRendererProps) {
   return (
-    <>
-      {layout.map((block) => {
-        const Component = components[block.blockType]
-        if (!Component) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(`[BlockRenderer] Unknown block type: "${block.blockType}"`)
-          }
-          return null
-        }
-        return <Component key={block.id} data={block} />
-      })}
-    </>
+    <article>
+      {hero?.map(renderBlock)}
+      {layout.map(renderBlock)}
+    </article>
   )
 }

@@ -2,6 +2,7 @@ export interface Page {
   id: string
   slug: string
   title: string
+  hero?: Block[]
   layout: Block[]
   meta?: {
     title?: string

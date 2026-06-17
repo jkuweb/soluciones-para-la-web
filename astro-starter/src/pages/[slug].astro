@@ -19,5 +19,5 @@ const { page } = Astro.props
   description={page.meta?.description}
   seo={page.meta}
 >
-  <BlockRenderer layout={page.layout} />
+  <BlockRenderer hero={page.hero} layout={page.layout} />
 </Layout>

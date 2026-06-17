@@ -45,5 +45,5 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     )
   }
 
-  return <BlockRenderer layout={page.layout} />
+  return <BlockRenderer hero={page.hero} layout={page.layout} />
 }

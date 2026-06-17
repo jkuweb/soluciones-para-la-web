@@ -8,10 +8,11 @@ import MenuBlock from '@/components/blocks/MenuBlock.astro'
 import CourseBlock from '@/components/blocks/CourseBlock.astro'
 
 interface Props {
+  hero?: Array<{ blockType: string; [key: string]: unknown }>
   layout: Array<{ blockType: string; [key: string]: unknown }>
 }
 
-const { layout } = Astro.props
+const { hero, layout } = Astro.props
 
 const components: Record<string, (_props: { data: unknown }) => any> = {
   hero: HeroBlock,
@@ -22,9 +23,8 @@ const components: Record<string, (_props: { data: unknown }) => any> = {
   menu: MenuBlock,
   course: CourseBlock,
 }
----
 
-{layout.map((block) => {
+function renderBlock(block: { blockType: string; [key: string]: unknown }) {
   const Component = components[block.blockType]
   if (!Component) {
     if (import.meta.env.DEV) {
@@ -33,4 +33,10 @@ const components: Record<string, (_props: { data: unknown }) => any> = {
     return null
   }
   return <Component data={block} />
-})}
+}
+---
+
+<article>
+  {hero?.map(renderBlock)}
+  {layout.map(renderBlock)}
+</article>
