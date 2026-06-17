@@ -1,7 +1,10 @@
 import path from 'node:path'
 
+// Use import.meta.dirname (Node 20.11+), with fallback for safety
+const scriptDir = import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname)
+
 // --- Constants ---
-export const MONOREPO_ROOT = path.resolve(__dirname, '../../')
+export const MONOREPO_ROOT = path.resolve(scriptDir, '../../')
 export const TEMPLATES_DIR = MONOREPO_ROOT
 export const CLIENTS_DIR = '/home/joseba/Clientes/clientes'
 
