@@ -61,7 +61,7 @@ export const buildUserData = (input: UserInput, tenantId: number): Record<string
   email: input.email,
   name: input.name,
   password: input.password,
-  roles: [input.role],
+  roles: input.role,
   tenants: [{ tenant: tenantId }],
 })
 
