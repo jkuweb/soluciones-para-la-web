@@ -17,6 +17,7 @@ import {
   promptUser,
   confirmSummary,
   printSuccess,
+  run,
   type TenantInput,
   type UserInput,
 } from '../../../scripts/create-client'
@@ -327,5 +328,38 @@ describe('printSuccess', () => {
     expect(logSpy).toHaveBeenCalled()
     expect(logSpy.mock.calls.some((c) => String(c[0]).includes('x'))).toBe(true)
     logSpy.mockRestore()
+  })
+})
+
+describe('run orchestrator', () => {
+  it('rollback del tenant si falla la creación del user', async () => {
+    // prompts
+    ;(prompts.text as any)
+      .mockResolvedValueOnce('Test') // name
+      .mockResolvedValueOnce('test-slug') // slug
+      .mockResolvedValueOnce('test.com') // domain
+      .mockResolvedValueOnce('') // projectPrice (skip)
+      .mockResolvedValueOnce('') // maintenanceFee (skip)
+      .mockResolvedValueOnce('a@test.com') // email
+      .mockResolvedValueOnce('Admin') // name
+      .mockResolvedValueOnce('password123') // password
+    ;(prompts.select as any)
+      .mockResolvedValueOnce('web-estatica')
+      .mockResolvedValueOnce('astro')
+      .mockResolvedValueOnce('pending')
+      .mockResolvedValueOnce('tenant-admin')
+    ;(prompts.confirm as any).mockResolvedValue(true)
+
+    // DB: slug libre, email libre, tenant create OK, user create FALLA
+    mockPayload.find
+      .mockResolvedValueOnce({ totalDocs: 0, docs: [] }) // slug libre
+      .mockResolvedValueOnce({ totalDocs: 0, docs: [] }) // email libre
+    mockPayload.create
+      .mockResolvedValueOnce({ id: 1, slug: 'test-slug' }) // tenant OK
+      .mockRejectedValueOnce(new Error('user create failed'))
+    mockPayload.delete.mockResolvedValue(undefined)
+
+    await expect(run()).rejects.toThrow('user create failed')
+    expect(mockPayload.delete).toHaveBeenCalledWith({ collection: 'tenants', id: 1 })
   })
 })

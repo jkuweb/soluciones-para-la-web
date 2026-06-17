@@ -68,7 +68,7 @@ export const generateEnvContent = (template: string, slug: string): string =>
 // --- DB operations ---
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { cp } from 'node:fs/promises'
+import { cp, readFile, writeFile } from 'node:fs/promises'
 import * as p from '@clack/prompts'
 
 export const copyTemplate = async (srcDir: string, destDir: string): Promise<void> => {
@@ -100,7 +100,7 @@ export const promptTenant = async (): Promise<TenantInput> => {
     () =>
       p.text({
         message: 'Slug (sin espacios, solo minúsculas/números/guiones):',
-        validate: (v) => isValidSlug(v as string) || 'Formato inválido',
+        validate: (v) => (v && isValidSlug(v) ? undefined : 'Formato inválido'),
       }) as Promise<string>,
     isSlugTaken,
     'Ese slug ya existe, probá con otro.',
@@ -163,7 +163,7 @@ export const promptUser = async (): Promise<UserInput> => {
     () =>
       p.text({
         message: 'Email del admin del cliente:',
-        validate: (v) => isValidEmail(v as string) || 'Email inválido',
+        validate: (v) => (v && isValidEmail(v) ? undefined : 'Email inválido'),
       }) as Promise<string>,
     isEmailTaken,
     'Ese email ya existe, probá con otro.',
@@ -174,7 +174,7 @@ export const promptUser = async (): Promise<UserInput> => {
 
   const password = await p.password({
     message: 'Password (mínimo 8 caracteres):',
-    validate: (v) => v.length >= 8 || 'Mínimo 8 caracteres',
+    validate: (v) => (v && v.length >= 8 ? undefined : 'Mínimo 8 caracteres'),
   })
   if (p.isCancel(password)) process.exit(0)
 
@@ -227,6 +227,82 @@ export const printSuccess = (info: {
   console.log('    4. Editar src/styles/theme.css con los colores del cliente')
   console.log('    5. pnpm dev')
   console.log('========================================\n')
+}
+
+// --- Orchestrator ---
+export const run = async (): Promise<void> => {
+  p.intro('Crear nuevo cliente')
+
+  const tenantInput = await promptTenant()
+  const userInput = await promptUser()
+  const confirmed = await confirmSummary(tenantInput, userInput)
+  if (!confirmed) {
+    p.cancel('Cancelado.')
+    return
+  }
+
+  // 1. Crear tenant
+  let tenant: { id: number }
+  try {
+    tenant = await createTenant(buildTenantData(tenantInput))
+  } catch (err) {
+    p.log.error(`No se pudo crear el tenant: ${(err as Error).message}`)
+    throw err
+  }
+  p.log.success(`Tenant creado (ID: ${tenant.id})`)
+
+  // 2. Crear user (con rollback si falla)
+  let user: { id: number }
+  try {
+    user = await createUser(userInput, tenant.id)
+  } catch (err) {
+    p.log.error(`No se pudo crear el user, haciendo rollback del tenant...`)
+    await deleteTenant(tenant.id)
+    throw err
+  }
+  p.log.success(`User creado (ID: ${user.id})`)
+
+  // 3. Clonar template + generar .env
+  const srcDir = path.join(TEMPLATES_DIR, `${tenantInput.frontendType}-starter`)
+  const destDir = path.join(CLIENTS_DIR, tenantInput.slug)
+  try {
+    await copyTemplate(srcDir, destDir)
+    const envExample = await readFile(path.join(destDir, '.env.example'), 'utf-8')
+    await writeFile(
+      path.join(destDir, '.env'),
+      generateEnvContent(envExample, tenantInput.slug),
+      'utf-8',
+    )
+    p.log.success(`Frontend clonado en ${destDir}`)
+  } catch (err) {
+    p.log.warn(
+      `Tenant y user quedaron en DB, pero la copia del template falló: ${(err as Error).message}`,
+    )
+    p.log.warn(`Reintentá manualmente: cp -r ${srcDir} ${destDir}`)
+    return
+  }
+
+  p.outro('Listo.')
+  printSuccess({
+    tenantSlug: tenantInput.slug,
+    userEmail: userInput.email,
+    userPassword: userInput.password,
+    frontendPath: destDir,
+  })
+}
+
+// Only auto-invoke when the script is run directly (not when imported by tests).
+// Standard ESM main-module check: argv[1] must match this file's path.
+import { fileURLToPath } from 'node:url'
+const isMain = process.argv[1] === fileURLToPath(import.meta.url)
+if (isMain) {
+  void run().then(
+    () => process.exit(0),
+    (err) => {
+      p.log.error((err as Error).message)
+      process.exit(1)
+    },
+  )
 }
 
 export const createTenant = async (
