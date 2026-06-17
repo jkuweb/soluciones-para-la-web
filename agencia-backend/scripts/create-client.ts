@@ -61,3 +61,6 @@ export const buildUserData = (input: UserInput, tenantId: number): Record<string
   roles: [input.role],
   tenants: [{ tenant: tenantId }],
 })
+
+export const generateEnvContent = (template: string, slug: string): string =>
+  template.replace(/^TENANT_SLUG=.*$/m, `TENANT_SLUG=${slug}`)

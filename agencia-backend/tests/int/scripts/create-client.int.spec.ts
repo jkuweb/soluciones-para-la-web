@@ -4,6 +4,7 @@ import {
   isValidEmail,
   buildTenantData,
   buildUserData,
+  generateEnvContent,
   type TenantInput,
   type UserInput,
 } from '../../../scripts/create-client'
@@ -94,5 +95,19 @@ describe('buildUserData', () => {
       roles: ['tenant-admin'],
       tenants: [{ tenant: 42 }],
     })
+  })
+})
+
+describe('generateEnvContent', () => {
+  it('reemplaza el placeholder del slug en el contenido de .env.example', () => {
+    const template = 'PAYLOAD_API_URL=http://localhost:3000/api\nTENANT_SLUG=mi-cliente\n'
+    const result = generateEnvContent(template, 'mi-tienda')
+    expect(result).toBe('PAYLOAD_API_URL=http://localhost:3000/api\nTENANT_SLUG=mi-tienda\n')
+  })
+
+  it('preserva líneas que no son TENANT_SLUG', () => {
+    const template = 'A=1\nTENANT_SLUG=placeholder\nB=2\n'
+    const result = generateEnvContent(template, 'cliente-nuevo')
+    expect(result).toBe('A=1\nTENANT_SLUG=cliente-nuevo\nB=2\n')
   })
 })
