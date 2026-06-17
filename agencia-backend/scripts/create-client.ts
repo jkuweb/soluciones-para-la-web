@@ -190,6 +190,45 @@ export const promptUser = async (): Promise<UserInput> => {
   return { email, name: String(name), password: String(password), role }
 }
 
+// --- Output ---
+export const confirmSummary = async (tenant: TenantInput, user: UserInput): Promise<boolean> => {
+  console.log('\n--- Resumen ---')
+  console.log(`Tenant: ${tenant.name} (${tenant.slug})`)
+  console.log(`  domain: ${tenant.domain}`)
+  console.log(`  serviceType: ${tenant.serviceType}`)
+  console.log(`  frontendType: ${tenant.frontendType}`)
+  console.log(`  status: ${tenant.status}`)
+  if (tenant.projectPrice) console.log(`  projectPrice: €${tenant.projectPrice}`)
+  if (tenant.maintenanceFee) console.log(`  maintenanceFee: €${tenant.maintenanceFee}`)
+  console.log(`User: ${user.email} (${user.role})`)
+  console.log('----------------\n')
+
+  const ok = await p.confirm({ message: '¿Crear cliente con estos datos?' })
+  if (p.isCancel(ok)) return false
+  return ok === true
+}
+
+export const printSuccess = (info: {
+  tenantSlug: string
+  userEmail: string
+  userPassword: string
+  frontendPath: string
+}): void => {
+  console.log('\n========================================')
+  console.log('  Cliente creado!')
+  console.log('========================================')
+  console.log(`  Tenant:     ${info.tenantSlug}`)
+  console.log(`  User:       ${info.userEmail} / ${info.userPassword}`)
+  console.log(`  Frontend:   ${info.frontendPath}`)
+  console.log('  Próximos pasos:')
+  console.log('    1. Crear las páginas en el admin de Payload')
+  console.log(`    2. cd ${info.frontendPath}`)
+  console.log('    3. pnpm install')
+  console.log('    4. Editar src/styles/theme.css con los colores del cliente')
+  console.log('    5. pnpm dev')
+  console.log('========================================\n')
+}
+
 export const createTenant = async (
   data: Record<string, unknown>,
 ): Promise<{ id: number }> => {

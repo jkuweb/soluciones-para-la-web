@@ -15,6 +15,8 @@ import {
   copyTemplate,
   promptTenant,
   promptUser,
+  confirmSummary,
+  printSuccess,
   type TenantInput,
   type UserInput,
 } from '../../../scripts/create-client'
@@ -276,5 +278,54 @@ describe('promptTenant', () => {
     expect(result.slug).toBe('libre')
     expect(result.frontendType).toBe('astro')
     expect(mockPayload.find).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('confirmSummary', () => {
+  it('devuelve true si el usuario confirma', async () => {
+    ;(prompts.confirm as any).mockResolvedValue(true)
+    const ok = await confirmSummary(
+      {
+        name: 'X',
+        slug: 'x',
+        domain: 'x.com',
+        serviceType: 'web-estatica',
+        frontendType: 'astro',
+        status: 'pending',
+      },
+      { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' },
+    )
+    expect(ok).toBe(true)
+  })
+
+  it('devuelve false si el usuario cancela', async () => {
+    ;(prompts.confirm as any).mockResolvedValue(false)
+    const ok = await confirmSummary(
+      {
+        name: 'X',
+        slug: 'x',
+        domain: 'x.com',
+        serviceType: 'web-estatica',
+        frontendType: 'astro',
+        status: 'pending',
+      } as any,
+      { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' } as any,
+    )
+    expect(ok).toBe(false)
+  })
+})
+
+describe('printSuccess', () => {
+  it('imprime el resumen completo', () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    printSuccess({
+      tenantSlug: 'x',
+      userEmail: 'a@b.com',
+      userPassword: 'pw',
+      frontendPath: '/clientes/x',
+    })
+    expect(logSpy).toHaveBeenCalled()
+    expect(logSpy.mock.calls.some((c) => String(c[0]).includes('x'))).toBe(true)
+    logSpy.mockRestore()
   })
 })
