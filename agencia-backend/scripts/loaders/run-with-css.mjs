@@ -28,6 +28,12 @@ if (!targetArg) {
   process.exit(1)
 }
 
+// Remove the target script path from argv so the imported script only
+// sees the real user-provided args. The wrapper consumes argv[2] to know
+// which script to run; without this, scripts that read process.argv.slice(2)
+// would see the script path as the first arg and fail with "Unknown argument".
+process.argv.splice(2, 1)
+
 const targetPath = resolve(process.cwd(), targetArg)
 const mod = await import(targetPath)
 

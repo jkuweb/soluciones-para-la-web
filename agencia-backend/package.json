@@ -14,6 +14,8 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "create-client": "node scripts/loaders/run-with-css.mjs scripts/create-client.ts",
+    "sync:client": "node scripts/loaders/run-with-css.mjs scripts/sync-template.ts",
+    "update:client": "node scripts/loaders/run-with-css.mjs scripts/update-deps.ts",
     "test": "pnpm run test:int",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
