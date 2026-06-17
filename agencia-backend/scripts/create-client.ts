@@ -94,3 +94,23 @@ export const deleteTenant = async (tenantId: number): Promise<void> => {
   const payload = await getPayload({ config })
   await payload.delete({ collection: 'tenants', id: tenantId })
 }
+
+export const isSlugTaken = async (slug: string): Promise<boolean> => {
+  const payload = await getPayload({ config })
+  const result = await payload.find({
+    collection: 'tenants',
+    where: { slug: { equals: slug } },
+    limit: 1,
+  })
+  return result.totalDocs > 0
+}
+
+export const isEmailTaken = async (email: string): Promise<boolean> => {
+  const payload = await getPayload({ config })
+  const result = await payload.find({
+    collection: 'users',
+    where: { email: { equals: email } },
+    limit: 1,
+  })
+  return result.totalDocs > 0
+}

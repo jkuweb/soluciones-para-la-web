@@ -7,6 +7,8 @@ import {
   generateEnvContent,
   createTenant,
   createUser,
+  isSlugTaken,
+  isEmailTaken,
   type TenantInput,
   type UserInput,
 } from '../../../scripts/create-client'
@@ -172,5 +174,39 @@ describe('createUser', () => {
       },
     })
     expect(result).toEqual(user)
+  })
+})
+
+describe('isSlugTaken', () => {
+  it('devuelve true si encuentra un tenant con ese slug', async () => {
+    mockPayload.find.mockResolvedValue({ totalDocs: 1, docs: [{ id: 1 }] })
+    expect(await isSlugTaken('existente')).toBe(true)
+    expect(mockPayload.find).toHaveBeenCalledWith({
+      collection: 'tenants',
+      where: { slug: { equals: 'existente' } },
+      limit: 1,
+    })
+  })
+
+  it('devuelve false si no hay resultados', async () => {
+    mockPayload.find.mockResolvedValue({ totalDocs: 0, docs: [] })
+    expect(await isSlugTaken('libre')).toBe(false)
+  })
+})
+
+describe('isEmailTaken', () => {
+  it('devuelve true si encuentra un user con ese email', async () => {
+    mockPayload.find.mockResolvedValue({ totalDocs: 1, docs: [{ id: 1 }] })
+    expect(await isEmailTaken('taken@x.com')).toBe(true)
+    expect(mockPayload.find).toHaveBeenCalledWith({
+      collection: 'users',
+      where: { email: { equals: 'taken@x.com' } },
+      limit: 1,
+    })
+  })
+
+  it('devuelve false si no hay resultados', async () => {
+    mockPayload.find.mockResolvedValue({ totalDocs: 0, docs: [] })
+    expect(await isEmailTaken('free@x.com')).toBe(false)
   })
 })
