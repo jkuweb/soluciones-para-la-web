@@ -294,19 +294,10 @@ export const run = async (): Promise<void> => {
   })
 }
 
-// Only auto-invoke when the script is run directly (not when imported by tests).
-// Standard ESM main-module check: argv[1] must match this file's path.
-import { fileURLToPath } from 'node:url'
-const isMain = process.argv[1] === fileURLToPath(import.meta.url)
-if (isMain) {
-  void run().then(
-    () => process.exit(0),
-    (err) => {
-      p.log.error((err as Error).message)
-      process.exit(1)
-    },
-  )
-}
+// This script is invoked via scripts/loaders/run-with-css.mjs which calls run() directly.
+// No auto-invocation here so that:
+// - tests can import { run } and call it without side effects
+// - the wrapper (which doesn't pass this file as argv[1]) is the single entry point
 
 export const createTenant = async (
   data: Record<string, unknown>,

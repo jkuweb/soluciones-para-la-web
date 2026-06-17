@@ -26,4 +26,11 @@ if (!targetArg) {
 }
 
 const targetPath = resolve(process.cwd(), targetArg)
-await import(targetPath)
+const mod = await import(targetPath)
+
+if (typeof mod.run === 'function') {
+  await mod.run()
+} else {
+  console.error(`Script ${targetArg} does not export a "run" function.`)
+  process.exit(1)
+}
