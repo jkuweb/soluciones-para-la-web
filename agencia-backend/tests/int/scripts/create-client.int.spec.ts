@@ -1,13 +1,37 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   isValidSlug,
   isValidEmail,
   buildTenantData,
   buildUserData,
   generateEnvContent,
+  createTenant,
+  createUser,
   type TenantInput,
   type UserInput,
 } from '../../../scripts/create-client'
+
+// Mock payload module (preserves other exports like slugField used by the config)
+vi.mock('payload', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('payload')>()
+  return {
+    ...actual,
+    getPayload: vi.fn(),
+  }
+})
+
+import { getPayload } from 'payload'
+
+const mockPayload = {
+  create: vi.fn(),
+  delete: vi.fn(),
+  find: vi.fn(),
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  ;(getPayload as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(mockPayload)
+})
 
 describe('isValidSlug', () => {
   it('acepta slugs válidos', () => {
@@ -109,5 +133,44 @@ describe('generateEnvContent', () => {
     const template = 'A=1\nTENANT_SLUG=placeholder\nB=2\n'
     const result = generateEnvContent(template, 'cliente-nuevo')
     expect(result).toBe('A=1\nTENANT_SLUG=cliente-nuevo\nB=2\n')
+  })
+})
+
+describe('createTenant', () => {
+  it('crea el tenant y devuelve el documento', async () => {
+    const tenant = { id: 7, slug: 'test' }
+    mockPayload.create.mockResolvedValue(tenant)
+
+    const result = await createTenant({ name: 'X', slug: 'test', domain: 'x.com' } as any)
+
+    expect(mockPayload.create).toHaveBeenCalledWith({
+      collection: 'tenants',
+      data: { name: 'X', slug: 'test', domain: 'x.com' },
+    })
+    expect(result).toEqual(tenant)
+  })
+})
+
+describe('createUser', () => {
+  it('crea el user asignado al tenant', async () => {
+    const user = { id: 99, email: 'a@b.com' }
+    mockPayload.create.mockResolvedValue(user)
+
+    const result = await createUser(
+      { email: 'a@b.com', name: 'A', password: 'pw1234', role: 'tenant-admin' } as any,
+      7,
+    )
+
+    expect(mockPayload.create).toHaveBeenCalledWith({
+      collection: 'users',
+      data: {
+        email: 'a@b.com',
+        name: 'A',
+        password: 'pw1234',
+        roles: ['tenant-admin'],
+        tenants: [{ tenant: 7 }],
+      },
+    })
+    expect(result).toEqual(user)
   })
 })

@@ -64,3 +64,33 @@ export const buildUserData = (input: UserInput, tenantId: number): Record<string
 
 export const generateEnvContent = (template: string, slug: string): string =>
   template.replace(/^TENANT_SLUG=.*$/m, `TENANT_SLUG=${slug}`)
+
+// --- DB operations ---
+import { getPayload } from 'payload'
+import config from '@/payload.config'
+
+export const createTenant = async (
+  data: Record<string, unknown>,
+): Promise<{ id: number }> => {
+  const payload = await getPayload({ config })
+  return payload.create({
+    collection: 'tenants',
+    data: data as never,
+  }) as Promise<{ id: number }>
+}
+
+export const createUser = async (
+  input: UserInput,
+  tenantId: number,
+): Promise<{ id: number }> => {
+  const payload = await getPayload({ config })
+  return payload.create({
+    collection: 'users',
+    data: buildUserData(input, tenantId) as never,
+  }) as Promise<{ id: number }>
+}
+
+export const deleteTenant = async (tenantId: number): Promise<void> => {
+  const payload = await getPayload({ config })
+  await payload.delete({ collection: 'tenants', id: tenantId })
+}
