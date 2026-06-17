@@ -13,6 +13,7 @@ import {
   isSlugTaken,
   isEmailTaken,
   copyTemplate,
+  writeClientVersionFile,
   promptTenant,
   confirmSummary,
   printSuccess,
@@ -140,7 +141,7 @@ describe('buildUserData', () => {
       email: 'admin@cliente.com',
       name: 'Admin Cliente',
       password: 'secret123',
-      roles: ['tenant-admin'],
+      roles: 'tenant-admin',
       tenants: [{ tenant: 42 }],
     })
   })
@@ -191,7 +192,7 @@ describe('createUser', () => {
         email: 'a@b.com',
         name: 'A',
         password: 'pw1234',
-        roles: ['tenant-admin'],
+        roles: 'tenant-admin',
         tenants: [{ tenant: 7 }],
       },
     })
@@ -254,6 +255,53 @@ describe('copyTemplate', () => {
     expect(existsSync(join(destDir, '.env.example'))).toBe(true)
     expect(existsSync(join(destDir, 'package.json'))).toBe(true)
     expect(readFileSync(join(destDir, '.env.example'), 'utf-8')).toBe('TENANT_SLUG=placeholder\n')
+  })
+})
+
+describe('writeClientVersionFile', () => {
+  let srcDir: string
+  let destDir: string
+
+  beforeEach(() => {
+    srcDir = mkdtempSync(join(tmpdir(), 'tvs-'))
+    destDir = mkdtempSync(join(tmpdir(), 'tvd-'))
+  })
+
+  afterEach(() => {
+    rmSync(srcDir, { recursive: true, force: true })
+    rmSync(destDir, { recursive: true, force: true })
+  })
+
+  it('writes .template-version.json with the template name and version', async () => {
+    writeFileSync(
+      join(srcDir, 'package.json'),
+      JSON.stringify({ name: 'astro-starter', version: '1.2.3' }),
+    )
+    await writeClientVersionFile(srcDir, destDir)
+    const raw = readFileSync(join(destDir, '.template-version.json'), 'utf-8')
+    const parsed = JSON.parse(raw)
+    expect(parsed.template).toBe('astro')
+    expect(parsed.version).toBe('1.2.3')
+    expect(parsed.installedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  })
+
+  it('strips the -starter suffix from the template name', async () => {
+    writeFileSync(
+      join(srcDir, 'package.json'),
+      JSON.stringify({ name: 'nextjs-starter', version: '2.0.0' }),
+    )
+    await writeClientVersionFile(srcDir, destDir)
+    const raw = readFileSync(join(destDir, '.template-version.json'), 'utf-8')
+    expect(JSON.parse(raw).template).toBe('nextjs')
+  })
+
+  it('throws when the template package.json is missing', async () => {
+    await expect(writeClientVersionFile(srcDir, destDir)).rejects.toThrow()
+  })
+
+  it('throws when the template package.json is missing name or version', async () => {
+    writeFileSync(join(srcDir, 'package.json'), JSON.stringify({ name: 'no-version' }))
+    await expect(writeClientVersionFile(srcDir, destDir)).rejects.toThrow(/missing name or version/)
   })
 })
 

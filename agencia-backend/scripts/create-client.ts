@@ -73,9 +73,18 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import * as p from '@clack/prompts'
+import { readTemplateVersion, writeTemplateVersionFile } from './lib/template-version'
 
 export const copyTemplate = async (srcDir: string, destDir: string): Promise<void> => {
   await cp(srcDir, destDir, { recursive: true })
+}
+
+// Reads the template version from srcDir/package.json and writes a
+// .template-version.json to destDir so the client remembers which
+// template version it was bootstrapped from.
+export const writeClientVersionFile = async (srcDir: string, destDir: string): Promise<void> => {
+  const versionInfo = await readTemplateVersion(srcDir)
+  await writeTemplateVersionFile(destDir, versionInfo)
 }
 
 // --- Interactive prompts ---
@@ -283,6 +292,17 @@ export const run = async (): Promise<void> => {
     )
     p.log.warn(`Reintentá manualmente: cp -r ${srcDir} ${destDir}`)
     return
+  }
+
+  // 4. Escribir .template-version.json (no crítico: si falla, el cliente sigue
+  // funcional, solo le faltará el registro de versión).
+  try {
+    await writeClientVersionFile(srcDir, destDir)
+  } catch (err) {
+    p.log.warn(
+      `No se pudo escribir .template-version.json: ${(err as Error).message}. ` +
+        `El cliente quedó creado pero sin registro de versión.`,
+    )
   }
 
   p.outro('Listo.')
