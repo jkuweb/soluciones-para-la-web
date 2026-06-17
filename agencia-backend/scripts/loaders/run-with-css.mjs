@@ -1,10 +1,13 @@
-// Wrapper: registers the CSS shim loader, then runs a script via tsx.
+// Wrapper: loads .env, registers the CSS shim loader, then runs a script via tsx.
 // This is needed because Payload's admin UI and custom components import
-// .css files that don't work outside of Next.js's bundler.
+// .css files that don't work outside of Next.js's bundler, and Payload
+// needs env vars (PAYLOAD_SECRET, DATABASE_URL) at init time.
 //
 // Usage:
 //   node scripts/loaders/run-with-css.mjs scripts/create-client.ts
 //   node scripts/loaders/run-with-css.mjs scripts/reset-admin-pw.ts
+
+import 'dotenv/config'
 
 import { register } from 'node:module'
 import { fileURLToPath } from 'node:url'
