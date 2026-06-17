@@ -1,4 +1,4 @@
-import { getPageBySlug } from '@/lib/payload'
+import { getPageBySlug, normalizePage } from '@/lib/payload'
 import BlockRenderer from '@/components/BlockRenderer'
 
 export async function generateMetadata() {
@@ -10,7 +10,8 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const page = await getPageBySlug('home')
+  const rawPage = await getPageBySlug('home')
+  const page = rawPage ? normalizePage(rawPage) : null
 
   if (!page) {
     return (

@@ -1,7 +1,32 @@
-import type { Page, Block, Header, Footer } from './types'
+import type { Page, Block, Header, Footer, MediaImage, HeroBlock } from './types'
 
 const PAYLOAD_API_URL = process.env.PAYLOAD_API_URL || 'http://localhost:3000/api'
 const TENANT_SLUG = process.env.TENANT_SLUG || 'mi-tienda'
+
+const API_BASE_URL = PAYLOAD_API_URL.replace(/\/api\/?$/, '')
+
+function toAbsoluteMedia(media: MediaImage | undefined): MediaImage | undefined {
+  if (!media) return undefined
+  if (!media.url || media.url.startsWith('http://') || media.url.startsWith('https://')) {
+    return media
+  }
+  return { ...media, url: `${API_BASE_URL}${media.url}` }
+}
+
+function normalizeBlock(block: Block): Block {
+  if (block.blockType === 'hero') {
+    const heroBlock = block as HeroBlock
+    return { ...heroBlock, backgroundImage: toAbsoluteMedia(heroBlock.backgroundImage) }
+  }
+  return block
+}
+
+export function normalizePage(page: Page): Page {
+  return {
+    ...page,
+    hero: page.hero?.map(normalizeBlock),
+  }
+}
 
 export async function getPages(): Promise<Page[]> {
   const res = await fetch(

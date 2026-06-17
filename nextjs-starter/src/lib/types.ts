@@ -48,7 +48,7 @@ export interface HeroBlock extends Block {
   blockType: 'hero'
   title: string
   subtitle?: string
-  backgroundImage?: string
+  backgroundImage?: MediaImage
   cta?: Link
 }
 

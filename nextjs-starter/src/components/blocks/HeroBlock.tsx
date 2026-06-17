@@ -7,8 +7,22 @@ interface HeroBlockProps {
 }
 
 export default function HeroBlock({ data }: HeroBlockProps) {
+  const imageUrl =
+    data.backgroundImage?.sizes?.hero?.url || data.backgroundImage?.url || ''
+
   return (
-    <section className="hero-block">
+    <section
+      className="hero-block"
+      style={
+        imageUrl
+          ? {
+              backgroundImage: `url(${imageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+          : undefined
+      }
+    >
       <div className="hero-content">
         <h1>{data.title}</h1>
         {data.subtitle && <p className="subtitle">{data.subtitle}</p>}
@@ -31,10 +45,12 @@ export default function HeroBlock({ data }: HeroBlockProps) {
           font-size: 3rem;
           font-weight: 700;
           margin-bottom: 1rem;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
         .subtitle {
           font-size: 1.25rem;
           margin-bottom: 2rem;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
         }
         .cta-button {
           display: inline-block;

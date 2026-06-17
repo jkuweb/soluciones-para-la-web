@@ -1,4 +1,4 @@
-import { getPages, getPageBySlug } from '@/lib/payload'
+import { getPages, getPageBySlug, normalizePage } from '@/lib/payload'
 import BlockRenderer from '@/components/BlockRenderer'
 
 export async function generateStaticParams() {
@@ -34,7 +34,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const page = await getPageBySlug(slug)
+  const rawPage = await getPageBySlug(slug)
+  const page = rawPage ? normalizePage(rawPage) : null
 
   if (!page) {
     return (
