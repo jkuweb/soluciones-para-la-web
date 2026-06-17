@@ -68,6 +68,11 @@ export const generateEnvContent = (template: string, slug: string): string =>
 // --- DB operations ---
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { cp } from 'node:fs/promises'
+
+export const copyTemplate = async (srcDir: string, destDir: string): Promise<void> => {
+  await cp(srcDir, destDir, { recursive: true })
+}
 
 export const createTenant = async (
   data: Record<string, unknown>,

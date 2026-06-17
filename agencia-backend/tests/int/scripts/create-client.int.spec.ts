@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
   isValidSlug,
   isValidEmail,
@@ -9,6 +12,7 @@ import {
   createUser,
   isSlugTaken,
   isEmailTaken,
+  copyTemplate,
   type TenantInput,
   type UserInput,
 } from '../../../scripts/create-client'
@@ -208,5 +212,29 @@ describe('isEmailTaken', () => {
   it('devuelve false si no hay resultados', async () => {
     mockPayload.find.mockResolvedValue({ totalDocs: 0, docs: [] })
     expect(await isEmailTaken('free@x.com')).toBe(false)
+  })
+})
+
+describe('copyTemplate', () => {
+  let srcDir: string
+  let destDir: string
+
+  beforeEach(() => {
+    srcDir = mkdtempSync(join(tmpdir(), 'src-'))
+    destDir = mkdtempSync(join(tmpdir(), 'dest-'))
+    writeFileSync(join(srcDir, '.env.example'), 'TENANT_SLUG=placeholder\n')
+    writeFileSync(join(srcDir, 'package.json'), '{"name":"template"}')
+  })
+
+  afterEach(() => {
+    rmSync(srcDir, { recursive: true, force: true })
+    rmSync(destDir, { recursive: true, force: true })
+  })
+
+  it('copia todos los archivos del template al destino', async () => {
+    await copyTemplate(srcDir, destDir)
+    expect(existsSync(join(destDir, '.env.example'))).toBe(true)
+    expect(existsSync(join(destDir, 'package.json'))).toBe(true)
+    expect(readFileSync(join(destDir, '.env.example'), 'utf-8')).toBe('TENANT_SLUG=placeholder\n')
   })
 })
