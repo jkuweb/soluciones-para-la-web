@@ -98,6 +98,33 @@ export const syncOneClient = async (
   }
 }
 
+const pad = (s: string, n: number): string => s.padEnd(n).slice(0, n)
+
+export const formatSyncAllSummary = (result: SyncAllResult): string[] => {
+  const headers = ['Client', 'Template', 'Files', 'Status']
+  const widths = [16, 10, 10, 40]
+  const rows: string[][] = result.clients.map((c) => {
+    if (c.status === 'updated') {
+      return [c.slug, c.template, `${c.filesChanged}c+${c.filesAdded}a`, 'updated']
+    }
+    if (c.status === 'skipped') {
+      return [c.slug, '-', '-', 'skipped (up-to-date)']
+    }
+    return [c.slug, '-', '-', `error: ${c.reason}`]
+  })
+  const lines: string[] = []
+  lines.push(headers.map((h, i) => pad(h, widths[i])).join('  '))
+  lines.push(widths.map((w) => '-'.repeat(w)).join('  '))
+  for (const row of rows) {
+    lines.push(row.map((cell, i) => pad(cell, widths[i])).join('  '))
+  }
+  lines.push('')
+  lines.push(
+    `Total: ${result.total} | Updated: ${result.updated} | Skipped: ${result.skipped} | Errors: ${result.errors}`,
+  )
+  return lines
+}
+
 export const runSyncAll = async (
   options: SyncAllOptions,
   clientDirBase: string = CLIENTS_DIR,

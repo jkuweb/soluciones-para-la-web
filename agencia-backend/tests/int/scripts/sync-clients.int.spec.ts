@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, copyFileSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { parseSyncAllArgs, syncOneClient, runSyncAll, MONOREPO_ROOT } from '../../../scripts/sync-clients'
+import { parseSyncAllArgs, syncOneClient, runSyncAll, formatSyncAllSummary, type SyncAllResult, MONOREPO_ROOT } from '../../../scripts/sync-clients'
 import { getAllowlist } from '../../../scripts/sync-template'
 
 describe('parseSyncAllArgs', () => {
@@ -140,5 +140,34 @@ describe('runSyncAll', () => {
     expect(result.total).toBe(2)
     expect(result.errors).toBe(1)
     expect(result.skipped).toBe(1)
+  })
+})
+
+describe('formatSyncAllSummary', () => {
+  const baseResult: SyncAllResult = {
+    total: 3,
+    updated: 1,
+    skipped: 1,
+    errors: 1,
+    clients: [
+      { slug: 'client-a', status: 'updated', template: 'astro', filesChanged: 2, filesAdded: 1 },
+      { slug: 'client-b', status: 'skipped', reason: 'up-to-date' },
+      { slug: 'client-c', status: 'error', reason: 'package.json missing' },
+    ],
+  }
+
+  it('includes header, divider, rows, and summary line', () => {
+    const lines = formatSyncAllSummary(baseResult)
+    expect(lines[0]).toMatch(/Client.*Template.*Files.*Status/)
+    expect(lines[1]).toMatch(/----/)
+    expect(lines.some((l) => l.includes('client-a') && l.includes('2c+1a'))).toBe(true)
+    expect(lines.some((l) => l.includes('client-b') && l.includes('up-to-date'))).toBe(true)
+    expect(lines.some((l) => l.includes('client-c') && l.includes('error'))).toBe(true)
+    expect(lines.some((l) => l.match(/Total: 3 \| Updated: 1 \| Skipped: 1 \| Errors: 1/))).toBe(true)
+  })
+
+  it('handles empty result set', () => {
+    const lines = formatSyncAllSummary({ total: 0, updated: 0, skipped: 0, errors: 0, clients: [] })
+    expect(lines.some((l) => l.match(/Total: 0/))).toBe(true)
   })
 })
