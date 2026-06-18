@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { parseUpdateAllArgs, updateOneClient, MONOREPO_ROOT } from '../../../scripts/update-clients'
+import { parseUpdateAllArgs, updateOneClient, runUpdateAll, formatUpdateAllSummary, type UpdateAllResult, MONOREPO_ROOT } from '../../../scripts/update-clients'
 
 describe('parseUpdateAllArgs', () => {
   it('returns defaults when no args given', () => {
@@ -82,5 +82,64 @@ describe('updateOneClient (dry-run)', () => {
   it('returns "error" when client dir missing', async () => {
     const result = await updateOneClient('missing', { apply: false, filter: 'all', skipInstall: false }, root)
     expect(result.status).toBe('error')
+  })
+})
+
+describe('runUpdateAll', () => {
+  let root: string
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'run-update-'))
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it('returns empty result when no clients', async () => {
+    const result = await runUpdateAll({ apply: false, filter: 'all', skipInstall: false }, root)
+    expect(result.total).toBe(0)
+  })
+
+  it('processes all clients by default', async () => {
+    setupClientMirror(root)
+    const result = await runUpdateAll({ apply: false, filter: 'all', skipInstall: false }, root)
+    expect(result.total).toBe(1)
+    expect(result.skipped).toBe(1)
+  })
+
+  it('skips up-to-date clients when filter=outdated', async () => {
+    setupClientMirror(root)
+    const result = await runUpdateAll({ apply: false, filter: 'outdated', skipInstall: false }, root)
+    expect(result.total).toBe(1)
+    expect(result.clients).toEqual([])
+  })
+
+  it('continues on error', async () => {
+    setupClientMirror(root)
+    const brokenDir = join(root, 'broken')
+    mkdirSync(brokenDir, { recursive: true })
+    const result = await runUpdateAll({ apply: false, filter: 'all', skipInstall: false }, root)
+    expect(result.total).toBe(2)
+    expect(result.errors).toBe(1)
+  })
+})
+
+describe('formatUpdateAllSummary', () => {
+  const baseResult: UpdateAllResult = {
+    total: 2,
+    updated: 1,
+    skipped: 0,
+    errors: 1,
+    clients: [
+      { slug: 'client-a', status: 'updated', template: 'astro', added: 2, updated: 1, installed: true },
+      { slug: 'client-b', status: 'error', reason: 'package.json missing' },
+    ],
+  }
+
+  it('includes header, divider, rows, and summary line', () => {
+    const lines = formatUpdateAllSummary(baseResult)
+    expect(lines[0]).toMatch(/Client.*Template.*Pkg.*Status/)
+    expect(lines.some((l) => l.includes('client-a') && l.includes('2+1~'))).toBe(true)
+    expect(lines.some((l) => l.includes('client-b') && l.includes('error'))).toBe(true)
+    expect(lines.some((l) => l.match(/Total: 2 \| Updated: 1 \| Skipped: 0 \| Errors: 1/))).toBe(true)
   })
 })

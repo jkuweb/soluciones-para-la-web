@@ -175,5 +175,57 @@ const runPnpmInstall = (cwd: string): Promise<number | null> => {
   })
 }
 
+export const runUpdateAll = async (
+  options: UpdateAllOptions,
+  clientDirBase: string = CLIENTS_DIR,
+): Promise<UpdateAllResult> => {
+  const slugs = await listClientSlugs(clientDirBase)
+  if (slugs.length === 0) {
+    return { total: 0, updated: 0, skipped: 0, errors: 0, clients: [] }
+  }
+  const clients: ClientUpdateStatus[] = []
+  for (const slug of slugs) {
+    const result = await updateOneClient(slug, options, clientDirBase)
+    if (options.filter === 'outdated' && result.status === 'skipped') {
+      continue
+    }
+    clients.push(result)
+  }
+  return {
+    total: slugs.length,
+    updated: clients.filter((c) => c.status === 'updated').length,
+    skipped: clients.filter((c) => c.status === 'skipped').length,
+    errors: clients.filter((c) => c.status === 'error').length,
+    clients,
+  }
+}
+
+const pad = (s: string, n: number): string => s.padEnd(n).slice(0, n)
+
+export const formatUpdateAllSummary = (result: UpdateAllResult): string[] => {
+  const headers = ['Client', 'Template', 'PkgΔ', 'Status']
+  const widths = [16, 10, 8, 40]
+  const rows: string[][] = result.clients.map((c) => {
+    if (c.status === 'updated') {
+      return [c.slug, c.template, `${c.added}+${c.updated}~`, 'updated']
+    }
+    if (c.status === 'skipped') {
+      return [c.slug, '-', '-', 'skipped (up-to-date)']
+    }
+    return [c.slug, '-', '-', `error: ${c.reason}`]
+  })
+  const lines: string[] = []
+  lines.push(headers.map((h, i) => pad(h, widths[i])).join('  '))
+  lines.push(widths.map((w) => '-'.repeat(w)).join('  '))
+  for (const row of rows) {
+    lines.push(row.map((cell, i) => pad(cell, widths[i])).join('  '))
+  }
+  lines.push('')
+  lines.push(
+    `Total: ${result.total} | Updated: ${result.updated} | Skipped: ${result.skipped} | Errors: ${result.errors}`,
+  )
+  return lines
+}
+
 // Re-export for tests
 export { detectTemplateType, getClientDir }
