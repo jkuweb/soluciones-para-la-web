@@ -68,7 +68,9 @@ describe('syncOneClient', () => {
     setupClientMirror(root)
     const result = await syncOneClient('client-x', { apply: false, filter: 'all' }, root)
     expect(result.status).toBe('skipped')
-    expect(result.reason).toBe('up-to-date')
+    if (result.status === 'skipped') {
+      expect(result.reason).toBe('up-to-date')
+    }
   })
 
   it('returns "updated" when client has different files', async () => {
@@ -85,7 +87,7 @@ describe('syncOneClient', () => {
     const result = await syncOneClient('missing', { apply: false, filter: 'all' }, root)
     expect(result.status).toBe('error')
     if (result.status === 'error') {
-      expect(result.reason).toMatch(/does not exist|Cannot detect/)
+      expect(result.reason).toMatch(/does not exist|Cannot detect|ENOENT/)
     }
   })
 })

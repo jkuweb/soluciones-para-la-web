@@ -1,5 +1,4 @@
 import path from 'node:path'
-import fs from 'node:fs'
 import { syncTemplate, detectTemplateType, type SyncOptions, type FrontendType } from './sync-template.js'
 import { listClientSlugs } from './audit-clients.js'
 
@@ -67,14 +66,11 @@ export const syncOneClient = async (
   clientDirBase: string = CLIENTS_DIR,
 ): Promise<ClientSyncStatus> => {
   const clientDir = path.join(clientDirBase, slug)
-  if (!fs.existsSync(clientDir)) {
-    return { slug, status: 'error', reason: `Client directory does not exist: ${clientDir}` }
-  }
   let templateType: FrontendType
   try {
     templateType = options.template ?? (await detectTemplateType(clientDir))
   } catch (err) {
-    return { slug, status: 'error', reason: (err as Error).message }
+    return { slug, status: 'error', reason: err instanceof Error ? err.message : String(err) }
   }
 
   try {
@@ -98,6 +94,6 @@ export const syncOneClient = async (
       filesAdded: result.added,
     }
   } catch (err) {
-    return { slug, status: 'error', reason: (err as Error).message }
+    return { slug, status: 'error', reason: err instanceof Error ? err.message : String(err) }
   }
 }
