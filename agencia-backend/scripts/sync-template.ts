@@ -14,6 +14,7 @@ export type SyncOptions = {
   apply: boolean
   verbose: boolean
   template?: FrontendType
+  clientDirOverride?: string
 }
 
 export type FileAction = 'unchanged' | 'updated' | 'added'
@@ -231,7 +232,7 @@ export const syncFile = async (
 }
 
 export const syncTemplate = async (options: SyncOptions): Promise<SyncResult> => {
-  const clientDir = getClientDir(options.slug)
+  const clientDir = options.clientDirOverride ?? getClientDir(options.slug)
   if (!(await fileExists(clientDir))) {
     throw new Error(`Client directory does not exist: ${clientDir}`)
   }
