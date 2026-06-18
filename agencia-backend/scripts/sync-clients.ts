@@ -155,11 +155,11 @@ export const run = async (): Promise<void> => {
   try {
     options = parseSyncAllArgs(process.argv.slice(2))
   } catch (err) {
-    if ((err as Error).message === 'HELP') {
+    if (err instanceof Error && err.message === 'HELP') {
       console.log(USAGE)
       return
     }
-    console.error(`Error: ${(err as Error).message}`)
+    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`)
     console.log(USAGE)
     process.exit(1)
   }
