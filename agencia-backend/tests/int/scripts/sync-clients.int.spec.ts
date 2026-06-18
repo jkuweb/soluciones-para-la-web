@@ -130,6 +130,23 @@ describe('runSyncAll', () => {
     expect(result.clients).toEqual([]) // filtered out
   })
 
+  it('counts skipped clients even when filter=outdated excludes them from clients', async () => {
+    // client-x mirrors the template (will be skipped)
+    setupClientMirror(root)
+    // Add a second client with a different file (will be updated)
+    const clientY = join(root, 'client-y')
+    mkdirSync(clientY, { recursive: true })
+    writeFileSync(join(clientY, 'package.json'), '{"name":"astro-starter"}')
+    writeFileSync(join(clientY, 'astro.config.mjs'), '// changed')
+
+    const result = await runSyncAll({ apply: false, filter: 'outdated' }, root)
+    expect(result.total).toBe(2)
+    expect(result.updated).toBe(1)
+    expect(result.skipped).toBe(1) // counted even though excluded from clients
+    expect(result.errors).toBe(0)
+    expect(result.clients.length).toBe(1) // only the updated client is in the array
+  })
+
   it('continues on error and counts it', async () => {
     setupClientMirror(root)
     // Add a second client that will fail

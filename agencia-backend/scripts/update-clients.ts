@@ -184,8 +184,14 @@ export const runUpdateAll = async (
     return { total: 0, updated: 0, skipped: 0, errors: 0, clients: [] }
   }
   const clients: ClientUpdateStatus[] = []
+  let updated = 0
+  let skipped = 0
+  let errors = 0
   for (const slug of slugs) {
     const result = await updateOneClient(slug, options, clientDirBase)
+    if (result.status === 'updated') updated++
+    else if (result.status === 'skipped') skipped++
+    else if (result.status === 'error') errors++
     if (options.filter === 'outdated' && result.status === 'skipped') {
       continue
     }
@@ -193,9 +199,9 @@ export const runUpdateAll = async (
   }
   return {
     total: slugs.length,
-    updated: clients.filter((c) => c.status === 'updated').length,
-    skipped: clients.filter((c) => c.status === 'skipped').length,
-    errors: clients.filter((c) => c.status === 'error').length,
+    updated,
+    skipped,
+    errors,
     clients,
   }
 }

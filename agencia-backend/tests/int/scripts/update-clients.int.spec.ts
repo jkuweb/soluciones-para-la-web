@@ -113,6 +113,24 @@ describe('runUpdateAll', () => {
     expect(result.clients).toEqual([])
   })
 
+  it('counts skipped clients even when filter=outdated excludes them from clients', async () => {
+    // client-x mirrors the template (will be skipped)
+    setupClientMirror(root)
+    // Add a second client with a client-only dep (will be updated)
+    const clientY = join(root, 'client-y')
+    mkdirSync(clientY, { recursive: true })
+    const pkg = JSON.parse(readFileSync(join(ASTRO_TEMPLATE, 'package.json'), 'utf-8'))
+    pkg.dependencies = { ...pkg.dependencies, 'client-extra': '^1.0.0' }
+    writeFileSync(join(clientY, 'package.json'), JSON.stringify(pkg, null, 2))
+
+    const result = await runUpdateAll({ apply: false, filter: 'outdated', skipInstall: false }, root)
+    expect(result.total).toBe(2)
+    expect(result.updated).toBe(1)
+    expect(result.skipped).toBe(1) // counted even though excluded from clients
+    expect(result.errors).toBe(0)
+    expect(result.clients.length).toBe(1) // only the updated client is in the array
+  })
+
   it('continues on error', async () => {
     setupClientMirror(root)
     const brokenDir = join(root, 'broken')
