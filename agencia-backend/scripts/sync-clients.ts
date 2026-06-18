@@ -1,4 +1,5 @@
 import path from 'node:path'
+import fs from 'node:fs'
 import { syncTemplate, detectTemplateType, type SyncOptions, type FrontendType } from './sync-template.js'
 import { listClientSlugs } from './audit-clients.js'
 
@@ -58,4 +59,45 @@ export const parseSyncAllArgs = (args: string[]): SyncAllOptions => {
   const options: SyncAllOptions = { apply, filter }
   if (template !== undefined) options.template = template
   return options
+}
+
+export const syncOneClient = async (
+  slug: string,
+  options: SyncAllOptions,
+  clientDirBase: string = CLIENTS_DIR,
+): Promise<ClientSyncStatus> => {
+  const clientDir = path.join(clientDirBase, slug)
+  if (!fs.existsSync(clientDir)) {
+    return { slug, status: 'error', reason: `Client directory does not exist: ${clientDir}` }
+  }
+  let templateType: FrontendType
+  try {
+    templateType = options.template ?? (await detectTemplateType(clientDir))
+  } catch (err) {
+    return { slug, status: 'error', reason: (err as Error).message }
+  }
+
+  try {
+    const syncOpts: SyncOptions = {
+      slug,
+      apply: options.apply,
+      verbose: false,
+      template: templateType,
+      clientDirOverride: clientDir,
+    }
+    const result = await syncTemplate(syncOpts)
+    const hasChanges = result.updated + result.added > 0
+    if (!hasChanges) {
+      return { slug, status: 'skipped', reason: 'up-to-date' }
+    }
+    return {
+      slug,
+      status: 'updated',
+      template: templateType,
+      filesChanged: result.updated,
+      filesAdded: result.added,
+    }
+  } catch (err) {
+    return { slug, status: 'error', reason: (err as Error).message }
+  }
 }
