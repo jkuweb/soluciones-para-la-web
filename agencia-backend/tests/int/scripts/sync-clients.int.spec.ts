@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, copyFileSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { parseSyncAllArgs, syncOneClient, MONOREPO_ROOT } from '../../../scripts/sync-clients'
+import { parseSyncAllArgs, syncOneClient, runSyncAll, MONOREPO_ROOT } from '../../../scripts/sync-clients'
 import { getAllowlist } from '../../../scripts/sync-template'
 
 describe('parseSyncAllArgs', () => {
@@ -89,5 +89,56 @@ describe('syncOneClient', () => {
     if (result.status === 'error') {
       expect(result.reason).toMatch(/does not exist|Cannot detect|ENOENT/)
     }
+  })
+})
+
+describe('runSyncAll', () => {
+  let root: string
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'run-sync-'))
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it('returns empty result when no clients found', async () => {
+    const result = await runSyncAll({ apply: false, filter: 'all' }, root)
+    expect(result.total).toBe(0)
+    expect(result.clients).toEqual([])
+  })
+
+  it('processes all clients by default (filter=all)', async () => {
+    setupClientMirror(root)
+    const result = await runSyncAll({ apply: false, filter: 'all' }, root)
+    expect(result.total).toBe(1)
+    expect(result.skipped).toBe(1)
+  })
+
+  it('skips up-to-date clients when filter=outdated', async () => {
+    const clientDir = setupClientMirror(root)
+    writeFileSync(join(clientDir, 'astro.config.mjs'), '// changed')
+    const result = await runSyncAll({ apply: false, filter: 'outdated' }, root)
+    expect(result.total).toBe(1)
+    expect(result.updated).toBe(1)
+    expect(result.skipped).toBe(0)
+  })
+
+  it('skips client entirely when filter=outdated and no changes', async () => {
+    setupClientMirror(root)
+    const result = await runSyncAll({ apply: false, filter: 'outdated' }, root)
+    expect(result.total).toBe(1)
+    expect(result.clients).toEqual([]) // filtered out
+  })
+
+  it('continues on error and counts it', async () => {
+    setupClientMirror(root)
+    // Add a second client that will fail
+    const brokenDir = join(root, 'broken')
+    mkdirSync(brokenDir, { recursive: true })
+    // No package.json - will fail
+    const result = await runSyncAll({ apply: false, filter: 'all' }, root)
+    expect(result.total).toBe(2)
+    expect(result.errors).toBe(1)
+    expect(result.skipped).toBe(1)
   })
 })

@@ -97,3 +97,28 @@ export const syncOneClient = async (
     return { slug, status: 'error', reason: err instanceof Error ? err.message : String(err) }
   }
 }
+
+export const runSyncAll = async (
+  options: SyncAllOptions,
+  clientDirBase: string = CLIENTS_DIR,
+): Promise<SyncAllResult> => {
+  const slugs = await listClientSlugs(clientDirBase)
+  if (slugs.length === 0) {
+    return { total: 0, updated: 0, skipped: 0, errors: 0, clients: [] }
+  }
+  const clients: ClientSyncStatus[] = []
+  for (const slug of slugs) {
+    const result = await syncOneClient(slug, options, clientDirBase)
+    if (options.filter === 'outdated' && result.status === 'skipped') {
+      continue
+    }
+    clients.push(result)
+  }
+  return {
+    total: slugs.length,
+    updated: clients.filter((c) => c.status === 'updated').length,
+    skipped: clients.filter((c) => c.status === 'skipped').length,
+    errors: clients.filter((c) => c.status === 'error').length,
+    clients,
+  }
+}
