@@ -176,6 +176,8 @@ export const run = async (): Promise<void> => {
 
   if (!options.apply) {
     console.log('Run with --apply to apply changes')
+  } else {
+    console.log('Done. Backups created with .bak-<ts> suffix')
   }
 
   if (result.errors > 0) {
