@@ -14,29 +14,33 @@ interface Props {
 
 const { hero, layout } = Astro.props
 
-const components: Record<string, (_props: { data: unknown }) => any> = {
-  hero: HeroBlock,
-  text: TextBlock,
-  image: ImageBlock,
-  footer: FooterBlock,
-  contact: ContactBlock,
-  menu: MenuBlock,
-  course: CourseBlock,
-}
-
-function renderBlock(block: { blockType: string; [key: string]: unknown }) {
-  const Component = components[block.blockType]
-  if (!Component) {
-    if (import.meta.env.DEV) {
-      console.warn(`[BlockRenderer] Unknown block type: "${block.blockType}"`)
-    }
-    return null
-  }
-  return <Component data={block} />
-}
+const allBlocks = [...(hero ?? []), ...layout]
 ---
 
 <article>
-  {hero?.map(renderBlock)}
-  {layout.map(renderBlock)}
+  {
+    allBlocks.map((block) => {
+      switch (block.blockType) {
+        case 'hero':
+          return <HeroBlock data={block} />
+        case 'text':
+          return <TextBlock data={block} />
+        case 'image':
+          return <ImageBlock data={block} />
+        case 'footer':
+          return <FooterBlock data={block} />
+        case 'contact':
+          return <ContactBlock data={block} />
+        case 'menu':
+          return <MenuBlock data={block} />
+        case 'course':
+          return <CourseBlock data={block} />
+        default:
+          if (import.meta.env.DEV) {
+            console.warn(`[BlockRenderer] Unknown block type: "${block.blockType}"`)
+          }
+          return null
+      }
+    })
+  }
 </article>
