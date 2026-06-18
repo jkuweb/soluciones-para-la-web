@@ -227,5 +227,40 @@ export const formatUpdateAllSummary = (result: UpdateAllResult): string[] => {
   return lines
 }
 
+export const run = async (): Promise<void> => {
+  let options: UpdateAllOptions
+  try {
+    options = parseUpdateAllArgs(process.argv.slice(2))
+  } catch (err) {
+    if (err instanceof Error && err.message === 'HELP') {
+      console.log(USAGE)
+      return
+    }
+    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`)
+    console.log(USAGE)
+    process.exit(1)
+  }
+
+  console.log(
+    `[update:clients]${options.apply ? ' APPLY' : ' (dry-run)'}${options.filter === 'outdated' ? ' filter=outdated' : ''}${options.template ? ` template=${options.template}` : ' (auto-detect)'}${options.skipInstall ? ' skip-install' : ''}`,
+  )
+
+  const result = await runUpdateAll(options)
+
+  for (const line of formatUpdateAllSummary(result)) {
+    console.log(line)
+  }
+
+  if (!options.apply) {
+    console.log('Run with --apply to apply changes')
+  } else {
+    console.log('Done. Backups created with .bak-<ts> suffix')
+  }
+
+  if (result.errors > 0) {
+    process.exit(1)
+  }
+}
+
 // Re-export for tests
 export { detectTemplateType, getClientDir }
