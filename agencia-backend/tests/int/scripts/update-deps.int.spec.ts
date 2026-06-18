@@ -7,8 +7,10 @@ import {
   readPackageJson,
   mergePackageJson,
   formatPkgChanges,
+  syncTemplateVersionFile,
   type PackageJson,
   type UpdateDepsOptions,
+  type TemplateVersionMeta,
 } from '../../../scripts/update-deps'
 
 vi.mock('@clack/prompts', () => ({
@@ -219,5 +221,104 @@ describe('formatPkgChanges', () => {
   it('returns an empty array when there are no changes', () => {
     const lines = formatPkgChanges({ added: [], updated: [], kept: [], removed: [] })
     expect(lines).toEqual([])
+  })
+})
+
+describe('syncTemplateVersionFile', () => {
+  let root: string
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'stv-'))
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  const writeMeta = (dir: string, meta: TemplateVersionMeta): void => {
+    writeFileSync(join(dir, '.template-version.json'), JSON.stringify(meta, null, 2))
+  }
+
+  it('updates version and lastSyncedAt when apply=true and the file exists', async () => {
+    const clientDir = join(root, 'client')
+    mkdirSync(clientDir, { recursive: true })
+    writeMeta(clientDir, {
+      template: 'astro',
+      version: '1.0.0',
+      installedAt: '2026-06-17T21:49:42+02:00',
+    })
+
+    const before = Date.now()
+    const result = await syncTemplateVersionFile(clientDir, '1.0.1', 'astro', { apply: true })
+    const after = Date.now()
+
+    expect(result.updated).toBe(true)
+    expect(result.meta?.version).toBe('1.0.1')
+    expect(result.meta?.template).toBe('astro')
+    expect(result.meta?.installedAt).toBe('2026-06-17T21:49:42+02:00') // preserved
+    expect(result.meta?.lastSyncedAt).toBeDefined()
+    // lastSyncedAt should be an ISO timestamp between before and after
+    const synced = new Date(result.meta!.lastSyncedAt!).getTime()
+    expect(synced).toBeGreaterThanOrEqual(before)
+    expect(synced).toBeLessThanOrEqual(after)
+
+    // Verify the file on disk matches the returned meta
+    const onDisk = JSON.parse(readFileSync(join(clientDir, '.template-version.json'), 'utf-8'))
+    expect(onDisk).toEqual(result.meta)
+  })
+
+  it('does not touch the file when apply=false (dry-run)', async () => {
+    const clientDir = join(root, 'client')
+    mkdirSync(clientDir, { recursive: true })
+    const original: TemplateVersionMeta = {
+      template: 'astro',
+      version: '1.0.0',
+      installedAt: '2026-06-17T21:49:42+02:00',
+    }
+    writeMeta(clientDir, original)
+
+    const result = await syncTemplateVersionFile(clientDir, '1.0.1', 'astro', { apply: false })
+
+    expect(result.updated).toBe(false)
+    expect(result.reason).toBe('dry-run')
+    const onDisk = JSON.parse(readFileSync(join(clientDir, '.template-version.json'), 'utf-8'))
+    expect(onDisk).toEqual(original) // unchanged
+  })
+
+  it('skips silently when .template-version.json does not exist', async () => {
+    const clientDir = join(root, 'no-meta')
+    mkdirSync(clientDir, { recursive: true })
+
+    const result = await syncTemplateVersionFile(clientDir, '1.0.1', 'astro', { apply: true })
+
+    expect(result.updated).toBe(false)
+    expect(result.reason).toMatch(/not found/)
+    expect(existsSync(join(clientDir, '.template-version.json'))).toBe(false) // not auto-created
+  })
+
+  it('skips silently when .template-version.json has invalid JSON', async () => {
+    const clientDir = join(root, 'bad-meta')
+    mkdirSync(clientDir, { recursive: true })
+    writeFileSync(join(clientDir, '.template-version.json'), 'not json {')
+
+    const result = await syncTemplateVersionFile(clientDir, '1.0.1', 'astro', { apply: true })
+
+    expect(result.updated).toBe(false)
+    expect(result.reason).toMatch(/invalid JSON/)
+    // File is left untouched
+    expect(readFileSync(join(clientDir, '.template-version.json'), 'utf-8')).toBe('not json {')
+  })
+
+  it('updates the template type field when it changes', async () => {
+    const clientDir = join(root, 'switch')
+    mkdirSync(clientDir, { recursive: true })
+    writeMeta(clientDir, {
+      template: 'astro',
+      version: '1.0.0',
+      installedAt: '2026-06-17T21:49:42+02:00',
+    })
+
+    const result = await syncTemplateVersionFile(clientDir, '1.0.1', 'nextjs', { apply: true })
+
+    expect(result.updated).toBe(true)
+    expect(result.meta?.template).toBe('nextjs')
   })
 })

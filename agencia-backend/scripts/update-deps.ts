@@ -46,6 +46,13 @@ export type PackageJson = {
   [key: string]: unknown
 }
 
+export type TemplateVersionMeta = {
+  template: FrontendType
+  version: string
+  installedAt: string
+  lastSyncedAt?: string
+}
+
 const USAGE =
   'Usage: pnpm update:client --slug=<slug> [--apply] [--template=astro|nextjs] [--skip-install]'
 
@@ -222,6 +229,42 @@ export const runPnpmInstall = (
   })
 }
 
+/**
+ * Sync `.template-version.json` in the client with the current template version.
+ * Only writes when `apply: true` so dry-runs stay non-destructive.
+ *
+ * Returns `{ updated: true, meta }` on success, or `{ updated: false, reason }`
+ * if the file is missing/malformed (create-client is responsible for creating it).
+ */
+export const syncTemplateVersionFile = async (
+  clientDir: string,
+  templateVersion: string,
+  templateType: FrontendType,
+  options: { apply: boolean },
+): Promise<{ updated: boolean; reason?: string; meta?: TemplateVersionMeta }> => {
+  if (!options.apply) {
+    return { updated: false, reason: 'dry-run' }
+  }
+  const versionFile = path.join(clientDir, '.template-version.json')
+  let raw: string
+  try {
+    raw = await readFile(versionFile, 'utf-8')
+  } catch {
+    return { updated: false, reason: '.template-version.json not found (client was not created via create-client)' }
+  }
+  let meta: TemplateVersionMeta
+  try {
+    meta = JSON.parse(raw) as TemplateVersionMeta
+  } catch {
+    return { updated: false, reason: '.template-version.json contains invalid JSON' }
+  }
+  meta.template = templateType
+  meta.version = templateVersion
+  meta.lastSyncedAt = new Date().toISOString()
+  await writeFile(versionFile, `${JSON.stringify(meta, null, 2)}\n`, 'utf-8')
+  return { updated: true, meta }
+}
+
 export const run = async (): Promise<void> => {
   let options: UpdateDepsOptions
   try {
@@ -267,6 +310,20 @@ export const run = async (): Promise<void> => {
     'utf-8',
   )
   console.log(`[update] Wrote ${clientDir}/package.json (backup: package.json.bak-${ts})`)
+
+  const versionResult = await syncTemplateVersionFile(
+    clientDir,
+    templatePkg.version ?? '0.0.0',
+    templateType,
+    { apply: options.apply },
+  )
+  if (versionResult.updated) {
+    console.log(
+      `[update] Synced .template-version.json (version=${versionResult.meta?.version}, lastSyncedAt=${versionResult.meta?.lastSyncedAt})`,
+    )
+  } else if (versionResult.reason && versionResult.reason !== 'dry-run') {
+    console.log(`[update] Skipped .template-version.json sync: ${versionResult.reason}`)
+  }
 
   if (options.skipInstall) {
     console.log('[update] Skipping pnpm install (--skip-install).')
