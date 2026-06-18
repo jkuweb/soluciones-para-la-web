@@ -114,7 +114,7 @@ describe('runSyncAll', () => {
     expect(result.skipped).toBe(1)
   })
 
-  it('skips up-to-date clients when filter=outdated', async () => {
+  it('processes outdated clients when filter=outdated', async () => {
     const clientDir = setupClientMirror(root)
     writeFileSync(join(clientDir, 'astro.config.mjs'), '// changed')
     const result = await runSyncAll({ apply: false, filter: 'outdated' }, root)
