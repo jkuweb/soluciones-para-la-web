@@ -174,6 +174,27 @@ Merges `package.json` between the template and the client. Read the output: `+` 
 
 On apply, the client's `package.json` is backed up to `package.json.bak-<unix-ts>` and then `pnpm install --no-frozen-lockfile` runs in the client directory. Use `--skip-install` to defer the install (e.g. when you'll combine with other changes).
 
+### Bulk operations: `sync:clients` and `update:clients`
+
+When you want to apply template changes to **all** clients in one shot:
+
+1. Dry-run for everyone: `pnpm sync:clients --filter=outdated` — skips clients that are already up-to-date.
+2. Review the summary table. It shows file counts per client and any errors.
+3. Apply: `pnpm sync:clients --apply` (or `--apply --filter=outdated` to only touch the outdated ones).
+4. Same flow for dependencies: `pnpm update:clients` (dry-run) → `pnpm update:clients --apply`.
+
+Flags for both:
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--apply` | `false` | Execute the changes. Without it → dry-run. |
+| `--filter=outdated` | `all` | Skip clients with zero changes. |
+| `--template=astro\|nextjs` | auto | Override the auto-detect from `package.json#name`. |
+
+`update:clients` also accepts `--skip-install` to defer `pnpm install` (useful when you'll batch with other changes).
+
+Exit code is `0` if everything succeeded, `1` if any client errored. Errors don't stop the batch — each client is processed independently and reported in the summary.
+
 ### Template version tracking
 
 Every client bootstrapped via `pnpm create-client` writes a `.template-version.json` at the client root:
@@ -186,7 +207,7 @@ Every client bootstrapped via `pnpm create-client` writes a `.template-version.j
 }
 ```
 
-The `template` and `version` come from the template's `package.json` (`name` without the `-starter` suffix, plus `version`). The file is **not** updated by `sync:client` or `update:client` — it marks when the client was created, not the last sync.
+The `template` and `version` come from the template's `package.json` (`name` without the `-starter` suffix, plus `version`). The file is updated by `update:client --apply` and `update:clients --apply` (best-effort, only if the file already exists with valid JSON). The `lastSyncedAt` field records the last sync. `sync:client` and `sync:clients` do not touch it — file sync is independent from version tracking.
 
 For clients that pre-date this feature, backfill the file manually by reading the corresponding `<template>-starter/package.json` from the monorepo at the time the client was created. The format must match exactly (idempotent rewrite is safe).
 
@@ -275,6 +296,10 @@ pnpm sync:client --slug=<client-slug> --verbose      # Add line-level diffs to t
 pnpm update:client --slug=<client-slug>              # Dry-run: package.json merge + pnpm install
 pnpm update:client --slug=<client-slug> --apply      # Write merged package.json and run pnpm install
 pnpm update:client --slug=<client-slug> --skip-install   # Write package.json only, skip pnpm install
+pnpm sync:clients --filter=outdated            # Dry-run: sync files for all clients (skip clean)
+pnpm sync:clients --filter=outdated --apply    # Apply file sync to all outdated clients
+pnpm update:clients --filter=outdated          # Dry-run: update deps for all clients
+pnpm update:clients --filter=outdated --apply  # Apply dep updates to all outdated clients
 ```
 
 ## References
