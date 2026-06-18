@@ -149,3 +149,36 @@ export const runSyncAll = async (
     clients,
   }
 }
+
+export const run = async (): Promise<void> => {
+  let options: SyncAllOptions
+  try {
+    options = parseSyncAllArgs(process.argv.slice(2))
+  } catch (err) {
+    if ((err as Error).message === 'HELP') {
+      console.log(USAGE)
+      return
+    }
+    console.error(`Error: ${(err as Error).message}`)
+    console.log(USAGE)
+    process.exit(1)
+  }
+
+  console.log(
+    `[sync:clients]${options.apply ? ' APPLY' : ' (dry-run)'}${options.filter === 'outdated' ? ' filter=outdated' : ''}${options.template ? ` template=${options.template}` : ' (auto-detect)'}`,
+  )
+
+  const result = await runSyncAll(options)
+
+  for (const line of formatSyncAllSummary(result)) {
+    console.log(line)
+  }
+
+  if (!options.apply) {
+    console.log('Run with --apply to apply changes')
+  }
+
+  if (result.errors > 0) {
+    process.exit(1)
+  }
+}
