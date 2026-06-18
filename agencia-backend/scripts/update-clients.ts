@@ -76,5 +76,104 @@ export const parseUpdateAllArgs = (args: string[]): UpdateAllOptions => {
   return options
 }
 
+export const updateOneClient = async (
+  slug: string,
+  options: UpdateAllOptions,
+  clientDirBase: string = CLIENTS_DIR,
+): Promise<ClientUpdateStatus> => {
+  const clientDir = path.join(clientDirBase, slug)
+  let templateType: FrontendType
+  let clientPkg: PackageJson
+  let templatePkg: PackageJson
+
+  try {
+    templateType = options.template ?? (await detectTemplateType(clientDir))
+    clientPkg = await readPackageJson(clientDir)
+    templatePkg = await readPackageJson(getTemplateDir(templateType))
+  } catch (err) {
+    return { slug, status: 'error', reason: err instanceof Error ? err.message : String(err) }
+  }
+
+  const { pkg, changes } = mergePackageJson(clientPkg, templatePkg)
+  const hasChanges = changes.added.length + changes.updated.length > 0
+  const templateVersion = templatePkg.version ?? '0.0.0'
+
+  if (!hasChanges) {
+    return { slug, status: 'skipped', reason: 'up-to-date' }
+  }
+
+  if (!options.apply) {
+    return {
+      slug,
+      status: 'updated',
+      template: templateType,
+      added: changes.added.length,
+      updated: changes.updated.length,
+      installed: false,
+    }
+  }
+
+  // Apply mode
+  try {
+    const ts = Math.floor(Date.now() / 1000)
+    const backupPath = path.join(clientDir, `package.json.bak-${ts}`)
+    const currentRaw = await readFile(path.join(clientDir, 'package.json'), 'utf-8')
+    await writeFile(backupPath, currentRaw, 'utf-8')
+    await writeFile(
+      path.join(clientDir, 'package.json'),
+      `${JSON.stringify(pkg, null, 2)}\n`,
+      'utf-8',
+    )
+
+    // Update .template-version.json (best effort)
+    const versionFile = path.join(clientDir, '.template-version.json')
+    try {
+      const versionRaw = await readFile(versionFile, 'utf-8')
+      const meta = JSON.parse(versionRaw) as Record<string, unknown>
+      meta.template = templateType
+      meta.version = templateVersion
+      meta.lastSyncedAt = new Date().toISOString()
+      await writeFile(versionFile, `${JSON.stringify(meta, null, 2)}\n`, 'utf-8')
+    } catch {
+      // missing or invalid - skip
+    }
+  } catch (err) {
+    return { slug, status: 'error', reason: err instanceof Error ? err.message : String(err) }
+  }
+
+  let installed = false
+  if (!options.skipInstall) {
+    try {
+      const code = await runPnpmInstall(clientDir)
+      if (code !== 0) {
+        return { slug, status: 'error', reason: `pnpm install exited with code ${code}` }
+      }
+      installed = true
+    } catch (err) {
+      return { slug, status: 'error', reason: err instanceof Error ? err.message : String(err) }
+    }
+  }
+
+  return {
+    slug,
+    status: 'updated',
+    template: templateType,
+    added: changes.added.length,
+    updated: changes.updated.length,
+    installed,
+  }
+}
+
+const runPnpmInstall = (cwd: string): Promise<number | null> => {
+  return new Promise((resolve, reject) => {
+    const child = spawn('pnpm', ['install', '--no-frozen-lockfile'], {
+      cwd,
+      stdio: 'inherit',
+    })
+    child.on('error', reject)
+    child.on('exit', (code) => resolve(code))
+  })
+}
+
 // Re-export for tests
-export { detectTemplateType }
+export { detectTemplateType, getClientDir }
