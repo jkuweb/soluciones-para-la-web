@@ -27,7 +27,14 @@ function normalizeBlock(block: Block): Block {
   switch (block.blockType) {
     case 'hero': {
       const heroBlock = block as HeroBlock
-      return { ...heroBlock, backgroundImage: toAbsoluteMedia(heroBlock.backgroundImage) }
+      return {
+        ...heroBlock,
+        backgroundImage: toAbsoluteMedia(heroBlock.backgroundImage),
+        images: heroBlock.images?.map((item) => ({
+          ...item,
+          image: toAbsoluteMedia(item.image),
+        })),
+      }
     }
     case 'image': {
       const imageBlock = block as ImageBlock
