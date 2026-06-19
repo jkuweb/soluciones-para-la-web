@@ -65,6 +65,7 @@ const ALLOWLIST_ASTRO: readonly string[] = [
   'src/pages/[slug].astro',
   'src/pages/index.astro',
   'src/pages/404.astro',
+  'src/pages/preview.astro',
   'astro.config.mjs',
   'tsconfig.json',
 ]
@@ -79,6 +80,7 @@ const ALLOWLIST_NEXTJS: readonly string[] = [
   'src/app/[slug]/page.tsx',
   'src/app/page.tsx',
   'src/app/not-found.tsx',
+  'src/app/preview/page.tsx',
   'next.config.ts',
   'tsconfig.json',
 ]

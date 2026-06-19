@@ -43,6 +43,15 @@ export const Tenants: CollectionConfig = {
       required: true,
     },
     {
+      name: 'devUrl',
+      type: 'text',
+      label: 'URL de desarrollo local',
+      admin: {
+        description:
+          'URL del starter corriendo en local (ej: http://localhost:4321). Tiene prioridad sobre domain y LIVE_PREVIEW_BASE_URL para el live preview del admin.',
+      },
+    },
+    {
       name: 'serviceType',
       type: 'select',
       options: [

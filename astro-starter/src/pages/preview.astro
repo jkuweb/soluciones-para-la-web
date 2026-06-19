@@ -1,0 +1,72 @@
+---
+// SSR-only route used by the Payload admin live preview iframe.
+//
+// Security: validates ?secret= against PREVIEW_SECRET. The secret is the
+// same one configured in agencia-backend's .env (PREVIEW_SECRET). Anyone
+// hitting this route without the secret gets 403.
+//
+// Behavior: fetches the latest draft of the page (not just published) and
+// renders it through the same Layout + BlockRenderer that the static
+// [slug].astro page uses, so the admin sees the real client page with its
+// own styles, components, and global CSS.
+export const prerender = false
+
+import Layout from '@/layouts/Layout.astro'
+import BlockRenderer from '@/components/BlockRenderer.astro'
+import { getPageBySlugDraft } from '@/lib/payload'
+
+const url = Astro.url
+const path = url.searchParams.get('path') || '/'
+const secret = url.searchParams.get('secret') || ''
+const expected = import.meta.env.PREVIEW_SECRET || ''
+
+if (!expected || secret !== expected) {
+  return new Response('Invalid preview secret', { status: 403 })
+}
+
+const slug = path.replace(/^\//, '') || 'home'
+const page = await getPageBySlugDraft(slug, secret)
+
+if (!page) {
+  return new Response('Page not found', { status: 404 })
+}
+---
+
+<Layout
+  title={page.meta?.title || page.title}
+  description={page.meta?.description}
+  seo={page.meta}
+>
+  <BlockRenderer hero={page.hero} layout={page.layout} />
+</Layout>
+
+<script>
+  /**
+   * Live preview listener (Astro version).
+   *
+   * The Payload admin sends a `postMessage` to the iframe on every edit with
+   * shape `{ type: 'payload-live-preview', data: { ... } }`. We re-fetch the
+   * page from our own `/preview` route by calling `location.reload()` so the
+   * server-side render picks up the latest draft.
+   *
+   * The 100ms debounce coalesces rapid keystroke events (e.g. typing in a
+   * text field) into a single reload. Without it, every character would
+   * trigger a full re-render and the iframe would feel laggy.
+   *
+   * We only filter on the message `type` (a marker only Payload's admin
+   * uses), not on the event origin, because:
+   *   1. The reload is benign — the worst a malicious parent can do is force
+   *      a fresh GET, which the secret guard already blocks from leaking
+   *      draft data.
+   *   2. Cross-origin iframes can't reliably read `event.origin` of the
+   *      admin in all browsers, and `ancestorOrigins` is non-standard.
+   */
+  let reloadTimer: ReturnType<typeof setTimeout> | undefined
+  window.addEventListener('message', (event) => {
+    if (event.data?.type !== 'payload-live-preview') return
+    if (reloadTimer) clearTimeout(reloadTimer)
+    reloadTimer = setTimeout(() => {
+      window.location.reload()
+    }, 100)
+  })
+</script>
