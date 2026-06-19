@@ -2,11 +2,11 @@
 import type { HeroBlock } from '@/lib/types'
 import Link from '@/components/Link'
 
-interface HeroBlockProps {
+interface HeroProps {
   data: HeroBlock
 }
 
-export default function HeroBlock({ data }: HeroBlockProps) {
+export default function Hero({ data }: HeroProps) {
   const imageUrl =
     data.backgroundImage?.sizes?.hero?.url || data.backgroundImage?.url || ''
 
@@ -28,6 +28,18 @@ export default function HeroBlock({ data }: HeroBlockProps) {
         {data.subtitle && <p className="subtitle">{data.subtitle}</p>}
         {data.cta?.label && (
           <Link link={data.cta} className="cta-button" />
+        )}
+        {data.images && data.images.length > 0 && (
+          <div className="hero-additional-images">
+            {data.images.map((item, i) => (
+              <img
+                key={i}
+                src={item.image.url}
+                alt={item.image.alt}
+                className="hero-additional-image"
+              />
+            ))}
+          </div>
         )}
       </div>
       <style jsx>{`
@@ -60,6 +72,19 @@ export default function HeroBlock({ data }: HeroBlockProps) {
           text-decoration: none;
           border-radius: 4px;
           font-weight: 600;
+        }
+        .hero-additional-images {
+          display: flex;
+          gap: var(--hero-image-gap, 1rem);
+          justify-content: center;
+          flex-wrap: wrap;
+          margin-top: 2rem;
+        }
+        .hero-additional-image {
+          width: var(--hero-image-size, 120px);
+          height: var(--hero-image-size, 120px);
+          object-fit: cover;
+          border-radius: var(--hero-image-radius, 0);
         }
       `}</style>
     </section>

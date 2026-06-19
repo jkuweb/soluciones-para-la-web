@@ -50,6 +50,7 @@ export interface HeroBlock extends Block {
   subtitle?: string
   backgroundImage?: MediaImage
   cta?: Link
+  images?: { image: MediaImage }[]
 }
 
 export interface TextBlock extends Block {
