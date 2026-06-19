@@ -107,7 +107,11 @@ describe('API', () => {
       },
     })
 
-    const returnedSlugs = new Set(pages.docs.map((p: { slug: string }) => p.slug))
+    const returnedSlugs = new Set(
+      pages.docs
+        .map((p) => p.slug)
+        .filter((slug): slug is string => typeof slug === 'string'),
+    )
 
     // The published page should be visible to unauthenticated readers
     expect(returnedSlugs.has(publishedSlug)).toBe(true)

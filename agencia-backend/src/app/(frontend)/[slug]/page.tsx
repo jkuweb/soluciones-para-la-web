@@ -7,6 +7,7 @@ import { draftMode } from 'next/headers'
 import React from 'react'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import RichText from '@/components/RichText'
+import { HeroBlockRenderer } from '@/components/blocks/HeroBlockRenderer'
 
 const queryPageBySlug = async ({ slug }: { slug: string }) => {
   const { isEnabled: draft } = await draftMode()
@@ -91,49 +92,6 @@ function BlockRenderer({ block }: { block: NonNullable<Page['layout']>[number] }
     default:
       return null
   }
-}
-
-function HeroBlockRenderer({ block }: { block: Extract<NonNullable<Page['hero']>[number], { blockType: 'hero' }> }) {
-  const bgImage = block.backgroundImage as Media | number | null | undefined
-
-  return (
-    <section
-      style={{
-        padding: '4rem 2rem',
-        textAlign: 'center',
-        backgroundColor: '#f5f5f5',
-        backgroundImage: bgImage && typeof bgImage === 'object' && bgImage.url
-          ? `url(${bgImage.url})`
-          : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        color: bgImage ? '#fff' : '#333',
-        borderRadius: 8,
-        marginBottom: '2rem',
-      }}
-    >
-      <h2 style={{ fontSize: '2.5rem', margin: '0 0 1rem' }}>{block.title}</h2>
-      {block.subtitle && (
-        <p style={{ fontSize: '1.25rem', opacity: 0.9 }}>{block.subtitle}</p>
-      )}
-      {block.cta?.label && (
-        <a
-          href={block.cta.url || '#'}
-          style={{
-            display: 'inline-block',
-            marginTop: '1.5rem',
-            padding: '0.75rem 2rem',
-            backgroundColor: '#0070f3',
-            color: '#fff',
-            borderRadius: 6,
-            textDecoration: 'none',
-          }}
-        >
-          {block.cta.label}
-        </a>
-      )}
-    </section>
-  )
 }
 
 function TextBlockRenderer({ block }: { block: Extract<NonNullable<Page['layout']>[number], { blockType: 'text' }> }) {

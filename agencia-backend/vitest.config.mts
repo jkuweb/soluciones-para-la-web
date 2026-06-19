@@ -12,7 +12,7 @@ export default defineConfig({
     css: true,
     environment: 'jsdom',
     setupFiles: [resolve(__dirname, 'vitest.setup.ts')],
-    include: ['tests/int/**/*.int.spec.ts'],
+    include: ['tests/int/**/*.int.spec.ts', 'tests/unit/**/*.spec.ts'],
     server: {
       deps: {
         inline: ['@payloadcms/ui'],
