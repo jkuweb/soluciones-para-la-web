@@ -113,12 +113,6 @@ export interface CourseBlock extends Block {
   lessons?: { title: string; videoUrl?: string; description?: string }[]
 }
 
-export interface FooterBlock extends Block {
-  blockType: 'footer'
-  copyright?: string
-  socialLinks?: Link[]
-}
-
 export interface Header {
   navItems: { id: string; link: Link }[]
 }

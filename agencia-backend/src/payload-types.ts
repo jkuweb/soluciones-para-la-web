@@ -144,6 +144,7 @@ export interface Tenant {
   name: string;
   slug: string;
   domain: string;
+  devUrl?: string | null;
   serviceType: 'web-estatica' | 'tienda-online' | 'academia-online';
   frontendType: 'astro' | 'nextjs';
   status: 'active' | 'pending' | 'suspended';
@@ -361,31 +362,6 @@ export interface Page {
             id?: string | null;
             blockName?: string | null;
             blockType: 'course';
-          }
-        | {
-            copyright?: string | null;
-            socialLinks?:
-              | {
-                  link: {
-                    type?: ('reference' | 'custom') | null;
-                    newTab?: boolean | null;
-                    reference?: {
-                      relationTo: 'pages';
-                      value: number | Page;
-                    } | null;
-                    url?: string | null;
-                    label: string;
-                    /**
-                     * Choose how the link should be rendered.
-                     */
-                    appearance?: ('default' | 'outline') | null;
-                  };
-                  id?: string | null;
-                }[]
-              | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'footer';
           }
       )[]
     | null;

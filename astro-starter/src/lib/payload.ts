@@ -39,6 +39,41 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
   return data.docs?.[0] || null
 }
 
+/**
+ * Fetches a page including draft versions, for the live preview route only.
+ *
+ * Uses the custom `/api/pages/preview-page` endpoint on Payload (see
+ * agencia-backend/src/collections/Pages.ts `endpoints`) because the standard
+ * REST API cannot return drafts to an unauthenticated cross-origin request:
+ * the Pages read access is restricted to published for non-authenticated
+ * users, and a plain `?draft=true` would 404.
+ *
+ * The endpoint validates `?secret=` against PREVIEW_SECRET on Payload's
+ * side, so this client-side function does not need to know the secret.
+ *
+ * `cache: 'no-store'` bypasses any build-time / CDN cache, so changes in
+ * the admin show up immediately in the iframe.
+ */
+export async function getPageBySlugDraft(slug: string, secret: string): Promise<Page | null> {
+  const url = new URL(`${PAYLOAD_API_URL}/pages/preview-page`)
+  url.searchParams.set('slug', slug)
+  url.searchParams.set('tenantSlug', TENANT_SLUG)
+  url.searchParams.set('secret', secret)
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    return null
+  }
+
+  return res.json()
+}
+
 export async function getHeader(): Promise<Header | null> {
   const res = await fetch(`${PAYLOAD_API_URL}/globals/header`, {
     headers: {
@@ -79,8 +114,6 @@ export function renderBlock(block: Block) {
       return { component: 'ContactBlock', props: block }
     case 'menu':
       return { component: 'MenuBlock', props: block }
-    case 'footer':
-      return { component: 'FooterBlock', props: block }
     default:
       return null
   }

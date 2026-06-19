@@ -51,7 +51,7 @@ export interface HeroBlock extends Block {
   backgroundImage?: MediaImage
   information?: string
   cta?: { id?: string; link: Link }[]
-  images?: { image: MediaImage }[]
+  images?: { id?: string; image: MediaImage }[]
 }
 
 export interface TextBlock extends Block {
@@ -120,12 +120,6 @@ export interface MenuBlock extends Block {
   blockType: 'menu'
   category?: string
   items?: { name: string; description?: string; price?: number; image?: MediaImage }[]
-}
-
-export interface FooterBlock extends Block {
-  blockType: 'footer'
-  copyright?: string
-  socialLinks?: { id: string; link: Link }[]
 }
 
 export interface Header {

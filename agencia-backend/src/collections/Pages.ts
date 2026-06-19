@@ -1,4 +1,4 @@
-import type { CollectionConfig, Condition } from 'payload'
+import type { CollectionConfig, Condition, Payload } from 'payload'
 import { slugField } from 'payload'
 
 import { HeroBlock } from '@/blocks/HeroBlock'
@@ -9,11 +9,52 @@ import { MenuBlock } from '@/blocks/MenuBlock'
 import { ProductBlock } from '@/blocks/ProductBlock'
 import { CartBlock } from '@/blocks/CartBlock'
 import { CourseBlock } from '@/blocks/CourseBlock'
-import { FooterBlock } from '@/blocks/FooterBlock'
 import { RestrictedBlocksField } from '@/components/RestrictedBlocksField'
 import { generateSlug } from '@/collections/Pages/hooks/generateSlug'
 import { validateLayoutStructure } from '@/collections/Pages/hooks/validateLayoutStructure'
 import { validateUniqueSlug } from '@/collections/Pages/hooks/validateUniqueSlug'
+
+/**
+ * Resolves the preview base URL for a Page document by inspecting its tenant.
+ *
+ * Resolution order:
+ *   1. tenant.devUrl      — local dev (e.g. http://localhost:4321)
+ *   2. tenant.domain      — production (https://...)
+ *   3. LIVE_PREVIEW_BASE_URL env var — fallback when tenant is missing/empty
+ *
+ * Returns `null` if the tenant ref is present but cannot be fetched, so the
+ * caller can fall back to the env var. The function intentionally never throws
+ * — a missing tenant must not break the admin live preview.
+ */
+async function resolvePreviewBaseUrl(
+  payload: Payload,
+  data: { tenant?: number | { id: number | string } | null } | undefined,
+): Promise<string> {
+  const fallback = process.env.LIVE_PREVIEW_BASE_URL || 'http://localhost:3001'
+  const tenantRef = data?.tenant
+  if (!tenantRef) return fallback
+
+  const tenantId = typeof tenantRef === 'object' ? tenantRef.id : tenantRef
+  if (tenantId == null) return fallback
+
+  try {
+    const tenant = await payload.findByID({
+      collection: 'tenants',
+      id: tenantId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    if (tenant?.devUrl) return tenant.devUrl
+    if (tenant?.domain) {
+      return `https://${tenant.domain.replace(/^https?:\/\//, '')}`
+    }
+  } catch {
+    // Tenant lookup failed (DB down, etc.) — fall back silently so the admin
+    // iframe still loads something rather than throwing inside Payload's UI.
+  }
+
+  return fallback
+}
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -29,16 +70,16 @@ export const Pages: CollectionConfig = {
     defaultColumns: ['title', 'tenant', 'slug', '_status', 'updatedAt'],
     listSearchableFields: ['title', 'slug'],
     livePreview: {
-      url: ({ data }) => {
-        const baseUrl = process.env.LIVE_PREVIEW_BASE_URL || 'http://localhost:3001'
+      url: async ({ data, req }) => {
+        const baseUrl = await resolvePreviewBaseUrl(req.payload, data)
         const previewSecret = process.env.PREVIEW_SECRET || ''
-        const slug = data?.slug || ''
+        const slug = data?.slug || 'home'
         const path = `/${slug}`
-        return `${baseUrl}/preview?path=${path}&previewSecret=${previewSecret}`
+        return `${baseUrl}/preview?path=${encodeURIComponent(path)}&secret=${encodeURIComponent(previewSecret)}`
       },
     },
   },
-  defaultPopulate: { title: true, slug: true },
+  defaultPopulate: { title: true, slug: true, tenant: true },
   hooks: {
     beforeValidate: [generateSlug],
     beforeChange: [validateLayoutStructure, validateUniqueSlug],
@@ -73,6 +114,73 @@ export const Pages: CollectionConfig = {
       return user?.roles?.includes('super-admin') ?? false
     },
   },
+  endpoints: [
+    {
+      /**
+       * Cross-origin draft lookup for the live preview iframe in client sites.
+       *
+       * Why this exists:
+       *   - The client starter (astro/next) fetches a page server-side from
+       *     Payload, with no authenticated user, across a different origin.
+       *   - The Pages read access for unauthenticated users is restricted to
+       *     `{ _status: { equals: 'published' } }`, so a plain
+       *     `GET /api/pages?draft=true` would 404 on draft versions.
+       *   - This endpoint authenticates the request via a shared `secret`
+       *     (the same PREVIEW_SECRET the admin sends) and uses Local API
+       *     with `overrideAccess: true` to bypass row-level access.
+       *
+       * Security:
+       *   - Returns 403 unless `secret` matches PREVIEW_SECRET.
+       *   - The tenant is also matched by slug to prevent a starter for one
+       *     client from previewing another client's drafts.
+       */
+      path: '/preview-page',
+      method: 'get',
+      handler: async (req) => {
+        const expected = process.env.PREVIEW_SECRET
+        const provided = req.query.secret
+        if (!expected || provided !== expected) {
+          return Response.json(
+            { error: 'Invalid preview secret' },
+            { status: 403 },
+          )
+        }
+
+        const slug = typeof req.query.slug === 'string' ? req.query.slug : ''
+        const tenantSlug =
+          typeof req.query.tenantSlug === 'string' ? req.query.tenantSlug : ''
+
+        if (!slug || !tenantSlug) {
+          return Response.json(
+            { error: 'Missing slug or tenantSlug' },
+            { status: 400 },
+          )
+        }
+
+        const result = await req.payload.find({
+          collection: 'pages',
+          draft: true,
+          limit: 1,
+          pagination: false,
+          overrideAccess: true,
+          depth: 1,
+          where: {
+            and: [
+              { slug: { equals: slug } },
+              { 'tenant.slug': { equals: tenantSlug } },
+            ],
+          },
+        })
+
+        const doc = result.docs?.[0] || null
+        if (!doc) {
+          return Response.json({ error: 'Page not found' }, { status: 404 })
+        }
+
+        return Response.json(doc)
+      },
+    },
+  ],
   fields: [
     {
       name: 'title',
@@ -146,7 +254,6 @@ export const Pages: CollectionConfig = {
                 ProductBlock,
                 CartBlock,
                 CourseBlock,
-                FooterBlock,
               ],
               admin: {
                 components: {

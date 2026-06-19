@@ -7,7 +7,6 @@ import CartBlock from '@/components/blocks/CartBlock'
 import CourseBlock from '@/components/blocks/CourseBlock'
 import MenuBlock from '@/components/blocks/MenuBlock'
 import ContactBlock from '@/components/blocks/ContactBlock'
-import FooterBlock from '@/components/blocks/FooterBlock'
 
 interface Block {
   blockType: string
@@ -29,7 +28,6 @@ const components: Record<string, React.ComponentType<{ data: any }>> = {
   course: CourseBlock,
   menu: MenuBlock,
   contact: ContactBlock,
-  footer: FooterBlock,
 }
 
 function renderBlock(block: Block) {
