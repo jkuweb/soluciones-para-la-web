@@ -1,6 +1,6 @@
 ---
 import Link from "@/components/Link.astro";
-import { getHeader, getFooter } from "@/lib/payload";
+import { getHeader, getFooter, getMediaUrl } from "@/lib/payload";
 
 interface SEO {
   title?: string;
@@ -18,7 +18,7 @@ const { title, description = "", seo } = Astro.props;
 
 const seoTitle = seo?.title || title;
 const seoDescription = seo?.description || description;
-const seoImage = seo?.image?.url;
+const seoImage = seo?.image?.url ? getMediaUrl(seo.image.url) : '';
 
 const header = await getHeader();
 const footer = await getFooter();
