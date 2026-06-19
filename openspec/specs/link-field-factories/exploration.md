@@ -54,9 +54,8 @@ The directory already exists with three files:
 | Block | Usage | Customizations |
 |---|---|---|
 | `HeroBlock.ts` | `link({ overrides: { name: 'cta', label: 'Call to Action Link' } })` | Name overridden to `cta` |
-| `FooterBlock.ts` | `linkGroup({ overrides: { name: 'socialLinks', label: 'Social Links' } })` | Name overridden to `socialLinks` |
 
-Blocks that do NOT use links: `TextBlock`, `ImageBlock`, `ContactBlock`, `MenuBlock` (restaurant menu), `CartBlock`, `CourseBlock`, `ProductBlock`.
+Blocks that do NOT use links: `TextBlock`, `ImageBlock`, `ContactBlock`, `MenuBlock` (restaurant menu), `CartBlock`, `CourseBlock`, `ProductBlock`. (The footer was a block previously but has been removed in favour of the `/globals/footer` global.)
 
 ### In Globals (agencia-backend)
 
@@ -239,7 +238,6 @@ import { defaultLexical } from '@/fields/defaultLexical'
 |---|---|
 | `agencia-backend/src/fields/index.ts` | Already re-exports correctly |
 | `agencia-backend/src/blocks/HeroBlock.ts` | Already uses `link()` correctly |
-| `agencia-backend/src/blocks/FooterBlock.ts` | Already uses `linkGroup()` correctly |
 | `agencia-backend/src/blocks/MenuBlock.ts` | No link or richText fields |
 | `agencia-backend/src/blocks/ImageBlock.ts` | No link or richText fields |
 | `agencia-backend/src/blocks/ContactBlock.ts` | No link or richText fields |

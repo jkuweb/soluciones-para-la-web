@@ -5,7 +5,7 @@
 The Agencia SaaS backend is a **Payload CMS 3.85.1** instance with a multi-tenant plugin isolating `pages` and `media` collections by tenant. The key architectural pieces:
 
 **1. Pages Collection (`src/collections/Pages.ts`)**
-- The `layout` field is a `blocks` type containing 9 registered blocks: `HeroBlock`, `TextBlock`, `ImageBlock`, `ContactBlock`, `MenuBlock`, `ProductBlock`, `CartBlock`, `CourseBlock`, `FooterBlock`.
+- The `layout` field is a `blocks` type containing 8 registered blocks: `HeroBlock`, `TextBlock`, `ImageBlock`, `ContactBlock`, `MenuBlock`, `ProductBlock`, `CartBlock`, `CourseBlock`. The footer is sourced exclusively from the `/globals/footer` global.
 - Access control allows `super-admin` full CRUD, and `tenant-admin`/`tenant-editor` can read/update only their own tenant's pages via `user.tenants` mapping.
 - **No field-level access control** on the `layout` field currently.
 - **No custom components** on the `layout` field.

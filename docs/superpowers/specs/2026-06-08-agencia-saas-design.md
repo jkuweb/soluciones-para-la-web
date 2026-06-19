@@ -147,7 +147,6 @@ Plataforma para agencia de desarrollo web donde el programador (super-admin) ges
       'ProductBlock',
       'CartBlock',
       'CourseBlock',
-      'FooterBlock',
     ]},
     { name: 'status', type: 'select', options: [
       { label: 'Borrador', value: 'draft' },
@@ -309,17 +308,6 @@ const CourseBlock = {
   ]
 }
 
-// FooterBlock
-const FooterBlock = {
-  slug: 'footer',
-  fields: [
-    { name: 'copyright', type: 'text' },
-    { name: 'socialLinks', type: 'array', fields: [
-      { name: 'platform', type: 'text' },
-      { name: 'url', type: 'text' },
-    ]},
-  ]
-}
 ```
 
 ### 3.3 Permisos (Access Control)
@@ -397,7 +385,6 @@ const { page } = Astro.props;
       case 'image': return <ImageBlock data={block} />;
       case 'contact': return <ContactBlock data={block} />;
       case 'menu': return <MenuBlock data={block} />;
-      case 'footer': return <FooterBlock data={block} />;
     }
   })}
 </Layout>
