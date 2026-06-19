@@ -5,10 +5,12 @@ import BlockRenderer from '@/components/BlockRenderer.astro'
 
 export async function getStaticPaths() {
   const pages = await getPages()
-  return pages.map((page) => ({
-    params: { slug: page.slug === 'home' ? undefined : page.slug },
-    props: { page },
-  }))
+  return pages
+    .filter((page) => page.slug !== 'home')
+    .map((page) => ({
+      params: { slug: page.slug },
+      props: { page },
+    }))
 }
 
 const { page } = Astro.props
