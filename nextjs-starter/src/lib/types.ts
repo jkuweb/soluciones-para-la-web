@@ -124,7 +124,7 @@ export interface MenuBlock extends Block {
 export interface FooterBlock extends Block {
   blockType: 'footer'
   copyright?: string
-  socialLinks?: Link[]
+  socialLinks?: { id: string; link: Link }[]
 }
 
 export interface Header {

@@ -20,7 +20,7 @@ interface BlockRendererProps {
   layout: Block[]
 }
 
-const components: Record<string, React.ComponentType<{ data: unknown }>> = {
+const components: Record<string, React.ComponentType<{ data: any }>> = {
   hero: Hero,
   text: TextBlock,
   image: ImageBlock,
