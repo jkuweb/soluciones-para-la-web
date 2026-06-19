@@ -86,7 +86,10 @@ const fullImageUrl = backgroundImage ? getMediaUrl(backgroundImage) : ''
     flex-wrap: wrap;
   }
 
-  .cta-button {
+  /* :global: Astro scoped styles don't reach child components.
+     <Link> renders its own <a> without our data-astro-cid, so this
+     class must escape scope to style the CTA inside <Link className="..." />. */
+  :global(.cta-button) {
     display: inline-block;
     padding: 0.75rem 1.5rem;
     background: var(--primary-color, #007bff);
