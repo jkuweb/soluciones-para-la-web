@@ -22,18 +22,28 @@ const fullImageUrl = backgroundImage ? getMediaUrl(backgroundImage) : ''
   <div class="hero-content">
     <h1>{data.title}</h1>
     {data.subtitle && <p class="subtitle">{data.subtitle}</p>}
-    {data.cta && data.cta.label && (
-      <Link link={data.cta} className="cta-button" />
+    {data.information && <p class="information">{data.information}</p>}
+    {data.cta && data.cta.length > 0 && (
+      <div class="hero-cta-group">
+        {data.cta.map((item) => {
+          const link = item.link
+          if (!link?.label) return null
+          return <Link link={link} className="cta-button" />
+        })}
+      </div>
     )}
     {data.images && data.images.length > 0 && (
       <div class="hero-additional-images">
-        {data.images.map((item) => (
-          <img
-            src={getMediaUrl(item.image.url)}
-            alt={item.image.alt}
-            class="hero-additional-image"
-          />
-        ))}
+        {data.images.map((item) => {
+          if (!item.image?.url) return null
+          return (
+            <img
+              src={getMediaUrl(item.image.url)}
+              alt={item.image.alt || ''}
+              class="hero-additional-image"
+            />
+          )
+        })}
       </div>
     )}
   </div>
@@ -60,6 +70,20 @@ const fullImageUrl = backgroundImage ? getMediaUrl(backgroundImage) : ''
   .subtitle {
     font-size: 1.25rem;
     margin-bottom: 2rem;
+  }
+
+  .information {
+    font-size: 1rem;
+    opacity: 0.85;
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .cta-button {

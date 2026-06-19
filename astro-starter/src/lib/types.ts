@@ -49,7 +49,8 @@ export interface HeroBlock extends Block {
   title: string
   subtitle?: string
   backgroundImage?: MediaImage
-  cta?: Link
+  information?: string
+  cta?: { id?: string; link: Link }[]
   images?: { image: MediaImage }[]
 }
 

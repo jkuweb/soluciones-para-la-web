@@ -26,19 +26,29 @@ export default function Hero({ data }: HeroProps) {
       <div className="hero-content">
         <h1>{data.title}</h1>
         {data.subtitle && <p className="subtitle">{data.subtitle}</p>}
-        {data.cta?.label && (
-          <Link link={data.cta} className="cta-button" />
+        {data.information && <p className="information">{data.information}</p>}
+        {data.cta && data.cta.length > 0 && (
+          <div className="hero-cta-group">
+            {data.cta.map((item, i) => {
+              const link = item.link
+              if (!link?.label) return null
+              return <Link key={item.id || i} link={link} className="cta-button" />
+            })}
+          </div>
         )}
         {data.images && data.images.length > 0 && (
           <div className="hero-additional-images">
-            {data.images.map((item, i) => (
-              <img
-                key={i}
-                src={item.image.url}
-                alt={item.image.alt}
-                className="hero-additional-image"
-              />
-            ))}
+            {data.images.map((item, i) => {
+              if (!item.image?.url) return null
+              return (
+                <img
+                  key={item.id ?? item.image?.id ?? i}
+                  src={item.image.url}
+                  alt={item.image.alt || ''}
+                  className="hero-additional-image"
+                />
+              )
+            })}
           </div>
         )}
       </div>
@@ -63,6 +73,18 @@ export default function Hero({ data }: HeroProps) {
           font-size: 1.25rem;
           margin-bottom: 2rem;
           text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+        }
+        .information {
+          font-size: 1rem;
+          opacity: 0.85;
+          max-width: 600px;
+          margin: 0 auto 1.5rem;
+        }
+        .hero-cta-group {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: center;
+          flex-wrap: wrap;
         }
         .cta-button {
           display: inline-block;
