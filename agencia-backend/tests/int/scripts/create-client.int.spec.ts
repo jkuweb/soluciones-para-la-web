@@ -13,6 +13,8 @@ import {
   isSlugTaken,
   isEmailTaken,
   copyTemplate,
+  shouldCopyTemplateEntry,
+  TEMPLATE_COPY_SKIP,
   writeClientVersionFile,
   promptTenant,
   confirmSummary,
@@ -255,6 +257,78 @@ describe('copyTemplate', () => {
     expect(existsSync(join(destDir, '.env.example'))).toBe(true)
     expect(existsSync(join(destDir, 'package.json'))).toBe(true)
     expect(readFileSync(join(destDir, '.env.example'), 'utf-8')).toBe('TENANT_SLUG=placeholder\n')
+  })
+
+  it('no copia directorios de build artifacts (node_modules, .next, .astro, dist, .turbo, coverage)', async () => {
+    const { mkdirSync } = await import('node:fs')
+    for (const skip of TEMPLATE_COPY_SKIP) {
+      if (skip === 'tsconfig.tsbuildinfo' || skip === '.DS_Store') continue
+      const dir = join(srcDir, skip)
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, 'marker.txt'), 'should-not-be-copied')
+    }
+
+    await copyTemplate(srcDir, destDir)
+
+    for (const skip of TEMPLATE_COPY_SKIP) {
+      if (skip === 'tsconfig.tsbuildinfo' || skip === '.DS_Store') continue
+      expect(existsSync(join(destDir, skip))).toBe(false)
+    }
+    // sanity: real files were copied
+    expect(existsSync(join(destDir, 'package.json'))).toBe(true)
+  })
+
+  it('no copia archivos sueltos en la skip list (tsconfig.tsbuildinfo, .DS_Store)', async () => {
+    writeFileSync(join(srcDir, 'tsconfig.tsbuildinfo'), 'cache')
+    writeFileSync(join(srcDir, '.DS_Store'), 'mac-junk')
+
+    await copyTemplate(srcDir, destDir)
+
+    expect(existsSync(join(destDir, 'tsconfig.tsbuildinfo'))).toBe(false)
+    expect(existsSync(join(destDir, '.DS_Store'))).toBe(false)
+  })
+
+  it('maneja la estructura self-referential de .next/standalone sin EINVAL (regresión)', async () => {
+    // Reproduces the real bug: Next.js `.next/standalone/<abs-src-path>/.next/standalone/...`
+    // used to cause `cp` to recurse into itself. With the filter in place, the whole
+    // .next tree is skipped, so the recursive walk never reaches the self-reference.
+    const { mkdirSync } = await import('node:fs')
+    const selfRefDir = join(
+      srcDir,
+      '.next',
+      'standalone',
+      srcDir,
+      '.next',
+      'standalone',
+      srcDir,
+    )
+    mkdirSync(selfRefDir, { recursive: true })
+    writeFileSync(join(selfRefDir, 'leaf.txt'), 'deep')
+
+    await expect(copyTemplate(srcDir, destDir)).resolves.not.toThrow()
+    expect(existsSync(join(destDir, '.next'))).toBe(false)
+  })
+})
+
+describe('shouldCopyTemplateEntry', () => {
+  it('devuelve false para los nombres de la skip list', () => {
+    for (const skip of TEMPLATE_COPY_SKIP) {
+      expect(shouldCopyTemplateEntry(`/some/path/${skip}`)).toBe(false)
+      expect(shouldCopyTemplateEntry(skip)).toBe(false)
+    }
+  })
+
+  it('devuelve true para archivos y directorios normales', () => {
+    expect(shouldCopyTemplateEntry('/some/path/src')).toBe(true)
+    expect(shouldCopyTemplateEntry('/some/path/package.json')).toBe(true)
+    expect(shouldCopyTemplateEntry('README.md')).toBe(true)
+  })
+
+  it('solo compara el basename (no matchea archivos internos como "next.config.ts")', () => {
+    // Important: "next.config.ts" contains ".next" as a substring but is NOT
+    // a build artifact. The filter must only match exact basenames.
+    expect(shouldCopyTemplateEntry('/some/path/next.config.ts')).toBe(true)
+    expect(shouldCopyTemplateEntry('/some/path/.env.example')).toBe(true)
   })
 })
 

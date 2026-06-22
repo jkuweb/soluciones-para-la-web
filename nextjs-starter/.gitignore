@@ -2,8 +2,12 @@
 /node_modules/
 
 # build output
+/.next/
+/out/
 /dist/
-/.astro/
+
+# Turbo
+/.turbo/
 
 # TypeScript build cache
 tsconfig.tsbuildinfo
