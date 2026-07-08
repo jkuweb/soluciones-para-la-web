@@ -39,27 +39,47 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             )}
             {header?.navItems && header.navItems.length > 0 && (
               <nav aria-label="Principal">
-                {header.navItems.map((item) => (
-                  <Link key={item.id} link={item.link} />
-                ))}
+                <ul>
+                  {header.navItems.map((item) => (
+                    <li key={item.id}>
+                      {item.subItems && item.subItems.length > 0 ? (
+                        <details>
+                          <summary>{item.title}</summary>
+                          <ul>
+                            {item.subItems.map((sub) => (
+                              <li key={sub.id}>
+                                <Link link={sub.link}>
+                                  {sub.enableImage && sub.image?.url && (
+                                    <img
+                                      src={getMediaUrl(sub.image.url)}
+                                      alt={sub.image.alt || ''}
+                                    />
+                                  )}
+                                  <span>
+                                    <span>{sub.title}</span>
+                                    {sub.description && (
+                                      <span>{sub.description}</span>
+                                    )}
+                                  </span>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : item.link ? (
+                        <Link link={item.link}>{item.title}</Link>
+                      ) : (
+                        <span>{item.title}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </nav>
             )}
             {header?.ctaText && header?.ctaLink && (
-              <a
-                href={
-                  header.ctaLink.type === 'reference' &&
-                  typeof header.ctaLink.reference?.value === 'object' &&
-                  (header.ctaLink.reference.value as { slug?: string }).slug
-                    ? `/${(header.ctaLink.reference.value as { slug: string }).slug}`
-                    : header.ctaLink.url
-                }
-                className="site-cta"
-                {...(header.ctaLink.newTab
-                  ? { rel: 'noopener noreferrer', target: '_blank' }
-                  : {})}
-              >
+              <Link link={header.ctaLink} className="site-cta">
                 {header.ctaText}
-              </a>
+              </Link>
             )}
           </header>
         )}

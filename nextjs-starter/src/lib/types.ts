@@ -127,7 +127,19 @@ export interface Header {
   tenant: string | { slug: string }
   createdAt: string
   updatedAt: string
-  navItems: { id: string; link: Link }[]
+  navItems?: {
+    id?: string
+    title: string
+    link?: Link
+    subItems?: {
+      id?: string
+      title: string
+      description?: string
+      enableImage?: boolean
+      image?: MediaImage
+      link?: Link
+    }[]
+  }[]
   logo?: { id: string; url: string; alt: string }
   ctaText?: string
   ctaLink?: Link

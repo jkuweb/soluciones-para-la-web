@@ -1,7 +1,7 @@
 import type { Page } from '@/lib/types'
 
 interface LinkProps {
-  link: {
+  link?: {
     type?: 'reference' | 'custom'
     reference?: {
       relationTo: string
@@ -16,6 +16,8 @@ interface LinkProps {
 }
 
 export default function Link({ link, className, children }: LinkProps) {
+  if (!link) return null
+
   const href =
     link.type === 'reference' &&
     typeof link.reference?.value === 'object' &&

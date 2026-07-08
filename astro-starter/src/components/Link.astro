@@ -29,6 +29,6 @@ const newTabProps = link.newTab
 
 {href && (
   <a href={href} class={className} {...newTabProps}>
-    {link.label}
+    <slot>{link.label}</slot>
   </a>
 )}
