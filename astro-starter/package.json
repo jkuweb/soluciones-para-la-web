@@ -11,6 +11,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@astrojs/node": "^8.3.4",
+    "@payloadcms/live-preview": "3.85.1",
     "astro": "^4.0.0"
   },
   "devDependencies": {

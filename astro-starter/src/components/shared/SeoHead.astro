@@ -1,0 +1,18 @@
+---
+interface Props {
+  title: string
+  description?: string
+  imageUrl?: string
+}
+
+const { title, description, imageUrl } = Astro.props
+---
+
+<title>{title}</title>
+{description && <meta name="description" content={description} />}
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+{description && <meta property="og:description" content={description} />}
+{imageUrl && <meta property="og:image" content={imageUrl} />}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="robots" content="index, follow" />

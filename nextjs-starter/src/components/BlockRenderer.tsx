@@ -1,5 +1,5 @@
 'use client'
-import Hero from '@/heros/Hero'
+import HeroBlock from '@/components/HeroBlock'
 import TextBlock from '@/components/blocks/TextBlock'
 import ImageBlock from '@/components/blocks/ImageBlock'
 import ProductBlock from '@/components/blocks/ProductBlock'
@@ -20,7 +20,7 @@ interface BlockRendererProps {
 }
 
 const components: Record<string, React.ComponentType<{ data: any }>> = {
-  hero: Hero,
+  hero: HeroBlock,
   text: TextBlock,
   image: ImageBlock,
   product: ProductBlock,

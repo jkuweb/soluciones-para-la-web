@@ -30,6 +30,11 @@ const page = await getPageBySlugDraft(slug, secret)
 if (!page) {
   return new Response('Page not found', { status: 404 })
 }
+
+// Origin of the Payload admin (without /api). The admin posts messages from
+// this origin, and isDocumentEvent checks event.origin === serverURL.
+const payloadApiUrl = import.meta.env.PAYLOAD_API_URL || 'http://localhost:3000/api'
+const serverURL = payloadApiUrl.replace(/\/api\/?$/, '')
 ---
 
 <Layout
@@ -38,32 +43,47 @@ if (!page) {
   seo={page.meta}
 >
   <BlockRenderer hero={page.hero} layout={page.layout} />
+  <div data-payload-server-url={serverURL} hidden />
 </Layout>
 
 <script>
   /**
    * Live preview listener (Astro version).
    *
-   * The Payload admin sends a `postMessage` to the iframe on every edit with
-   * shape `{ type: 'payload-live-preview', data: { ... } }`. We re-fetch the
-   * page from our own `/preview` route by calling `location.reload()` so the
-   * server-side render picks up the latest draft.
+   * Two things were missing in the previous implementation that prevented
+   * the preview from updating after the initial load:
    *
-   * The 100ms debounce coalesces rapid keystroke events (e.g. typing in a
-   * text field) into a single reload. Without it, every character would
-   * trigger a full re-render and the iframe would feel laggy.
+   *   1. The `ready` handshake. The Payload admin does NOT emit postMessage
+   *      events to the iframe until the iframe announces it is ready. Without
+   *      this call, the admin never sends anything and the preview is frozen
+   *      on the first render.
    *
-   * We only filter on the message `type` (a marker only Payload's admin
-   * uses), not on the event origin, because:
-   *   1. The reload is benign — the worst a malicious parent can do is force
-   *      a fresh GET, which the secret guard already blocks from leaking
-   *      draft data.
-   *   2. Cross-origin iframes can't reliably read `event.origin` of the
-   *      admin in all browsers, and `ancestorOrigins` is non-standard.
+   *   2. The correct event type. For a server-side preview that reloads the
+   *      page, we must listen for `payload-document-event` (save / autosave /
+   *      publish), not `payload-live-preview` (as-you-type form state). The
+   *      latter fires on every keystroke with unsaved data that a page
+   *      reload cannot pick up — the server only has the last *saved* draft.
+   *      isDocumentEvent also validates event.origin === serverURL, which
+   *      the previous type-only check skipped.
+   *
+   * serverURL is passed through a data attribute because Astro bundles
+   * <script> tags (so `import` works) but does not expose non-PUBLIC_ env
+   * vars to client-side code.
    */
+  import { ready, isDocumentEvent } from '@payloadcms/live-preview'
+
+  const serverURL =
+    document.querySelector('[data-payload-server-url]')?.getAttribute('data-payload-server-url') || ''
+
+  // Announce to the Payload admin that the iframe is ready to receive events.
+  ready({ serverURL })
+
+  // Reload when the admin sends a document-level event (autosave / save /
+  // publish). The autosave interval is 500ms, so the preview updates shortly
+  // after typing stops. The 100ms debounce coalesces rapid successive events.
   let reloadTimer: ReturnType<typeof setTimeout> | undefined
   window.addEventListener('message', (event) => {
-    if (event.data?.type !== 'payload-live-preview') return
+    if (!isDocumentEvent(event, serverURL)) return
     if (reloadTimer) clearTimeout(reloadTimer)
     reloadTimer = setTimeout(() => {
       window.location.reload()

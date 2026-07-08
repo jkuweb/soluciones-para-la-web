@@ -114,11 +114,27 @@ export interface CourseBlock extends Block {
 }
 
 export interface Header {
+  id: string
+  tenant: string | { slug: string }
+  createdAt: string
+  updatedAt: string
   navItems: { id: string; link: Link }[]
+  logo?: { id: string; url: string; alt: string }
+  ctaText?: string
+  ctaLink?: Link
 }
 
 export interface Footer {
-  navItems: { id: string; link: Link }[]
+  id: string
+  tenant: string | { slug: string }
+  createdAt: string
+  updatedAt: string
   copyright?: string
+  navItems: { id: string; link: Link }[]
   socialLinks: { id: string; link: Link }[]
+  navColumns: {
+    id: string
+    title: string
+    links: { id: string; link: Link }[]
+  }[]
 }

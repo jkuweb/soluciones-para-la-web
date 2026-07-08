@@ -33,9 +33,14 @@ export default async function PreviewPage({
   // and the API returns relative paths in the media collection.
   const page = normalizePage(rawPage)
 
+  // Origin of the Payload admin (without /api). The admin posts messages from
+  // this origin, and isDocumentEvent checks event.origin === serverURL.
+  const payloadApiUrl = process.env.PAYLOAD_API_URL || 'http://localhost:3000/api'
+  const serverURL = payloadApiUrl.replace(/\/api\/?$/, '')
+
   return (
     <>
-      <LivePreviewListener />
+      <LivePreviewListener serverURL={serverURL} />
       <BlockRenderer hero={page.hero} layout={page.layout} />
     </>
   )

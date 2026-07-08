@@ -7,6 +7,8 @@ export const plugins: Config['plugins'] = [
     collections: {
       pages: {},
       media: {},
+      header: {},
+      footer: {},
     },
     tenantsSlug: 'tenants',
     userHasAccessToAllTenants: (user: User) => {

@@ -1,36 +1,44 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { ready, isDocumentEvent } from '@payloadcms/live-preview'
 
 /**
  * Live preview listener (Next.js version).
  *
- * The Payload admin sends a `postMessage` to this iframe on every edit with
- * shape `{ type: 'payload-live-preview', data: { ... } }`. We reload the
- * route so the server component re-fetches the latest draft from Payload
- * and re-renders with the new data.
+ * Two things were missing in the previous implementation that prevented
+ * the preview from updating after the initial load:
  *
- * The 100ms debounce coalesces rapid keystroke events (typing in a text
- * field) into a single reload. Without it, every character would trigger
- * a full re-render and the iframe would feel laggy.
+ *   1. The `ready` handshake. The Payload admin does NOT emit postMessage
+ *      events to the iframe until the iframe announces it is ready. Without
+ *      this call, the admin never sends anything and the preview is frozen
+ *      on the first render.
  *
- * Filter rationale: we only check `event.data.type === 'payload-live-preview'`,
- * not the event origin, because:
- *   1. The reload is benign — the worst a malicious parent can do is force
- *      a fresh GET, which the secret guard already blocks from leaking
- *      draft data.
- *   2. Cross-origin iframes can't reliably read `event.origin` of the admin
- *      in all browsers, and `ancestorOrigins` is non-standard.
+ *   2. The correct event type. For a server-side preview that refreshes the
+ *      route, we must listen for `payload-document-event` (save / autosave /
+ *      publish), not `payload-live-preview` (as-you-type form state). The
+ *      latter fires on every keystroke with unsaved data that a server
+ *      refresh cannot pick up — the server only has the last *saved* draft.
+ *      isDocumentEvent also validates event.origin === serverURL, which
+ *      the previous type-only check skipped.
+ *
+ * serverURL is passed from the server component (page.tsx) which can read
+ * process.env.PAYLOAD_API_URL directly.
  */
-export function LivePreviewListener() {
+export function LivePreviewListener({ serverURL }: { serverURL: string }) {
+  const router = useRouter()
+
   useEffect(() => {
+    // Announce to the Payload admin that the iframe is ready to receive events.
+    ready({ serverURL })
+
     let timer: ReturnType<typeof setTimeout> | undefined
     const onMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string } | null
-      if (data?.type !== 'payload-live-preview') return
+      if (!isDocumentEvent(event, serverURL)) return
       if (timer) clearTimeout(timer)
       timer = setTimeout(() => {
-        window.location.reload()
+        router.refresh()
       }, 100)
     }
     window.addEventListener('message', onMessage)
@@ -38,6 +46,6 @@ export function LivePreviewListener() {
       window.removeEventListener('message', onMessage)
       if (timer) clearTimeout(timer)
     }
-  }, [])
+  }, [serverURL, router])
   return null
 }

@@ -5,13 +5,12 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
+import { Footer } from './collections/Footer'
+import { Header } from './collections/Header'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
-
-import { Header } from './globals/Header/config'
-import { Footer } from './globals/Footer/config'
 
 import { getServerUrl } from './utilities/getURL'
 import { plugins } from './plugins'
@@ -56,8 +55,7 @@ export default buildConfig({
       ],
     },
   },
-  collections: [Tenants, Users, Pages, Media],
-  globals: [Header, Footer],
+  collections: [Tenants, Users, Pages, Media, Header, Footer],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

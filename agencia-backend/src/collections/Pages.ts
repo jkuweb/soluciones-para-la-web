@@ -30,12 +30,12 @@ async function resolvePreviewBaseUrl(
   payload: Payload,
   data: { tenant?: number | { id: number | string } | null } | undefined,
 ): Promise<string> {
-  const fallback = process.env.LIVE_PREVIEW_BASE_URL || 'http://localhost:3001'
+  const envBase = process.env.LIVE_PREVIEW_BASE_URL || 'http://localhost'
   const tenantRef = data?.tenant
-  if (!tenantRef) return fallback
+  if (!tenantRef) return envBase
 
   const tenantId = typeof tenantRef === 'object' ? tenantRef.id : tenantRef
-  if (tenantId == null) return fallback
+  if (tenantId == null) return envBase
 
   try {
     const tenant = await payload.findByID({
@@ -44,7 +44,23 @@ async function resolvePreviewBaseUrl(
       depth: 0,
       overrideAccess: true,
     })
+    // 1) devUrl always wins — explicit per-tenant override
     if (tenant?.devUrl) return tenant.devUrl
+    // 2) derive the port from tenant.frontendType, using envBase as the host
+    if (tenant?.frontendType) {
+      const port =
+        tenant.frontendType === 'nextjs'
+          ? process.env.LIVE_PREVIEW_NEXTJS_PORT || '3000'
+          : process.env.LIVE_PREVIEW_ASTRO_PORT || '4321'
+      try {
+        const url = new URL(envBase)
+        url.port = port
+        return url.toString().replace(/\/$/, '')
+      } catch {
+        // envBase is not a valid URL — fall through to domain
+      }
+    }
+    // 3) production: use the real domain
     if (tenant?.domain) {
       return `https://${tenant.domain.replace(/^https?:\/\//, '')}`
     }
@@ -53,7 +69,7 @@ async function resolvePreviewBaseUrl(
     // iframe still loads something rather than throwing inside Payload's UI.
   }
 
-  return fallback
+  return envBase
 }
 
 export const Pages: CollectionConfig = {

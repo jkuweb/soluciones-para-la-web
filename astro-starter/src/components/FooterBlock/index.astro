@@ -1,0 +1,39 @@
+---
+import Link from '@/components/Link.astro'
+
+interface LinkItem {
+  id?: string
+  link: {
+    type?: 'reference' | 'custom'
+    label?: string
+    url?: string
+    newTab?: boolean
+  }
+}
+
+interface Props {
+  navItems?: LinkItem[]
+  copyright?: string
+  socialLinks?: LinkItem[]
+}
+
+const { navItems, copyright, socialLinks } = Astro.props
+---
+
+<footer class="site-footer">
+  {navItems && navItems.length > 0 && (
+    <nav class="site-footer__nav">
+      {navItems.map((item) => (
+        <Link link={item.link} className="site-footer__nav-item" />
+      ))}
+    </nav>
+  )}
+  {copyright && <p class="site-footer__copyright">{copyright}</p>}
+  {socialLinks && socialLinks.length > 0 && (
+    <div class="site-footer__social">
+      {socialLinks.map((item) => (
+        <Link link={item.link} className="site-footer__social-link" />
+      ))}
+    </div>
+  )}
+</footer>

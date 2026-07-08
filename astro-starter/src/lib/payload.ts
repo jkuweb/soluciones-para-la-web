@@ -4,39 +4,51 @@ const PAYLOAD_API_URL = import.meta.env.PAYLOAD_API_URL || 'http://localhost:300
 const TENANT_SLUG = import.meta.env.TENANT_SLUG || 'mi-cliente'
 
 export async function getPages(): Promise<Page[]> {
-  const res = await fetch(
-    `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[_status][equals]=published&depth=1`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+  try {
+    const res = await fetch(
+      `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[_status][equals]=published&depth=1`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    if (!res.ok) {
+      console.warn(`[payload] getPages: HTTP ${res.status} — returning []`)
+      return []
     }
-  )
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch pages: ${res.status}`)
+    const data = await res.json()
+    return data.docs || []
+  } catch (err) {
+    console.warn(`[payload] getPages: network error (${(err as Error).message}) — returning []`)
+    return []
   }
-
-  const data = await res.json()
-  return data.docs || []
 }
 
 export async function getPageBySlug(slug: string): Promise<Page | null> {
-  const res = await fetch(
-    `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[slug][equals]=${slug}&where[_status][equals]=published&depth=1`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+  try {
+    const res = await fetch(
+      `${PAYLOAD_API_URL}/pages?where[tenant.slug][equals]=${TENANT_SLUG}&where[slug][equals]=${slug}&where[_status][equals]=published&depth=1`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    if (!res.ok) {
+      console.warn(`[payload] getPageBySlug: HTTP ${res.status} for slug="${slug}" — returning null`)
+      return null
     }
-  )
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch page: ${res.status}`)
+    const data = await res.json()
+    return data.docs?.[0] || null
+  } catch (err) {
+    console.warn(`[payload] getPageBySlug: network error for slug="${slug}" (${(err as Error).message}) — returning null`)
+    return null
   }
-
-  const data = await res.json()
-  return data.docs?.[0] || null
 }
 
 /**
@@ -75,31 +87,51 @@ export async function getPageBySlugDraft(slug: string, secret: string): Promise<
 }
 
 export async function getHeader(): Promise<Header | null> {
-  const res = await fetch(`${PAYLOAD_API_URL}/globals/header`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  try {
+    const res = await fetch(
+      `${PAYLOAD_API_URL}/header?where[tenant.slug][equals]=${TENANT_SLUG}&limit=1&depth=1`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
 
-  if (!res.ok) {
+    if (!res.ok) {
+      console.warn(`[payload] getHeader: HTTP ${res.status} — returning null`)
+      return null
+    }
+
+    const data = await res.json()
+    return data.docs?.[0] || null
+  } catch (err) {
+    console.warn(`[payload] getHeader: network error (${(err as Error).message}) — returning null`)
     return null
   }
-
-  return res.json()
 }
 
 export async function getFooter(): Promise<Footer | null> {
-  const res = await fetch(`${PAYLOAD_API_URL}/globals/footer`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  try {
+    const res = await fetch(
+      `${PAYLOAD_API_URL}/footer?where[tenant.slug][equals]=${TENANT_SLUG}&limit=1&depth=1`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
 
-  if (!res.ok) {
+    if (!res.ok) {
+      console.warn(`[payload] getFooter: HTTP ${res.status} — returning null`)
+      return null
+    }
+
+    const data = await res.json()
+    return data.docs?.[0] || null
+  } catch (err) {
+    console.warn(`[payload] getFooter: network error (${(err as Error).message}) — returning null`)
     return null
   }
-
-  return res.json()
 }
 
 export function renderBlock(block: Block) {

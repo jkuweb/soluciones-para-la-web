@@ -1,0 +1,27 @@
+/*
+ * =============================================================================
+ * Theme: client-owned stylesheet
+ * =============================================================================
+ *
+ * This file is BLOCKLISTED from template sync. Each client overrides these
+ * custom properties to define its own visual identity. The template never
+ * overwrites it.
+ *
+ * Example custom properties a client might set:
+ *
+ *   --color-primary: #e63946;
+ *   --font-heading: 'Playfair Display', serif;
+ *   --radius-card: 12px;
+ *
+ * All values below are sensible defaults. Override by re-declaring in this
+ * file inside the client project — no template changes needed.
+ */
+
+:root {
+  --color-primary: #007bff;
+  --color-primary-hover: #0056b3;
+  --font-heading: 'Georgia', serif;
+  --font-body: system-ui, sans-serif;
+  --radius-card: 8px;
+  --transition-base: 200ms ease;
+}
