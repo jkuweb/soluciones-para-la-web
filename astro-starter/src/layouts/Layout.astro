@@ -1,6 +1,9 @@
 ---
-import Link from "@/components/Link.astro";
-import { getHeader, getFooter, getMediaUrl } from "@/lib/payload";
+import SeoHead from '@/components/shared/SeoHead.astro'
+import Link from '@/components/Link.astro'
+import FooterBlock from '@/components/FooterBlock/index.astro'
+import { getHeader, getFooter, getMediaUrl } from '@/lib/payload'
+import { SITE_CONFIG } from '@/content/site.config'
 
 interface SEO {
   title?: string;
@@ -29,46 +32,58 @@ const footer = await getFooter();
   <head>
     <meta charset='UTF-8' />
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <title>{seoTitle}</title>
-    {seoDescription && <meta name='description' content={seoDescription} />}
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={seoTitle} />
-    {seoDescription && <meta property="og:description" content={seoDescription} />}
-    {seoImage && <meta property="og:image" content={seoImage} />}
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="robots" content="index, follow" />
+    <SeoHead title={seoTitle} description={seoDescription} imageUrl={seoImage} />
     <link rel='stylesheet' href='/styles/variables.css' />
     <link rel='stylesheet' href='/styles/global.css' />
   </head>
   <body>
     {
-      header?.navItems && header.navItems.length > 0 && (
+      (header?.logo ||
+        (header?.navItems && header.navItems.length > 0) ||
+        (header?.ctaText && header?.ctaLink)) && (
         <header>
-          <nav>
-            {header.navItems.map((item) => (
-              <Link link={item.link} />
-            ))}
-          </nav>
+          {header?.logo && (
+            <a href="/" class='site-logo' aria-label={`${SITE_CONFIG.siteName} — inicio`}>
+              <img
+                src={getMediaUrl(header.logo.url)}
+                alt={header.logo.alt?.trim() || SITE_CONFIG.siteName}
+              />
+            </a>
+          )}
+          {header?.navItems && header.navItems.length > 0 && (
+            <nav aria-label='Principal'>
+              {header.navItems.map((item) => (
+                <Link link={item.link} />
+              ))}
+            </nav>
+          )}
+          {header?.ctaText && header?.ctaLink && (
+            <a
+              href={
+                header.ctaLink.type === 'reference' &&
+                typeof header.ctaLink.reference?.value === 'object' &&
+                header.ctaLink.reference.value?.slug
+                  ? `/${header.ctaLink.reference.value.slug}`
+                  : header.ctaLink.url
+              }
+              class='site-cta'
+              {...(header.ctaLink.newTab
+                ? { rel: 'noopener noreferrer', target: '_blank' }
+                : {})}
+            >
+              {header.ctaText}
+            </a>
+          )}
         </header>
       )
     }
     <main>
       <slot />
     </main>
-    {
-      footer && (
-        <footer>
-          <div>
-            {footer.navItems?.map((item) => (
-              <Link link={item.link} />
-            ))}
-          </div>
-          {footer.copyright && <p>{footer.copyright}</p>}
-          {footer.socialLinks?.map((item) => (
-            <Link link={item.link} />
-          ))}
-        </footer>
-      )
-    }
+    <FooterBlock
+      navItems={footer?.navItems}
+      copyright={footer?.copyright}
+      socialLinks={footer?.socialLinks}
+    />
   </body>
 </html>
