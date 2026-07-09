@@ -1,7 +1,7 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 
-const run = async (): Promise<void> => {
+export const run = async (): Promise<void> => {
   const payload = await getPayload({ config })
 
   await payload.update({
