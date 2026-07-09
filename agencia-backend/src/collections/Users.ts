@@ -43,6 +43,10 @@ export const Users: CollectionConfig = {
       sameSite: 'None',
       secure: false,
     },
+    // Disable login throttling outside production so local work doesn't
+    // lock the super-admin out. Production keeps the default 5 attempts
+    // per 10 minutes for anti-brute-force protection.
+    maxLoginAttempts: process.env.NODE_ENV === 'production' ? 5 : 0,
   },
   access: {
     // Read: super-admin sees all, tenant-admin sees only users in their tenants
