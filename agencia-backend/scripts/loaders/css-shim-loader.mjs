@@ -7,15 +7,28 @@
 //   pnpm exec tsx --import ./scripts/loaders/css-shim-loader.mjs scripts/foo.ts
 
 const EMPTY_MODULE_SOURCE = 'export default {};'
-const EMPTY_MODULE_URL = `data:text/javascript;base64,${Buffer.from(EMPTY_MODULE_SOURCE).toString('base64')}`
 
 export function resolve(specifier, context, nextResolve) {
   if (specifier.endsWith('.css')) {
     return {
-      url: EMPTY_MODULE_URL,
+      url: 'data:text/javascript,export default {};',
       shortCircuit: true,
       format: 'module',
     }
   }
   return nextResolve(specifier, context)
+}
+
+export function load(url, context, nextLoad) {
+  // Some bundlers (e.g. tsx) append ?tsx-namespace=... to data: URLs and
+  // then fail to parse them. Strip the suffix so any data: URL we return
+  // is treated as a plain JS module.
+  if (url.startsWith('data:text/javascript')) {
+    return {
+      format: 'module',
+      source: EMPTY_MODULE_SOURCE,
+      shortCircuit: true,
+    }
+  }
+  return nextLoad(url, context)
 }
