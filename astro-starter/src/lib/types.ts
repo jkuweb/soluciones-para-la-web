@@ -118,6 +118,12 @@ export interface Header {
   tenant: string | { slug: string }
   createdAt: string
   updatedAt: string
+  /**
+   * 'simple' renders every nav item as a flat link, ignoring any subItems
+   * present in the data. 'withSubItems' (or undefined for legacy headers)
+   * keeps the mega-menu behaviour. Controlled by super-admin only.
+   */
+  navigationType?: 'simple' | 'withSubItems'
   navItems?: {
     id?: string
     title: string

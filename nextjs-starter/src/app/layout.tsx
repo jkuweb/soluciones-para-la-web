@@ -37,16 +37,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 />
               </a>
             )}
-            {header?.navItems && header.navItems.length > 0 && (
+              {header?.navItems && header.navItems.length > 0 && (
               <nav aria-label="Principal">
                 <ul>
-                  {header.navItems.map((item) => (
+                  {header.navItems.map((item) => {
+                    // 'simple' navigation renders every item as a flat link,
+                    // ignoring any subItems the row may still have in the DB.
+                    // 'withSubItems' (or undefined, for backwards compat) keeps
+                    // the mega-menu behaviour.
+                    const renderSubItems =
+                      header.navigationType !== 'simple' &&
+                      (item.subItems?.length ?? 0) > 0
+                    return (
                     <li key={item.id}>
-                      {item.subItems && item.subItems.length > 0 ? (
+                      {renderSubItems ? (
                         <details>
                           <summary>{item.title}</summary>
                           <ul>
-                            {item.subItems.map((sub) => (
+                            {item.subItems?.map((sub) => (
                               <li key={sub.id}>
                                 <Link link={sub.link}>
                                   {sub.enableImage && sub.image?.url && (
@@ -72,7 +80,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                         <span>{item.title}</span>
                       )}
                     </li>
-                  ))}
+                    )
+                  })}
                 </ul>
               </nav>
             )}
