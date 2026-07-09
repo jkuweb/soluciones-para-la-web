@@ -12,6 +12,7 @@ let secondTenantId: number | string
 let secondTenantSlug: string
 let headerId: number | string
 let footerId: number | string
+let tenantAdminUserId: number | string | undefined
 
 describe('Header and Footer Collections', () => {
   beforeAll(async () => {
@@ -58,6 +59,9 @@ describe('Header and Footer Collections', () => {
       // Clean up in reverse dependency order
       try { await payload.delete({ collection: 'header', id: headerId, overrideAccess: true }) } catch { /* ignore */ }
       try { await payload.delete({ collection: 'footer', id: footerId, overrideAccess: true }) } catch { /* ignore */ }
+      if (tenantAdminUserId !== undefined) {
+        try { await payload.delete({ collection: 'users', id: tenantAdminUserId, overrideAccess: true }) } catch { /* ignore */ }
+      }
       try { await payload.delete({ collection: 'tenants', id: secondTenantId, overrideAccess: true }) } catch { /* ignore */ }
       try { await payload.delete({ collection: 'tenants', id: tenantId, overrideAccess: true }) } catch { /* ignore */ }
     }
@@ -133,6 +137,174 @@ describe('Header and Footer Collections', () => {
       })
 
       expect(otherHeaders.docs).toHaveLength(0)
+    })
+
+    it('defaults navigationType to "withSubItems" for backwards compatibility', async () => {
+      const fetched = await payload.findByID({
+        collection: 'header',
+        id: headerId,
+        overrideAccess: true,
+      })
+
+      expect(fetched.navigationType).toBe('withSubItems')
+    })
+
+    it('supports a "simple" navigation with flat links (no subItems)', async () => {
+      const updated = await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: {
+          navigationType: 'simple',
+          navItems: [
+            {
+              title: 'Inicio',
+              link: { type: 'custom', url: '/', newTab: false },
+            },
+            {
+              title: 'Contacto',
+              link: { type: 'custom', url: '/contacto', newTab: false },
+            },
+          ],
+        },
+        overrideAccess: true,
+      })
+
+      expect(updated.navigationType).toBe('simple')
+      expect(updated.navItems).toHaveLength(2)
+      expect(updated.navItems?.[0]?.title).toBe('Inicio')
+      // Payload normalises an empty array to [] (not undefined). We only care
+      // that no sub-items were attached for the "simple" navigation type.
+      expect(updated.navItems?.[0]?.subItems?.length ?? 0).toBe(0)
+    })
+
+    it('supports "withSubItems" navigation with sub-items persisted', async () => {
+      const updated = await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: {
+          navigationType: 'withSubItems',
+          navItems: [
+            {
+              title: 'Servicios',
+              link: { type: 'custom', url: '/servicios', newTab: false },
+              subItems: [
+                {
+                  title: 'Diseño web',
+                  description: 'Diseño moderno y responsivo',
+                  link: { type: 'custom', url: '/servicios/diseno', newTab: false },
+                },
+              ],
+            },
+          ],
+        },
+        overrideAccess: true,
+      })
+
+      expect(updated.navigationType).toBe('withSubItems')
+      expect(updated.navItems?.[0]?.subItems).toHaveLength(1)
+      expect(updated.navItems?.[0]?.subItems?.[0]?.title).toBe('Diseño web')
+    })
+
+    it('exposes navigationType in the REST API payload', async () => {
+      await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: { navigationType: 'simple' },
+        overrideAccess: true,
+      })
+
+      const headers = await payload.find({
+        collection: 'header',
+        where: { 'tenant.slug': { equals: tenantSlug } },
+        overrideAccess: true,
+      })
+
+      expect(headers.docs[0].navigationType).toBe('simple')
+    })
+
+    it('blocks tenant-admin from changing navigationType (only super-admin can)', async () => {
+      // Reset the header to a known state for this test.
+      await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: { navigationType: 'withSubItems' },
+        overrideAccess: true,
+      })
+
+      // Create a tenant-admin user scoped to the test tenant.
+      const ts = Date.now()
+      const tenantAdmin = await payload.create({
+        collection: 'users',
+        data: {
+          email: `tenant-admin-header-${ts}@example.com`,
+          password: 'password123',
+          name: 'Tenant Admin (header test)',
+          roles: 'tenant-admin',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          tenants: [{ tenant: tenantId }] as any,
+        },
+        overrideAccess: true,
+      })
+      tenantAdminUserId = tenantAdmin.id
+
+      // Sanity check: tenant-admin can still edit navItems (content edit allowed).
+      const allowed = await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: {
+          navItems: [
+            {
+              title: 'Tenant-edited item',
+              link: { type: 'custom', url: '/x', newTab: false },
+            },
+          ],
+        },
+        user: tenantAdmin,
+        overrideAccess: false,
+      })
+      expect(allowed.navItems?.[0]?.title).toBe('Tenant-edited item')
+
+      // The actual assertion: tenant-admin cannot change navigationType.
+      // The field-level access (superAdminOnly) strips or blocks the change.
+      // We pass an explicit navigationType in the update payload; the access
+      // control should prevent it from being persisted.
+      const attempted = await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: {
+          navigationType: 'simple',
+          navItems: [
+            {
+              title: 'Tenant-edited item 2',
+              link: { type: 'custom', url: '/y', newTab: false },
+            },
+          ],
+        },
+        user: tenantAdmin,
+        overrideAccess: false,
+      })
+
+      // navigationType must still be 'withSubItems' (the value before the
+      // tenant-admin's update). The navItem edit itself is allowed.
+      expect(attempted.navigationType).toBe('withSubItems')
+      expect(attempted.navItems?.[0]?.title).toBe('Tenant-edited item 2')
+
+      // And super-admin can still change it normally.
+      const adminChange = await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: { navigationType: 'simple' },
+        overrideAccess: true,
+      })
+      expect(adminChange.navigationType).toBe('simple')
+
+      // Restore the default for the rest of the suite.
+      await payload.update({
+        collection: 'header',
+        id: headerId,
+        data: { navigationType: 'withSubItems' },
+        overrideAccess: true,
+      })
     })
   })
 

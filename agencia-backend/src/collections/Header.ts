@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { link } from '@/fields/link'
 import { ensureUniqueTenant } from '@/collections/Header/hooks/ensureUniqueTenant'
+import { superAdminOnly } from '@/access/superAdminOnly'
 
 export const Header: CollectionConfig = {
   slug: 'header',
@@ -33,6 +34,36 @@ export const Header: CollectionConfig = {
   },
   fields: [
     {
+      name: 'navigationType',
+      type: 'radio',
+      label: 'Tipo de navegación',
+      defaultValue: 'withSubItems',
+      options: [
+        {
+          label: 'Simple (links planos sin subítems)',
+          value: 'simple',
+        },
+        {
+          label: 'Con subítems (mega-menú con dropdowns)',
+          value: 'withSubItems',
+        },
+      ],
+      admin: {
+        layout: 'horizontal',
+        description:
+          'Elegí cómo querés que se renderice la navegación. En modo "Simple" el campo Subítems se oculta para cada item. Solo super-admin puede modificar este campo.',
+      },
+      // Only super-admin can toggle the navigation type. Tenant clients can
+      // still read the value (so the admin.condition on subItems keeps working)
+      // and can still edit navItems, but they cannot switch between simple and
+      // mega-menu.
+      access: {
+        read: () => true,
+        create: superAdminOnly,
+        update: superAdminOnly,
+      },
+    },
+    {
       name: 'navItems',
       type: 'array',
       label: 'Navigation Items',
@@ -53,6 +84,14 @@ export const Header: CollectionConfig = {
           type: 'array',
           label: 'Subítems',
           maxRows: 20,
+          admin: {
+            initCollapsed: true,
+            // Only show sub-items when the header is configured for "withSubItems" navigation.
+            // The first arg (`data`) is the whole document, so we can read navigationType from it.
+            condition: (data) => data?.navigationType === 'withSubItems',
+            description:
+              'Solo disponible cuando el tipo de navegación es "Con subítems".',
+          },
           fields: [
             {
               name: 'title',
@@ -84,9 +123,6 @@ export const Header: CollectionConfig = {
               disableLabel: true,
             }),
           ],
-          admin: {
-            initCollapsed: true,
-          },
         },
       ],
       admin: {

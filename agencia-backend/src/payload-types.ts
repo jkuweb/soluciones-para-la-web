@@ -427,6 +427,10 @@ export interface Media {
 export interface Header {
   id: number;
   tenant?: (number | null) | Tenant;
+  /**
+   * Elegí cómo querés que se renderice la navegación. En modo "Simple" el campo Subítems se oculta para cada item.
+   */
+  navigationType?: ('simple' | 'withSubItems') | null;
   navItems?:
     | {
         title: string;
@@ -967,6 +971,7 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface HeaderSelect<T extends boolean = true> {
   tenant?: T;
+  navigationType?: T;
   navItems?:
     | T
     | {
