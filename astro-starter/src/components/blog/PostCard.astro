@@ -1,0 +1,69 @@
+---
+/**
+ * PostCard — clickable blog post card for index and filter pages.
+ *
+ * Props match the design contract at §9 Frontend Contracts:
+ *   title, slug, publishedAt, heroImage (MediaImage),
+ *   excerpt?, categories? (Array<{ id, title, slug }>)
+ */
+import { getMediaUrl } from '@/lib/payload'
+import type { MediaImage } from '@/lib/types'
+import styles from './PostCard.module.css'
+
+interface Props {
+  title: string
+  slug: string
+  publishedAt: string
+  heroImage: MediaImage
+  excerpt?: string
+  categories?: { id: string; title: string; slug: string }[]
+}
+
+const { title, slug, publishedAt, heroImage, excerpt, categories } = Astro.props
+
+const imageUrl =
+  heroImage.sizes?.card?.url || heroImage.url || ''
+const formattedDate = new Date(publishedAt).toLocaleDateString('es-AR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<article class={styles.card}>
+  <a href={`/blog/post/${slug}`} class={styles.link}>
+    {imageUrl && (
+      <div class={styles.imageWrapper}>
+        <img
+          src={getMediaUrl(imageUrl)}
+          alt={heroImage.alt || title}
+          class={styles.image}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    )}
+
+    <div class={styles.body}>
+      <div class={styles.meta}>
+        <time datetime={publishedAt} class={styles.date}>{formattedDate}</time>
+      </div>
+
+      <h2 class={styles.title}>{title}</h2>
+
+      {excerpt && <p class={styles.excerpt}>{excerpt}</p>}
+
+      {categories && categories.length > 0 && (
+        <ul class={styles.categories} aria-label="Categorías">
+          {categories.map((cat) => (
+            <li>
+              <a href={`/blog/category/${cat.slug}`} class={styles.categoryChip}>
+                {cat.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </a>
+</article>
