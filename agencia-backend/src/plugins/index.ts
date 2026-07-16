@@ -9,7 +9,11 @@ export const plugins: Config['plugins'] = [
       media: {},
       header: {},
       footer: {},
-    },
+      posts: {},
+      categories: {},
+      tags: {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any,
     tenantsSlug: 'tenants',
     userHasAccessToAllTenants: (user: User) => {
       return user?.roles?.includes('super-admin') ?? false

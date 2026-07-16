@@ -8,7 +8,10 @@ import sharp from 'sharp'
 import { Footer } from './collections/Footer'
 import { Header } from './collections/Header'
 import { Media } from './collections/Media'
+import { Categories } from './collections/Categories/Categories'
 import { Pages } from './collections/Pages'
+import { Posts } from './collections/Posts/Posts'
+import { Tags } from './collections/Tags/Tags'
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
 
@@ -55,7 +58,7 @@ export default buildConfig({
       ],
     },
   },
-  collections: [Tenants, Users, Pages, Media, Header, Footer],
+  collections: [Tenants, Users, Posts, Categories, Tags, Pages, Media, Header, Footer],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
