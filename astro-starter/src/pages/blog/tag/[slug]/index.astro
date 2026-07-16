@@ -2,11 +2,10 @@
 /**
  * Tag filter page — posts filtered by tag with ?page=N pagination.
  * SSR-only because pagination uses query params.
- *
- * TODO(PR 3): Replace raw HTML with <PostCard /> component + full CSS.
  */
 import Layout from '@/layouts/Layout.astro'
-import { getTagBySlug, getPostsByTag, getMediaUrl } from '@/lib/payload'
+import PostCard from '@/components/blog/PostCard.astro'
+import { getTagBySlug, getPostsByTag } from '@/lib/payload'
 import type { Tag } from '@/lib/types'
 
 export const prerender = false
@@ -22,36 +21,21 @@ const { docs: posts, totalPages } = await getPostsByTag(slug, page, 10)
 ---
 
 <Layout title={`${tag.title} — Blog`}>
-  <section class="filter-page">
+  <section>
     <h1>{tag.title}</h1>
 
     {posts.length === 0 && <p>No hay artículos con esta etiqueta.</p>}
 
-    <div class="posts-list">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
       {posts.map((post) => (
-        <article class="post-card">
-          <a href={`/blog/post/${post.slug}`}>
-            {(post.heroImage?.sizes?.card?.url || post.heroImage?.url) && (
-              <img
-                src={getMediaUrl(post.heroImage.sizes?.card?.url || post.heroImage.url)}
-                alt={post.heroImage.alt || post.title}
-                loading="lazy"
-              />
-            )}
-            <time datetime={post.publishedAt}>
-              {new Date(post.publishedAt).toLocaleDateString('es-AR', {
-                year: 'numeric', month: 'long', day: 'numeric',
-              })}
-            </time>
-            <h2>{post.title}</h2>
-            {post.excerpt && <p>{post.excerpt}</p>}
-            {post.categories && post.categories.length > 0 && (
-              <ul aria-label="Categorías">
-                {post.categories.map((cat) => <li><a href={`/blog/category/${cat.slug}`}>{cat.title}</a></li>)}
-              </ul>
-            )}
-          </a>
-        </article>
+        <PostCard
+          title={post.title}
+          slug={post.slug}
+          publishedAt={post.publishedAt}
+          heroImage={post.heroImage}
+          excerpt={post.excerpt}
+          categories={post.categories}
+        />
       ))}
     </div>
 

@@ -3,13 +3,10 @@
  * Post detail page.
  *
  * getStaticPaths caps at 200 posts; Astro hybrid mode handles overflow via SSR.
- *
- * TODO(PR 3): Replace raw HTML with <Post /> component.
- * TODO(PR 3): Add full CSS via Post.module.css.
  */
 import Layout from '@/layouts/Layout.astro'
-import { getLatestPosts, getPostBySlug, getMediaUrl } from '@/lib/payload'
-import { serializeLexical } from '@/lib/lexical'
+import PostDetail from '@/components/blog/Post.astro'
+import { getLatestPosts, getPostBySlug } from '@/lib/payload'
 import type { Post } from '@/lib/types'
 
 export async function getStaticPaths() {
@@ -24,41 +21,8 @@ const metaTitle = post.metaTitle || post.title
 const metaDescription = post.metaDescription || post.excerpt || ''
 const metaImageUrl = post.metaImage?.url || post.heroImage?.url || ''
 const seoImage = metaImageUrl ? { url: metaImageUrl } : undefined
-const contentHtml = post.content ? serializeLexical(post.content) : ''
 ---
 
 <Layout title={metaTitle} description={metaDescription} seo={{ title: metaTitle, description: metaDescription, image: seoImage }}>
-  <article class="post-detail">
-    {post.heroImage?.url && (
-      <figure>
-        <img
-          src={getMediaUrl(post.heroImage.sizes?.hero?.url || post.heroImage.url)}
-          alt={post.heroImage.alt || post.title}
-        />
-      </figure>
-    )}
-
-    <header>
-      <h1>{post.title}</h1>
-      <time datetime={post.publishedAt}>
-        {new Date(post.publishedAt).toLocaleDateString('es-AR', {
-          year: 'numeric', month: 'long', day: 'numeric',
-        })}
-      </time>
-    </header>
-
-    {post.categories && post.categories.length > 0 && (
-      <ul aria-label="Categorías">
-        {post.categories.map((cat) => <li><a href={`/blog/category/${cat.slug}`}>{cat.title}</a></li>)}
-      </ul>
-    )}
-
-    {post.tags && post.tags.length > 0 && (
-      <ul aria-label="Etiquetas">
-        {post.tags.map((tag) => <li><a href={`/blog/tag/${tag.slug}`}>{tag.title}</a></li>)}
-      </ul>
-    )}
-
-    {contentHtml && <div class="post-content">{contentHtml}</div>}
-  </article>
+  <PostDetail post={post} />
 </Layout>

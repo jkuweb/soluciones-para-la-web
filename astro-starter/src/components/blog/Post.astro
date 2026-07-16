@@ -1,0 +1,81 @@
+---
+/**
+ * Post — full blog post detail component.
+ *
+ * Accepts the full Post object and renders hero image, title,
+ * date, taxonomy badges, and the Lexical body via serializeLexical.
+ *
+ * SEO meta is handled by the parent page's <Layout> component.
+ */
+import { getMediaUrl } from '@/lib/payload'
+import { serializeLexical } from '@/lib/lexical'
+import type { Post as PostType } from '@/lib/types'
+import styles from './Post.module.css'
+
+interface Props {
+  post: PostType
+}
+
+const { post } = Astro.props
+const heroImageUrl = post.heroImage?.sizes?.hero?.url || post.heroImage?.url || ''
+const contentHtml = post.content ? serializeLexical(post.content) : ''
+const formattedDate = new Date(post.publishedAt).toLocaleDateString('es-AR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<article class={styles.article}>
+  {heroImageUrl && (
+    <figure class={styles.heroFigure}>
+      <img
+        src={getMediaUrl(heroImageUrl)}
+        alt={post.heroImage?.alt || post.title}
+        class={styles.heroImage}
+        decoding="async"
+      />
+    </figure>
+  )}
+
+  <header class={styles.header}>
+    <h1 class={styles.title}>{post.title}</h1>
+    <time datetime={post.publishedAt} class={styles.date}>{formattedDate}</time>
+  </header>
+
+  {(post.categories && post.categories.length > 0) || (post.tags && post.tags.length > 0) ? (
+    <div class={styles.taxonomy}>
+      {post.categories && post.categories.length > 0 && (
+        <div class={styles.taxonomyGroup}>
+          <span class={styles.taxonomyLabel}>Categorías</span>
+          <ul class={styles.taxonomyList} aria-label="Categorías">
+            {post.categories.map((cat) => (
+              <li>
+                <a href={`/blog/category/${cat.slug}`} class={styles.chip}>
+                  {cat.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {post.tags && post.tags.length > 0 && (
+        <div class={styles.taxonomyGroup}>
+          <span class={styles.taxonomyLabel}>Etiquetas</span>
+          <ul class={styles.taxonomyList} aria-label="Etiquetas">
+            {post.tags.map((tag) => (
+              <li>
+                <a href={`/blog/tag/${tag.slug}`} class={styles.chip}>
+                  {tag.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  ) : null}
+
+  {contentHtml && <div class={styles.content}>{contentHtml}</div>}
+</article>
