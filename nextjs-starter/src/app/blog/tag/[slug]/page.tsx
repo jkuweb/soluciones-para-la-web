@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
-import { getTagBySlug, getPostsByTag, getMediaUrl } from '@/lib/payload'
+import { getTagBySlug, getPostsByTag } from '@/lib/payload'
+import PostCard from '@/components/blog/PostCard'
 import type { Metadata } from 'next'
 
 type Params = Promise<{ slug: string }>
@@ -37,27 +38,15 @@ export default async function TagPage({
         }}
       >
         {posts.map((post) => (
-          <article key={post.id}>
-            {post.heroImage?.url && (
-              <img
-                src={getMediaUrl(post.heroImage.url)}
-                alt={post.heroImage.alt || ''}
-                style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
-              />
-            )}
-            {/* TODO PR 5: Replace with PostCard component */}
-            <h2>
-              <a href={`/blog/post/${post.slug}`}>{post.title}</a>
-            </h2>
-            {post.excerpt && <p>{post.excerpt}</p>}
-            <time dateTime={post.publishedAt}>
-              {new Intl.DateTimeFormat('es-ES', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              }).format(new Date(post.publishedAt))}
-            </time>
-          </article>
+          <PostCard
+            key={post.id}
+            title={post.title}
+            slug={post.slug}
+            publishedAt={post.publishedAt}
+            heroImage={post.heroImage}
+            excerpt={post.excerpt}
+            categories={post.categories}
+          />
         ))}
       </div>
       {totalPages > 1 && (
