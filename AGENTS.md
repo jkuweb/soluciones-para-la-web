@@ -151,11 +151,11 @@ Templates live in this monorepo (`astro-starter/`, `nextjs-starter/`), but each 
 
 Only files in a curated allowlist are candidates for sync. Everything else is left alone. A blocklist is always protected.
 
-| Group                     | Files                                                                                                                                                                             |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Astro allowlist           | `astro.config.mjs`, `tsconfig.json`, `src/lib/{payload,types,lexical}.ts`, `src/components/BlockRenderer.astro`, `src/layouts/Layout.astro`, `src/pages/{[slug],index,404}.astro` |
-| Next.js allowlist         | `next.config.ts`, `tsconfig.json`, `src/lib/{payload,types,lexical}.ts`, `src/components/BlockRenderer.tsx`, `src/app/{layout,page,not-found}.tsx`, `src/app/[slug]/page.tsx`     |
-| Blocklist (never touched) | `src/styles/*.css`, `src/components/blocks/*`, `src/components/**/styles.css`, `.env`, `.env.example`, `.env.local`, `node_modules/`, `dist/`, `.next/`, `.astro/`, `public/`     |
+| Group                     | Files                                                                                                                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Astro allowlist           | `astro.config.mjs`, `tsconfig.json`, `src/lib/{payload,types,lexical}.ts`, `src/components/BlockRenderer.astro`, `src/layouts/Layout.astro`, `src/pages/{[slug],index,404}.astro`, `src/components/blog/{PostCard,Post}.astro`, `src/components/blog/{PostCard,Post}.module.css`, `src/pages/blog/{index,post/[slug],category/[slug]/index,tag/[slug]/index}.astro` |
+| Next.js allowlist         | `next.config.ts`, `tsconfig.json`, `src/lib/{payload,types,lexical}.ts`, `src/components/BlockRenderer.tsx`, `src/app/{layout,page,not-found}.tsx`, `src/app/[slug]/page.tsx`, `src/components/blog/{PostCard,Post}.tsx`, `src/components/blog/{PostCard,Post}.module.css`, `src/app/blog/{page,post/[slug]/page,category/[slug]/page,tag/[slug]/page}.tsx` |
+| Blocklist (never touched) | `src/styles/*.css`, `src/components/blocks/*`, `src/components/**/styles.css`, `.env`, `.env.example`, `.env.local`, `node_modules/`, `dist/`, `.next/`, `.astro/`, `public/`                                                |
 
 Both modes (dry-run and apply) honour the allowlist and blocklist. On apply, every changed file is backed up as `<file>.bak-<unix-ts>` next to itself.
 
