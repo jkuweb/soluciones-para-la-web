@@ -156,3 +156,61 @@ export interface Footer {
     links: { id: string; link: Link }[]
   }[]
 }
+
+// ── Blog types ──────────────────────────────────────────────────────────────
+
+export interface Post {
+  id: string
+  slug: string
+  title: string
+  heroImage: MediaImage
+  content: LexicalNode | { root: LexicalNode }
+  categories?: { id: string; title: string; slug: string }[]
+  tags?: { id: string; title: string; slug: string }[]
+  publishedAt: string
+  excerpt?: string
+  metaTitle?: string
+  metaDescription?: string
+  metaImage?: MediaImage
+}
+
+export interface Category {
+  id: string
+  title: string
+  slug: string
+}
+
+export interface Tag {
+  id: string
+  title: string
+  slug: string
+}
+
+// ── Blog types ──────────────────────────────────────────────────────────────
+
+export interface Post {
+  id: string
+  slug: string
+  title: string
+  heroImage: MediaImage
+  content: LexicalNode | { root: LexicalNode }
+  categories?: { id: string; title: string; slug: string }[]
+  tags?: { id: string; title: string; slug: string }[]
+  publishedAt: string
+  excerpt?: string
+  metaTitle?: string
+  metaDescription?: string
+  metaImage?: MediaImage
+}
+
+export interface Category {
+  id: string
+  title: string
+  slug: string
+}
+
+export interface Tag {
+  id: string
+  title: string
+  slug: string
+}

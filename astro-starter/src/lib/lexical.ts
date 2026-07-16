@@ -72,6 +72,10 @@ function serializeNode(node: LexicalNode): string {
     return '<br />'
   }
 
+  if (node.type === 'horizontalrule') {
+    return '<hr />'
+  }
+
   if (node.children) {
     return node.children.map(serializeNode).join('') || ''
   }
