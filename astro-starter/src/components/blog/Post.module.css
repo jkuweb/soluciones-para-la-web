@@ -3,7 +3,6 @@
   margin: 0 auto;
   padding: 0 16px;
 }
-
 .heroFigure {
   margin: 0 0 32px;
   border-radius: 12px;
@@ -13,10 +12,9 @@
   width: 100%;
   height: auto;
   display: block;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16/9;
   object-fit: cover;
 }
-
 .header {
   margin-bottom: 24px;
 }
@@ -34,7 +32,6 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-
 .taxonomy {
   display: flex;
   flex-wrap: wrap;
@@ -79,7 +76,6 @@
 .chip:hover {
   background: color-mix(in srgb, var(--color-accent, #2563eb) 20%, transparent);
 }
-
 .content {
   font-size: 1.05rem;
   line-height: 1.75;
@@ -141,7 +137,6 @@
 .content :global(strong) {
   font-weight: 600;
 }
-
 @media (max-width: 640px) {
   .article {
     padding: 0 12px;
