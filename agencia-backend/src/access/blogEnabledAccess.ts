@@ -84,10 +84,17 @@ export const blogEnabledTenantAccess: Access = async (args) => {
   const payload = req.payload
   if (!user) return false
 
-  const allowedIds = await resolveBlogEnabledTenants({ user, payload })
-  if (allowedIds.length === 0) return false
+  // super-admin: acceso total (no pasamos por el helper porque sus
+  // `user.tenants` pueden venir sin poblar y la postura segura es dejarlo
+  // entrar a todo).
+  if (user?.roles?.includes('super-admin')) return true
 
-  // En create, si el cliente envió un tenant explícito, debe estar permitido.
+  const allowedIds = await resolveBlogEnabledTenants({ user, payload })
+
+  // Validar data.tenant ANTES de aplicar el where. Si el usuario envió un
+  // tenant explícito en create/update, debe estar permitido. Si no hay
+  // allowedIds (usuario sin tenants con blog), cualquier submitted.tenant
+  // implica Forbidden (no se puede escribir en ningún tenant del usuario).
   if ('data' in args && args.data && typeof args.data === 'object') {
     const submitted = (args.data as { tenant?: TenantId | { id: TenantId } }).tenant
     if (submitted != null) {
@@ -97,6 +104,13 @@ export const blogEnabledTenantAccess: Access = async (args) => {
           : (submitted as TenantId)
       if (!allowedIds.includes(submittedId)) return false
     }
+  }
+
+  if (allowedIds.length === 0) {
+    // Sin tenants con blog: para read significa 0 resultados visibles
+    // (where con lista vacía). Para write sin data.tenant submitted,
+    // el where vacío también bloquea (no hay matches válidos).
+    return { tenant: { in: [] } }
   }
 
   return { tenant: { in: allowedIds } }
@@ -109,11 +123,20 @@ export const blogEnabledTenantAccess: Access = async (args) => {
  * Es síncrono desde el punto de vista de Payload: retorna un where object.
  * No consulta DB (no puede — el caso es sin user).
  */
-export const blogEnabledPublicRead: Access = () => {
+export const blogEnabledPublicRead: Access = async ({ req }) => {
+  const payload = req.payload
+  const tenants = await payload.find({
+    collection: 'tenants',
+    where: { blogEnabled: { equals: true } },
+    pagination: false,
+    overrideAccess: true,
+    depth: 0,
+  })
+  const tenantIds = tenants.docs.map((t) => t.id)
   return {
     and: [
       { _status: { equals: 'published' } },
-      { 'tenant.blogEnabled': { equals: true } },
+      { tenant: { in: tenantIds } },
     ],
   } as Where
 }
@@ -135,9 +158,8 @@ export const blogEnabledPostRead: Access = async ({ req }) => {
 
   const allowedIds = await resolveBlogEnabledTenants({ user, payload })
   if (allowedIds.length === 0) {
-    // Comportamiento defensivo: si un user autenticado no tiene tenants
-    // con blog, no ve nada. Coherente con la intención.
-    return false
+    // User autenticado sin tenants con blog: 0 resultados visibles, no Forbidden.
+    return { tenant: { in: [] } }
   }
   return { tenant: { in: allowedIds } }
 }
