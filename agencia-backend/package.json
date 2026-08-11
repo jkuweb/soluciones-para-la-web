@@ -10,6 +10,8 @@
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
+    "generate:types:shimmed": "node scripts/loaders/run-with-css.mjs scripts/generate-types-shimmed.ts",
+    "backfill:blog-enabled": "node scripts/loaders/run-with-css.mjs scripts/backfill-blog-enabled.ts",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",

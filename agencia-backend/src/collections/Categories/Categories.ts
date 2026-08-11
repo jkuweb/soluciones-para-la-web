@@ -1,6 +1,6 @@
 import type { CollectionConfig, Condition } from 'payload'
 import { slugField } from 'payload'
-import { tenantAccess } from '@/access/tenantAccess'
+import { blogEnabledTenantAccess } from '@/access/blogEnabledAccess'
 import { validateUniqueSlug } from '@/utilities/validateUniqueSlug'
 
 /**
@@ -24,10 +24,10 @@ export const Categories: CollectionConfig = {
     group: 'Blog',
   },
   access: {
-    read: tenantAccess(),
-    create: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
-    update: tenantAccess(),
-    delete: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+    read: blogEnabledTenantAccess,
+    create: blogEnabledTenantAccess,
+    update: blogEnabledTenantAccess,
+    delete: blogEnabledTenantAccess,
   },
   hooks: {
     beforeValidate: [

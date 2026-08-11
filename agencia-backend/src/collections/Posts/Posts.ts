@@ -10,8 +10,10 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
-import { authenticatedOrPublished } from '@/access/authenticatedOrPublished'
-import { tenantAccess } from '@/access/tenantAccess'
+import {
+  blogEnabledPostRead,
+  blogEnabledTenantAccess,
+} from '@/access/blogEnabledAccess'
 import { generateSlug } from '@/collections/Posts/hooks/generateSlug'
 import { validateUniqueSlug } from '@/utilities/validateUniqueSlug'
 
@@ -41,10 +43,10 @@ export const Posts: CollectionConfig = {
     beforeChange: [validateUniqueSlug('posts')],
   },
   access: {
-    read: authenticatedOrPublished,
-    create: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
-    update: tenantAccess(),
-    delete: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+    read: blogEnabledPostRead,
+    create: blogEnabledTenantAccess,
+    update: blogEnabledTenantAccess,
+    delete: blogEnabledTenantAccess,
   },
   endpoints: [
     {

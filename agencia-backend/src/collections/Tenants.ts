@@ -99,5 +99,23 @@ export const Tenants: CollectionConfig = {
         { label: '100% Pagado', value: 'fully-paid' },
       ],
     },
+    {
+      name: 'blogEnabled',
+      type: 'checkbox',
+      label: 'Blog activado',
+      defaultValue: false,
+      admin: {
+        description:
+          'Permite al cliente crear y gestionar sus posts, categorías y etiquetas. Si está desactivado, el cliente no ve contenido del blog vía API y no puede escribir desde el admin.',
+        position: 'sidebar',
+      },
+      access: {
+        // Solo super-admin puede togglear este flag.
+        // `read` queda en default (visible a usuarios autenticados para
+        // que el admin cliente lo vea, aunque sea solo lectura).
+        create: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+        update: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+      },
+    },
   ],
 }
