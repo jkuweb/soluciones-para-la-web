@@ -11,9 +11,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@astrojs/node": "^8.3.4",
+    "@astrojs/node": "^9.5.5",
     "@payloadcms/live-preview": "3.85.1",
-    "astro": "^4.0.0"
+    "astro": "^5.18.2"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
