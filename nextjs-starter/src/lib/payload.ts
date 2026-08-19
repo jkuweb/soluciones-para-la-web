@@ -18,10 +18,39 @@ const API_BASE_URL = PAYLOAD_API_URL.replace(/\/api\/?$/, '')
 
 function toAbsoluteMedia(media: MediaImage | undefined): MediaImage | undefined {
   if (!media) return undefined
-  if (!media.url || media.url.startsWith('http://') || media.url.startsWith('https://')) {
-    return media
+  const toAbs = (url?: string): string | undefined =>
+    url && !url.startsWith('http://') && !url.startsWith('https://')
+      ? `${API_BASE_URL}${url}`
+      : url
+
+  const sizes = media.sizes
+    ? {
+        thumbnail: media.sizes.thumbnail
+          ? {
+              ...media.sizes.thumbnail,
+              url: toAbs(media.sizes.thumbnail.url) ?? media.sizes.thumbnail.url,
+            }
+          : media.sizes.thumbnail,
+        card: media.sizes.card
+          ? {
+              ...media.sizes.card,
+              url: toAbs(media.sizes.card.url) ?? media.sizes.card.url,
+            }
+          : media.sizes.card,
+        hero: media.sizes.hero
+          ? {
+              ...media.sizes.hero,
+              url: toAbs(media.sizes.hero.url) ?? media.sizes.hero.url,
+            }
+          : media.sizes.hero,
+      }
+    : media.sizes
+
+  return {
+    ...media,
+    url: toAbs(media.url) ?? media.url,
+    sizes,
   }
-  return { ...media, url: `${API_BASE_URL}${media.url}` }
 }
 
 function normalizeBlock(block: Block): Block {
