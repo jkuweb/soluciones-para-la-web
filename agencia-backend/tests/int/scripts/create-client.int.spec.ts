@@ -101,6 +101,7 @@ describe('buildTenantData', () => {
       status: 'pending',
       projectPrice: 1500,
       maintenanceFee: 79,
+      blogEnabled: false,
     }
     const data = buildTenantData(input)
     expect(data).toEqual({
@@ -112,6 +113,7 @@ describe('buildTenantData', () => {
       status: 'pending',
       projectPrice: 1500,
       maintenanceFee: 79,
+      blogEnabled: false,
     })
   })
 
@@ -123,6 +125,7 @@ describe('buildTenantData', () => {
       serviceType: 'tienda-online',
       frontendType: 'nextjs',
       status: 'active',
+      blogEnabled: false,
     }
     const data = buildTenantData(input)
     expect(data).not.toHaveProperty('projectPrice')
@@ -414,6 +417,7 @@ describe('confirmSummary', () => {
         serviceType: 'web-estatica',
         frontendType: 'astro',
         status: 'pending',
+        blogEnabled: false,
       },
       { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' },
     )
@@ -430,6 +434,7 @@ describe('confirmSummary', () => {
         serviceType: 'web-estatica',
         frontendType: 'astro',
         status: 'pending',
+        blogEnabled: false,
       },
       { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' },
     )

@@ -33,6 +33,7 @@ export type TenantInput = {
   status: TenantStatus
   projectPrice?: number
   maintenanceFee?: number
+  blogEnabled: boolean
 }
 
 export type UserInput = {
@@ -51,6 +52,7 @@ export const buildTenantData = (input: TenantInput): Record<string, unknown> => 
     serviceType: input.serviceType,
     frontendType: input.frontendType,
     status: input.status,
+    blogEnabled: input.blogEnabled,
   }
   if (input.projectPrice !== undefined) data.projectPrice = input.projectPrice
   if (input.maintenanceFee !== undefined) data.maintenanceFee = input.maintenanceFee
@@ -162,6 +164,12 @@ export const promptTenant = async (): Promise<TenantInput> => {
     ],
   })) as FrontendType
 
+  const blogEnabled = await p.confirm({
+    message: '¿El proyecto necesita blog?',
+    initialValue: false,
+  })
+  if (p.isCancel(blogEnabled)) process.exit(0)
+
   const status = (await p.select({
     message: 'Estado:',
     initialValue: 'pending' as TenantStatus,
@@ -189,6 +197,7 @@ export const promptTenant = async (): Promise<TenantInput> => {
     serviceType,
     frontendType,
     status,
+    blogEnabled: blogEnabled === true,
     projectPrice: projectPriceStr ? Number(projectPriceStr) : undefined,
     maintenanceFee: maintenanceFeeStr ? Number(maintenanceFeeStr) : undefined,
   }
@@ -234,6 +243,7 @@ export const confirmSummary = async (tenant: TenantInput, user: UserInput): Prom
   console.log(`  serviceType: ${tenant.serviceType}`)
   console.log(`  frontendType: ${tenant.frontendType}`)
   console.log(`  status: ${tenant.status}`)
+  console.log(`  blogEnabled: ${tenant.blogEnabled ? 'sí' : 'no'}`)
   if (tenant.projectPrice) console.log(`  projectPrice: €${tenant.projectPrice}`)
   if (tenant.maintenanceFee) console.log(`  maintenanceFee: €${tenant.maintenanceFee}`)
   console.log(`User: ${user.email} (${user.role})`)
@@ -249,6 +259,7 @@ export const printSuccess = (info: {
   userEmail: string
   userPassword: string
   frontendPath: string
+  blogPageId?: number
 }): void => {
   console.log('\n========================================')
   console.log('  Cliente creado!')
@@ -256,6 +267,7 @@ export const printSuccess = (info: {
   console.log(`  Tenant:     ${info.tenantSlug}`)
   console.log(`  User:       ${info.userEmail} / ${info.userPassword}`)
   console.log(`  Frontend:   ${info.frontendPath}`)
+  if (info.blogPageId) console.log(`  Blog page:  ID ${info.blogPageId} (slug "blog", published)`)
   console.log('  Próximos pasos:')
   console.log('    1. Crear las páginas en el admin de Payload')
   console.log(`    2. cd ${info.frontendPath}`)
@@ -298,6 +310,18 @@ export const run = async (): Promise<void> => {
   }
   p.log.success(`User creado (ID: ${user.id})`)
 
+  // 2.5. Si el tenant pidió blog, crear la página "blog" automáticamente
+  let blogPage: { id: number } | undefined
+  if (tenantInput.blogEnabled) {
+    try {
+      blogPage = await createBlogPage(tenant.id)
+      p.log.success(`Página "blog" creada (ID: ${blogPage.id})`)
+    } catch (err) {
+      p.log.warn(`No se pudo crear la página "blog": ${(err as Error).message}`)
+      p.log.warn('La podés crear manualmente desde el admin de Payload (slug "blog").')
+    }
+  }
+
   // 3. Clonar template + generar .env
   const srcDir = path.join(TEMPLATES_DIR, `${tenantInput.frontendType}-starter`)
   const destDir = path.join(CLIENTS_DIR, tenantInput.slug)
@@ -335,6 +359,7 @@ export const run = async (): Promise<void> => {
     userEmail: userInput.email,
     userPassword: userInput.password,
     frontendPath: destDir,
+    blogPageId: blogPage?.id,
   })
 }
 
@@ -367,6 +392,25 @@ export const createUser = async (
 export const deleteTenant = async (tenantId: number): Promise<void> => {
   const payload = await getPayload({ config })
   await payload.delete({ collection: 'tenants', id: tenantId })
+}
+
+export const createBlogPage = async (tenantId: number): Promise<{ id: number }> => {
+  const payload = await getPayload({ config })
+  return payload.create({
+    collection: 'pages',
+    data: {
+      slug: 'blog',
+      title: 'Blog',
+      tenant: tenantId,
+      _status: 'published',
+      layout: [],
+    },
+  }) as Promise<{ id: number }>
+}
+
+export const deleteBlogPage = async (pageId: number): Promise<void> => {
+  const payload = await getPayload({ config })
+  await payload.delete({ collection: 'pages', id: pageId })
 }
 
 export const isSlugTaken = async (slug: string): Promise<boolean> => {
