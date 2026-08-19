@@ -68,6 +68,8 @@ const ALLOWLIST_ASTRO: readonly string[] = [
   'src/components/blog/PostCard.module.css',
   'src/components/blog/Post.astro',
   'src/components/blog/Post.module.css',
+  'src/components/blog/SearchAndFilter.astro',
+  'src/components/blog/SearchAndFilter.module.css',
   'src/layouts/Layout.astro',
   'src/content/site.config.ts',
   'src/pages/[slug].astro',

@@ -1,32 +1,24 @@
 ---
 /**
- * Blog index — latest 10 published posts.
+ * Blog index — search, filter and paginate all published posts client-side.
+ *
+ * The server fetches a wider set of posts (default 100) plus the full
+ * categories/tags lists, then hands them to <SearchAndFilter /> which does
+ * Fuse.js search + chip filters + pagination in vanilla JS. No client fetch.
  */
 import Layout from '@/layouts/Layout.astro'
-import PostCard from '@/components/blog/PostCard.astro'
-import { getLatestPosts } from '@/lib/payload'
+import SearchAndFilter from '@/components/blog/SearchAndFilter.astro'
+import { getLatestPosts, getCategories, getTags } from '@/lib/payload'
 
-const posts = await getLatestPosts(10)
+const [posts, categories, tags] = await Promise.all([
+  getLatestPosts(100),
+  getCategories(),
+  getTags(),
+])
+
 const title = `Blog — ${import.meta.env.TENANT_SLUG || 'Blog'}`
 ---
 
 <Layout {title}>
-  <section>
-    <h1>Blog</h1>
-
-    {posts.length === 0 && <p>No hay artículos publicados aún.</p>}
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
-      {posts.map((post) => (
-        <PostCard
-          title={post.title}
-          slug={post.slug}
-          publishedAt={post.publishedAt}
-          heroImage={post.heroImage}
-          excerpt={post.excerpt}
-          categories={post.categories}
-        />
-      ))}
-    </div>
-  </section>
+  <SearchAndFilter posts={posts} categories={categories} tags={tags} />
 </Layout>

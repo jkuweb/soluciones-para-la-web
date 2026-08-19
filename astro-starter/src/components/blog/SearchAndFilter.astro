@@ -1,0 +1,574 @@
+---
+/**
+ * SearchAndFilter — client-side searchable blog index.
+ *
+ * Renders all post cards up-front, then lets the user filter and paginate
+ * via a tiny vanilla script. The script is bundled by Astro and imports
+ * `fuse.js` as an npm dependency; post data is shipped via a hidden JSON
+ * island so the script can stay ESM-friendly (no `define:vars` required).
+ *
+ * Searchable fields:
+ *   - title
+ *   - searchText  (= excerpt, or first 160 chars of flattened Lexical content)
+ *
+ * Filters are OR-within-group, AND-across-groups: a post matches if it has
+ * any of the selected categories AND any of the selected tags.
+ */
+import PostCard from './PostCard.astro'
+import type { Post, Category, Tag, LexicalNode } from '@/lib/types'
+import styles from './SearchAndFilter.module.css'
+
+interface Props {
+  posts: Post[]
+  categories: Category[]
+  tags: Tag[]
+}
+
+const { posts, categories, tags } = Astro.props
+
+const POSTS_PER_PAGE = 6
+const DEBOUNCE_MS = 300
+
+function flattenLexical(node: LexicalNode | { root: LexicalNode } | undefined): string {
+  if (!node) return ''
+  const root = 'root' in node ? node.root : node
+  if (!root) return ''
+  let text = ''
+  if (root.text) text += root.text + ' '
+  if (root.children && Array.isArray(root.children)) {
+    text += root.children.map((c) => flattenLexical(c)).join(' ')
+  }
+  return text
+}
+
+function postSearchText(post: Post): string {
+  if (post.excerpt && post.excerpt.trim()) return post.excerpt
+  const flat = flattenLexical(post.content).replace(/\s+/g, ' ').trim()
+  if (flat) return flat.slice(0, 160)
+  return ''
+}
+
+const postsForScript = posts.map((p) => ({
+  id: p.id,
+  slug: p.slug,
+  title: p.title,
+  excerpt: p.excerpt ?? '',
+  searchText: postSearchText(p),
+  publishedAt: p.publishedAt,
+  categories: (p.categories ?? []).map((c) => c.title),
+  tags: (p.tags ?? []).map((t) => t.title),
+}))
+
+const scriptPayload = {
+  postsPerPage: POSTS_PER_PAGE,
+  posts: postsForScript,
+}
+---
+
+<section class={styles.wrapper} data-search-filter>
+  <header class={styles.hero}>
+    <h1 class={styles.heroTitle}>Blog</h1>
+    <p class={styles.heroSubtitle}>Explora nuestra colección de artículos</p>
+  </header>
+
+  <div class={styles.searchBox}>
+    <svg
+      class={styles.searchIcon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+    <input
+      type="search"
+      class={styles.searchInput}
+      placeholder="Buscar artículos, categorías o etiquetas…"
+      aria-label="Buscar artículos"
+      data-search-input
+    />
+    <button
+      type="button"
+      class={styles.searchClear}
+      aria-label="Limpiar búsqueda"
+      data-search-clear
+      hidden
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        width="20"
+        height="20"
+        aria-hidden="true"
+      >
+        <path d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class={styles.filters}>
+    {
+      categories.length > 0 && (
+        <div class={styles.chipsRow}>
+          <span class={styles.chipsLabel}>Categorías</span>
+          {categories.map((c) => (
+            <button
+              type="button"
+              class={styles.chip}
+              data-chip-group="categories"
+              data-chip-value={c.title}
+              aria-pressed="false"
+            >
+              {c.title}
+            </button>
+          ))}
+        </div>
+      )
+    }
+    {
+      tags.length > 0 && (
+        <div class={styles.chipsRow}>
+          <span class={styles.chipsLabel}>Etiquetas</span>
+          {tags.map((t) => (
+            <button
+              type="button"
+              class={styles.chip}
+              data-chip-group="tags"
+              data-chip-value={t.title}
+              aria-pressed="false"
+            >
+              {t.title}
+            </button>
+          ))}
+        </div>
+      )
+    }
+    <div class={styles.chipsRow}>
+      <button
+        type="button"
+        class={styles.clearAll}
+        data-clear-all
+        hidden
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <p class={styles.resultsMeta} data-results-meta aria-live="polite">
+    <strong data-results-count>{posts.length}</strong>
+    <span data-results-label>
+      {posts.length === 1 ? 'artículo encontrado' : 'artículos encontrados'}
+    </span>
+    <span data-page-info hidden></span>
+  </p>
+
+  <div class={styles.grid} data-grid>
+    {
+      posts.map((post) => (
+        <div class={styles.cardSlot} data-post-id={post.id}>
+          <PostCard
+            title={post.title}
+            slug={post.slug}
+            publishedAt={post.publishedAt}
+            heroImage={post.heroImage}
+            excerpt={post.excerpt}
+            categories={post.categories}
+          />
+        </div>
+      ))
+    }
+  </div>
+
+  <nav class={styles.pagination} data-pagination aria-label="Paginación" hidden></nav>
+
+  <div class={styles.emptyState} data-empty-state>
+    <div class={styles.emptyIcon} aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h3 class={styles.emptyTitle}>No hay resultados</h3>
+    <p class={styles.emptyText}>Intenta ajustar tus filtros o búsqueda</p>
+    <button type="button" class={styles.emptyReset} data-empty-reset>
+      Reiniciar búsqueda
+    </button>
+  </div>
+
+  <span class={styles.srOnly} data-aria-status aria-live="polite"></span>
+
+  <script
+    type="application/json"
+    id="search-filter-data"
+    set:html={JSON.stringify(scriptPayload)}
+  />
+</section>
+
+<script>
+  import Fuse, { type IFuseOptions, type FuseResult } from 'fuse.js'
+
+  interface ScriptPost {
+    id: string
+    slug: string
+    title: string
+    excerpt: string
+    searchText: string
+    publishedAt: string
+    categories: string[]
+    tags: string[]
+  }
+
+  interface ScriptPayload {
+    postsPerPage: number
+    posts: ScriptPost[]
+  }
+
+  const CHIP_ACTIVE_CLASS = 'chipActive' /* placeholder, replaced via module map below */
+  const CARD_VISIBLE_CLASS = 'cardSlotVisible'
+  const EMPTY_VISIBLE_CLASS = 'emptyStateVisible'
+
+  const dataEl = document.getElementById('search-filter-data')
+  if (!dataEl?.textContent) {
+    // Nothing to wire up — the section is rendered with no posts.
+  } else {
+    const payload: ScriptPayload = JSON.parse(dataEl.textContent)
+    const root = document.querySelector<HTMLElement>('[data-search-filter]')
+    if (root) {
+      initSearchAndFilter(root, payload)
+    }
+  }
+
+  function initSearchAndFilter(root: HTMLElement, payload: ScriptPayload): void {
+    const { postsPerPage, posts } = payload
+
+    const input = root.querySelector<HTMLInputElement>('[data-search-input]')!
+    const clearBtn = root.querySelector<HTMLButtonElement>('[data-search-clear]')!
+    const clearAllBtn = root.querySelector<HTMLButtonElement>('[data-clear-all]')!
+    const emptyResetBtn = root.querySelector<HTMLButtonElement>('[data-empty-reset]')!
+    const grid = root.querySelector<HTMLElement>('[data-grid]')!
+    const paginationEl = root.querySelector<HTMLElement>('[data-pagination]')!
+    const emptyStateEl = root.querySelector<HTMLElement>('[data-empty-state]')!
+    const resultsCount = root.querySelector<HTMLElement>('[data-results-count]')!
+    const resultsLabel = root.querySelector<HTMLElement>('[data-results-label]')!
+    const pageInfo = root.querySelector<HTMLElement>('[data-page-info]')!
+    const ariaStatus = root.querySelector<HTMLElement>('[data-aria-status]')!
+
+    const chipButtons = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('[data-chip-group]'),
+    )
+    const cardSlots = new Map<string, HTMLElement>()
+    for (const slot of grid.querySelectorAll<HTMLElement>('[data-post-id]')) {
+      const id = slot.dataset.postId
+      if (id) cardSlots.set(id, slot)
+    }
+
+    // Resolve the active-chip CSS class from the module's own stylesheet so we
+    // don't hard-code the hashed Astro class name.
+    const activeClass = resolveActiveClass(root, 'chipActive') ?? 'active'
+    const cardVisibleClass = resolveActiveClass(root, 'cardSlotVisible') ?? 'visible'
+    const emptyVisibleClass =
+      resolveActiveClass(root, 'emptyStateVisible') ?? 'visible'
+    void CHIP_ACTIVE_CLASS /* keep tsc quiet about unused alias */
+
+    const fuseOptions: IFuseOptions<ScriptPost> = {
+      keys: [
+        { name: 'title', weight: 2 },
+        { name: 'searchText', weight: 1 },
+      ],
+      threshold: 0.3,
+      ignoreLocation: true,
+      includeScore: false,
+    }
+    const fuse = new Fuse(posts, fuseOptions)
+
+    let query = ''
+    let debouncedQuery = ''
+    const selectedCategories = new Set<string>()
+    const selectedTags = new Set<string>()
+    let currentPage = 1
+    let debounceTimer: number | undefined
+
+    function recompute(): void {
+      let result: ScriptPost[] = posts
+
+      if (debouncedQuery) {
+        const hits: FuseResult<ScriptPost>[] = fuse.search(debouncedQuery)
+        result = hits.map((h) => h.item)
+      }
+
+      if (selectedCategories.size > 0) {
+        result = result.filter((p) =>
+          p.categories.some((c) => selectedCategories.has(c)),
+        )
+      }
+
+      if (selectedTags.size > 0) {
+        result = result.filter((p) => p.tags.some((t) => selectedTags.has(t)))
+      }
+
+      render(result)
+    }
+
+    function render(result: ScriptPost[]): void {
+      const total = result.length
+      const totalPages = Math.max(1, Math.ceil(total / postsPerPage))
+      if (currentPage > totalPages) currentPage = totalPages
+      if (currentPage < 1) currentPage = 1
+
+      const start = (currentPage - 1) * postsPerPage
+      const visibleIds = new Set(result.slice(start, start + postsPerPage).map((p) => p.id))
+
+      cardSlots.forEach((slot, id) => {
+        slot.classList.toggle(cardVisibleClass, visibleIds.has(id))
+      })
+
+      // Results meta
+      resultsCount.textContent = String(total)
+      resultsLabel.textContent = total === 1 ? 'artículo encontrado' : 'artículos encontrados'
+      if (totalPages > 1) {
+        pageInfo.hidden = false
+        pageInfo.textContent = ` · Página ${currentPage} de ${totalPages}`
+      } else {
+        pageInfo.hidden = true
+        pageInfo.textContent = ''
+      }
+
+      // Empty state vs grid
+      const isEmpty = total === 0
+      emptyStateEl.classList.toggle(emptyVisibleClass, isEmpty)
+      grid.hidden = isEmpty
+
+      // Clear / clear-all visibility
+      const hasFilters =
+        query.length > 0 ||
+        selectedCategories.size > 0 ||
+        selectedTags.size > 0
+      clearAllBtn.hidden = !hasFilters
+      clearBtn.hidden = query.length === 0
+
+      // Pagination
+      renderPagination(totalPages)
+    }
+
+    function renderPagination(totalPages: number): void {
+      paginationEl.innerHTML = ''
+      if (totalPages <= 1) {
+        paginationEl.hidden = true
+        return
+      }
+      paginationEl.hidden = false
+
+      const prev = makePageBtn('‹', currentPage - 1, currentPage <= 1)
+      paginationEl.appendChild(prev)
+
+      const pageNumbers = buildPageList(currentPage, totalPages)
+      for (const item of pageNumbers) {
+        if (item === '…') {
+          const ell = document.createElement('span')
+          ell.className = 'pageEllipsis'
+          ell.textContent = '…'
+          ell.setAttribute('aria-hidden', 'true')
+          paginationEl.appendChild(ell)
+        } else {
+          const btn = makePageBtn(String(item), item, false, item === currentPage)
+          paginationEl.appendChild(btn)
+        }
+      }
+
+      const next = makePageBtn('›', currentPage + 1, currentPage >= totalPages)
+      paginationEl.appendChild(next)
+    }
+
+    function makePageBtn(
+      label: string,
+      page: number,
+      disabled: boolean,
+      active = false,
+    ): HTMLButtonElement {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'pageBtn' + (active ? ' pageBtnActive' : '')
+      btn.textContent = label
+      btn.disabled = disabled
+      btn.setAttribute('aria-label', `Ir a la página ${label}`)
+      if (active) btn.setAttribute('aria-current', 'page')
+      btn.addEventListener('click', () => goToPage(page))
+      return btn
+    }
+
+    function buildPageList(current: number, total: number): (number | '…')[] {
+      if (total <= 7) {
+        return Array.from({ length: total }, (_, i) => i + 1)
+      }
+      const list: (number | '…')[] = [1]
+      const start = Math.max(2, current - 1)
+      const end = Math.min(total - 1, current + 1)
+      if (start > 2) list.push('…')
+      for (let p = start; p <= end; p++) list.push(p)
+      if (end < total - 1) list.push('…')
+      list.push(total)
+      return list
+    }
+
+    function goToPage(page: number): void {
+      const totalPages = Math.max(
+        1,
+        Math.ceil(getFilteredCount() / postsPerPage),
+      )
+      if (page < 1 || page > totalPages) return
+      currentPage = page
+      recompute()
+      window.scrollTo({ top: root.offsetTop - 16, behavior: 'smooth' })
+    }
+
+    function getFilteredCount(): number {
+      let result: ScriptPost[] = posts
+      if (debouncedQuery) {
+        result = fuse.search(debouncedQuery).map((h) => h.item)
+      }
+      if (selectedCategories.size > 0) {
+        result = result.filter((p) =>
+          p.categories.some((c) => selectedCategories.has(c)),
+        )
+      }
+      if (selectedTags.size > 0) {
+        result = result.filter((p) => p.tags.some((t) => selectedTags.has(t)))
+      }
+      return result.length
+    }
+
+    function setChipActive(btn: HTMLButtonElement, active: boolean): void {
+      btn.classList.toggle(activeClass, active)
+      btn.setAttribute('aria-pressed', String(active))
+    }
+
+    // Wire events
+    input.addEventListener('input', () => {
+      query = input.value
+      window.clearTimeout(debounceTimer)
+      debounceTimer = window.setTimeout(() => {
+        debouncedQuery = query.trim()
+        currentPage = 1
+        recompute()
+        announce(debouncedQuery ? `Filtrando por "${debouncedQuery}"` : '')
+      }, 300)
+    })
+
+    input.addEventListener('search', () => {
+      // The native `search` event fires on Esc clear too.
+      query = input.value
+      debouncedQuery = query.trim()
+      currentPage = 1
+      recompute()
+    })
+
+    clearBtn.addEventListener('click', () => {
+      input.value = ''
+      query = ''
+      debouncedQuery = ''
+      currentPage = 1
+      recompute()
+      input.focus()
+    })
+
+    function clearAllFilters(): void {
+      input.value = ''
+      query = ''
+      debouncedQuery = ''
+      selectedCategories.clear()
+      selectedTags.clear()
+      currentPage = 1
+      for (const btn of chipButtons) setChipActive(btn, false)
+      recompute()
+      announce('Filtros reiniciados')
+    }
+
+    clearAllBtn.addEventListener('click', clearAllFilters)
+    emptyResetBtn.addEventListener('click', clearAllFilters)
+
+    for (const btn of chipButtons) {
+      btn.addEventListener('click', () => {
+        const group = btn.dataset.chipGroup as 'categories' | 'tags' | undefined
+        const value = btn.dataset.chipValue
+        if (!group || !value) return
+        const set = group === 'categories' ? selectedCategories : selectedTags
+        const wasActive = set.has(value)
+        if (wasActive) set.delete(value)
+        else set.add(value)
+        setChipActive(btn, !wasActive)
+        currentPage = 1
+        recompute()
+      })
+    }
+
+    function announce(msg: string): void {
+      ariaStatus.textContent = msg
+    }
+
+    // Initial paint (all posts visible, page 1)
+    recompute()
+  }
+
+  /**
+   * Astro's CSS Module hashing makes the class name opaque. Scan the
+   * stylesheets for a `.module.css` rule we can read by its source name and
+   * return the hashed class on the root element (or any descendant). This
+   * keeps the script independent of the specific hash.
+   */
+  function resolveActiveClass(
+    root: HTMLElement,
+    sourceName: string,
+  ): string | null {
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList | null = null
+      try {
+        rules = sheet.cssRules
+      } catch {
+        continue
+      }
+      if (!rules) continue
+      const match = findRuleWithSelector(rules, sourceName)
+      if (match) return match
+    }
+    return null
+  }
+
+  function findRuleWithSelector(
+    rules: CSSRuleList,
+    fragment: string,
+  ): string | null {
+    for (const rule of Array.from(rules)) {
+      if (rule instanceof CSSStyleRule) {
+        if (rule.selectorText.includes(`.${fragment}`)) {
+          // Return the FIRST class token from the selector (the unhashed
+          // source name is preserved when targeting via fragment).
+          const m = rule.selectorText.match(/\.[\w-]+/)
+          if (m && m[0].slice(1) === fragment) return fragment
+          const tokens = rule.selectorText.split(/[ .>+~:[]/).filter(Boolean)
+          for (const t of tokens) {
+            if (t.startsWith('.')) return t.slice(1)
+          }
+        }
+      } else if (rule instanceof CSSMediaRule) {
+        const inner = findRuleWithSelector(rule.cssRules, fragment)
+        if (inner) return inner
+      }
+    }
+    return null
+  }
+</script>
