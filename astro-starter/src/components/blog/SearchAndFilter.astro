@@ -49,7 +49,7 @@ function postSearchText(post: Post): string {
 }
 
 const postsForScript = posts.map((p) => ({
-  id: p.id,
+  id: String(p.id),
   slug: p.slug,
   title: p.title,
   excerpt: p.excerpt ?? '',
@@ -61,6 +61,9 @@ const postsForScript = posts.map((p) => ({
 
 const scriptPayload = {
   postsPerPage: POSTS_PER_PAGE,
+  chipActiveClass: styles.chipActive,
+  cardVisibleClass: styles.cardSlotVisible,
+  emptyVisibleClass: styles.emptyStateVisible,
   posts: postsForScript,
 }
 ---
@@ -233,14 +236,13 @@ const scriptPayload = {
     tags: string[]
   }
 
-  interface ScriptPayload {
-    postsPerPage: number
-    posts: ScriptPost[]
-  }
-
-  const CHIP_ACTIVE_CLASS = 'chipActive' /* placeholder, replaced via module map below */
-  const CARD_VISIBLE_CLASS = 'cardSlotVisible'
-  const EMPTY_VISIBLE_CLASS = 'emptyStateVisible'
+interface ScriptPayload {
+  postsPerPage: number
+  chipActiveClass: string
+  cardVisibleClass: string
+  emptyVisibleClass: string
+  posts: ScriptPost[]
+}
 
   const dataEl = document.getElementById('search-filter-data')
   if (!dataEl?.textContent) {
@@ -254,7 +256,7 @@ const scriptPayload = {
   }
 
   function initSearchAndFilter(root: HTMLElement, payload: ScriptPayload): void {
-    const { postsPerPage, posts } = payload
+    const { postsPerPage, chipActiveClass, cardVisibleClass, emptyVisibleClass, posts } = payload
 
     const input = root.querySelector<HTMLInputElement>('[data-search-input]')!
     const clearBtn = root.querySelector<HTMLButtonElement>('[data-search-clear]')!
@@ -276,14 +278,6 @@ const scriptPayload = {
       const id = slot.dataset.postId
       if (id) cardSlots.set(id, slot)
     }
-
-    // Resolve the active-chip CSS class from the module's own stylesheet so we
-    // don't hard-code the hashed Astro class name.
-    const activeClass = resolveActiveClass(root, 'chipActive') ?? 'active'
-    const cardVisibleClass = resolveActiveClass(root, 'cardSlotVisible') ?? 'visible'
-    const emptyVisibleClass =
-      resolveActiveClass(root, 'emptyStateVisible') ?? 'visible'
-    void CHIP_ACTIVE_CLASS /* keep tsc quiet about unused alias */
 
     const fuseOptions: IFuseOptions<ScriptPost> = {
       keys: [
@@ -453,7 +447,7 @@ const scriptPayload = {
     }
 
     function setChipActive(btn: HTMLButtonElement, active: boolean): void {
-      btn.classList.toggle(activeClass, active)
+      btn.classList.toggle(chipActiveClass, active)
       btn.setAttribute('aria-pressed', String(active))
     }
 
