@@ -1,6 +1,13 @@
 import type { Config } from 'payload'
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
+import { seoPlugin } from '@payloadcms/plugin-seo'
 import type { User } from '@/payload-types'
+
+import {
+  generateSeoTitle,
+  generateSeoDescription,
+  generateSeoImage,
+} from './seo-helpers'
 
 export const plugins: Config['plugins'] = [
   multiTenantPlugin<Config>({
@@ -31,5 +38,14 @@ export const plugins: Config['plugins'] = [
         disableListFilter: false,
       },
     },
+  }),
+  seoPlugin({
+    collections: ['pages', 'posts'],
+    uploadsCollection: 'media',
+    tabbedUI: true,
+    interfaceName: 'SeoMeta',
+    generateTitle: generateSeoTitle,
+    generateDescription: generateSeoDescription,
+    generateImage: generateSeoImage as any,
   }),
 ]
