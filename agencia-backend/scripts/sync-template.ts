@@ -88,6 +88,7 @@ const ALLOWLIST_NEXTJS: readonly string[] = [
   'src/lib/payload.ts',
   'src/lib/types.ts',
   'src/lib/lexical.ts',
+  'src/lib/blog-search-text.ts',
   'src/components/BlockRenderer.tsx',
   'src/components/Link.tsx',
   'src/components/shared/SeoHead.tsx',
@@ -97,6 +98,8 @@ const ALLOWLIST_NEXTJS: readonly string[] = [
   'src/components/blog/PostCard.module.css',
   'src/components/blog/Post.tsx',
   'src/components/blog/Post.module.css',
+  'src/components/blog/SearchAndFilter.tsx',
+  'src/components/blog/SearchAndFilter.module.css',
   'src/app/layout.tsx',
   'src/content/site.config.ts',
   'src/app/[slug]/page.tsx',
@@ -107,7 +110,7 @@ const ALLOWLIST_NEXTJS: readonly string[] = [
   'src/app/blog/post/[slug]/page.tsx',
   'src/app/blog/category/[slug]/page.tsx',
   'src/app/blog/tag/[slug]/page.tsx',
-  'next.config.ts',
+  'next.config.mjs',
   'tsconfig.json',
 ]
 

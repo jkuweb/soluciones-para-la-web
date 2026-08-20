@@ -61,7 +61,7 @@ const postsForScript = posts.map((p) => ({
 
 const scriptPayload = {
   postsPerPage: POSTS_PER_PAGE,
-  chipActiveClass: styles.chipActive,
+  dropdownTriggerActiveClass: styles.dropdownTriggerActive,
   cardVisibleClass: styles.cardSlotVisible,
   emptyVisibleClass: styles.emptyStateVisible,
   posts: postsForScript,
@@ -120,50 +120,98 @@ const scriptPayload = {
   <div class={styles.filters}>
     {
       categories.length > 0 && (
-        <div class={styles.chipsRow}>
-          <span class={styles.chipsLabel}>Categorías</span>
-          {categories.map((c) => (
-            <button
-              type="button"
-              class={styles.chip}
-              data-chip-group="categories"
-              data-chip-value={c.title}
-              aria-pressed="false"
-            >
-              {c.title}
-            </button>
-          ))}
+        <div class={styles.dropdown} data-dropdown data-dropdown-group="categories">
+          <button
+            type="button"
+            class={styles.dropdownTrigger}
+            data-dropdown-trigger
+            aria-expanded="false"
+            aria-haspopup="listbox"
+          >
+            <span>Categorías</span>
+            <span class={styles.dropdownCount} data-dropdown-count hidden></span>
+            <svg class={styles.dropdownChevron} viewBox="0 0 12 12" aria-hidden="true">
+              <path
+                d="M2 4l4 4 4-4"
+                stroke="currentColor"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div class={styles.dropdownPanel} data-dropdown-panel hidden>
+            <ul class={styles.dropdownList} role="listbox" aria-multiselectable>
+              {categories.map((c) => (
+                <li class={styles.dropdownItem} role="option" aria-selected="false">
+                  <label class={styles.dropdownOption}>
+                    <input
+                      type="checkbox"
+                      class={styles.dropdownCheckbox}
+                      data-dropdown-group="categories"
+                      data-dropdown-value={c.title}
+                    />
+                    <span>{c.title}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )
     }
     {
       tags.length > 0 && (
-        <div class={styles.chipsRow}>
-          <span class={styles.chipsLabel}>Etiquetas</span>
-          {tags.map((t) => (
-            <button
-              type="button"
-              class={styles.chip}
-              data-chip-group="tags"
-              data-chip-value={t.title}
-              aria-pressed="false"
-            >
-              {t.title}
-            </button>
-          ))}
+        <div class={styles.dropdown} data-dropdown data-dropdown-group="tags">
+          <button
+            type="button"
+            class={styles.dropdownTrigger}
+            data-dropdown-trigger
+            aria-expanded="false"
+            aria-haspopup="listbox"
+          >
+            <span>Etiquetas</span>
+            <span class={styles.dropdownCount} data-dropdown-count hidden></span>
+            <svg class={styles.dropdownChevron} viewBox="0 0 12 12" aria-hidden="true">
+              <path
+                d="M2 4l4 4 4-4"
+                stroke="currentColor"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div class={styles.dropdownPanel} data-dropdown-panel hidden>
+            <ul class={styles.dropdownList} role="listbox" aria-multiselectable>
+              {tags.map((t) => (
+                <li class={styles.dropdownItem} role="option" aria-selected="false">
+                  <label class={styles.dropdownOption}>
+                    <input
+                      type="checkbox"
+                      class={styles.dropdownCheckbox}
+                      data-dropdown-group="tags"
+                      data-dropdown-value={t.title}
+                    />
+                    <span>{t.title}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )
     }
-    <div class={styles.chipsRow}>
-      <button
-        type="button"
-        class={styles.clearAll}
-        data-clear-all
-        hidden
-      >
-        Limpiar filtros
-      </button>
-    </div>
+    <button
+      type="button"
+      class={styles.clearAll}
+      data-clear-all
+      hidden
+    >
+      Limpiar filtros
+    </button>
   </div>
 
   <p class={styles.resultsMeta} data-results-meta aria-live="polite">
@@ -238,7 +286,7 @@ const scriptPayload = {
 
 interface ScriptPayload {
   postsPerPage: number
-  chipActiveClass: string
+  dropdownTriggerActiveClass: string
   cardVisibleClass: string
   emptyVisibleClass: string
   posts: ScriptPost[]
@@ -256,7 +304,7 @@ interface ScriptPayload {
   }
 
   function initSearchAndFilter(root: HTMLElement, payload: ScriptPayload): void {
-    const { postsPerPage, chipActiveClass, cardVisibleClass, emptyVisibleClass, posts } = payload
+    const { postsPerPage, dropdownTriggerActiveClass, cardVisibleClass, emptyVisibleClass, posts } = payload
 
     const input = root.querySelector<HTMLInputElement>('[data-search-input]')!
     const clearBtn = root.querySelector<HTMLButtonElement>('[data-search-clear]')!
@@ -270,9 +318,14 @@ interface ScriptPayload {
     const pageInfo = root.querySelector<HTMLElement>('[data-page-info]')!
     const ariaStatus = root.querySelector<HTMLElement>('[data-aria-status]')!
 
-    const chipButtons = Array.from(
-      root.querySelectorAll<HTMLButtonElement>('[data-chip-group]'),
+    const dropdowns = Array.from(
+      root.querySelectorAll<HTMLElement>('[data-dropdown]'),
     )
+    const dropdownsByGroup = new Map<string, HTMLElement>()
+    for (const dd of dropdowns) {
+      const group = dd.dataset.dropdownGroup
+      if (group) dropdownsByGroup.set(group, dd)
+    }
     const cardSlots = new Map<string, HTMLElement>()
     for (const slot of grid.querySelectorAll<HTMLElement>('[data-post-id]')) {
       const id = slot.dataset.postId
@@ -446,9 +499,20 @@ interface ScriptPayload {
       return result.length
     }
 
-    function setChipActive(btn: HTMLButtonElement, active: boolean): void {
-      btn.classList.toggle(chipActiveClass, active)
-      btn.setAttribute('aria-pressed', String(active))
+    function setDropdownActive(dd: HTMLElement, active: boolean): void {
+      const trigger = dd.querySelector<HTMLButtonElement>('[data-dropdown-trigger]')
+      const count = dd.querySelector<HTMLElement>('[data-dropdown-count]')
+      if (!trigger || !count) return
+      trigger.classList.toggle(dropdownTriggerActiveClass, active)
+      if (active) {
+        const set =
+          dd.dataset.dropdownGroup === 'categories' ? selectedCategories : selectedTags
+        count.textContent = String(set.size)
+        count.hidden = set.size === 0
+      } else {
+        count.textContent = ''
+        count.hidden = true
+      }
     }
 
     // Wire events
@@ -487,7 +551,15 @@ interface ScriptPayload {
       selectedCategories.clear()
       selectedTags.clear()
       currentPage = 1
-      for (const btn of chipButtons) setChipActive(btn, false)
+      for (const dd of dropdowns) {
+        setDropdownActive(dd, false)
+        const checkboxes = dd.querySelectorAll<HTMLInputElement>('[data-dropdown-group]')
+        for (const cb of checkboxes) {
+          cb.checked = false
+          const item = cb.closest('[role="option"]') as HTMLElement | null
+          if (item) item.setAttribute('aria-selected', 'false')
+        }
+      }
       recompute()
       announce('Filtros reiniciados')
     }
@@ -495,16 +567,64 @@ interface ScriptPayload {
     clearAllBtn.addEventListener('click', clearAllFilters)
     emptyResetBtn.addEventListener('click', clearAllFilters)
 
-    for (const btn of chipButtons) {
-      btn.addEventListener('click', () => {
-        const group = btn.dataset.chipGroup as 'categories' | 'tags' | undefined
-        const value = btn.dataset.chipValue
+    // Dropdown open/close
+    for (const dd of dropdowns) {
+      const trigger = dd.querySelector<HTMLButtonElement>('[data-dropdown-trigger]')!
+      const panel = dd.querySelector<HTMLElement>('[data-dropdown-panel]')!
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const isOpen = trigger.getAttribute('aria-expanded') === 'true'
+        // Close all other dropdowns first
+        for (const other of dropdowns) {
+          if (other !== dd) {
+            const t = other.querySelector<HTMLButtonElement>('[data-dropdown-trigger]')!
+            const p = other.querySelector<HTMLElement>('[data-dropdown-panel]')!
+            t.setAttribute('aria-expanded', 'false')
+            p.hidden = true
+          }
+        }
+        trigger.setAttribute('aria-expanded', String(!isOpen))
+        panel.hidden = isOpen
+      })
+    }
+
+    // Close dropdowns on outside click or Escape
+    document.addEventListener('click', (e) => {
+      for (const dd of dropdowns) {
+        if (!dd.contains(e.target as Node)) {
+          const t = dd.querySelector<HTMLButtonElement>('[data-dropdown-trigger]')!
+          const p = dd.querySelector<HTMLElement>('[data-dropdown-panel]')!
+          t.setAttribute('aria-expanded', 'false')
+          p.hidden = true
+        }
+      }
+    })
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return
+      for (const dd of dropdowns) {
+        const t = dd.querySelector<HTMLButtonElement>('[data-dropdown-trigger]')!
+        const p = dd.querySelector<HTMLElement>('[data-dropdown-panel]')!
+        t.setAttribute('aria-expanded', 'false')
+        p.hidden = true
+      }
+    })
+
+    // Checkbox toggles
+    const checkboxes = Array.from(
+      root.querySelectorAll<HTMLInputElement>('[data-dropdown-group]'),
+    )
+    for (const cb of checkboxes) {
+      cb.addEventListener('change', () => {
+        const group = cb.dataset.dropdownGroup as 'categories' | 'tags' | undefined
+        const value = cb.dataset.dropdownValue
         if (!group || !value) return
         const set = group === 'categories' ? selectedCategories : selectedTags
-        const wasActive = set.has(value)
-        if (wasActive) set.delete(value)
-        else set.add(value)
-        setChipActive(btn, !wasActive)
+        if (cb.checked) set.add(value)
+        else set.delete(value)
+        const item = cb.closest('[role="option"]') as HTMLElement | null
+        if (item) item.setAttribute('aria-selected', String(cb.checked))
+        const dd = dropdownsByGroup.get(group)
+        if (dd) setDropdownActive(dd, set.size > 0)
         currentPage = 1
         recompute()
       })
@@ -516,53 +636,5 @@ interface ScriptPayload {
 
     // Initial paint (all posts visible, page 1)
     recompute()
-  }
-
-  /**
-   * Astro's CSS Module hashing makes the class name opaque. Scan the
-   * stylesheets for a `.module.css` rule we can read by its source name and
-   * return the hashed class on the root element (or any descendant). This
-   * keeps the script independent of the specific hash.
-   */
-  function resolveActiveClass(
-    root: HTMLElement,
-    sourceName: string,
-  ): string | null {
-    for (const sheet of Array.from(document.styleSheets)) {
-      let rules: CSSRuleList | null = null
-      try {
-        rules = sheet.cssRules
-      } catch {
-        continue
-      }
-      if (!rules) continue
-      const match = findRuleWithSelector(rules, sourceName)
-      if (match) return match
-    }
-    return null
-  }
-
-  function findRuleWithSelector(
-    rules: CSSRuleList,
-    fragment: string,
-  ): string | null {
-    for (const rule of Array.from(rules)) {
-      if (rule instanceof CSSStyleRule) {
-        if (rule.selectorText.includes(`.${fragment}`)) {
-          // Return the FIRST class token from the selector (the unhashed
-          // source name is preserved when targeting via fragment).
-          const m = rule.selectorText.match(/\.[\w-]+/)
-          if (m && m[0].slice(1) === fragment) return fragment
-          const tokens = rule.selectorText.split(/[ .>+~:[]/).filter(Boolean)
-          for (const t of tokens) {
-            if (t.startsWith('.')) return t.slice(1)
-          }
-        }
-      } else if (rule instanceof CSSMediaRule) {
-        const inner = findRuleWithSelector(rule.cssRules, fragment)
-        if (inner) return inner
-      }
-    }
-    return null
   }
 </script>
