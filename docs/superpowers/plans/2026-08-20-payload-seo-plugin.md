@@ -559,19 +559,27 @@ pnpm exec vitest run tests/unit/seo-helpers.spec.ts
 
 Expected: PASS — all 8 helper test cases still green.
 
-- [ ] **Step 4: Regenerate Payload types**
+- [ ] **Step 4: Regenerate Payload types and import map**
 
 ```bash
 cd agencia-backend
-pnpm generate:types
+pnpm generate:types:shimmed
 ```
 
 Expected: regenerates `payload-types.ts` with the new `SeoMeta` interface and `meta` field on `Page` and `Post` types. Exit code 0.
 
+```bash
+pnpm generate:importmap
+```
+
+Expected: regenerates `src/app/(payload)/admin/importMap.js` with entries for the SEO plugin's 5 client components (`MetaTitleComponent`, `MetaDescriptionComponent`, `MetaImageComponent`, `OverviewComponent`, `PreviewComponent`). Exit code 0.
+
+**If `pnpm generate:importmap` fails** with `ERR_UNKNOWN_FILE_EXTENSION` on a `.css` import (Node 24 tooling issue, same root cause as `generate:types`), manually edit `src/app/(payload)/admin/importMap.js` to add 5 entries mirroring the existing `plugin-multi-tenant/client` pattern. The hash suffix is the MD5 of `@payloadcms/plugin-seo/client` (e.g. `a8a977ebc872c5d5ea7ee689724c0860`).
+
 - [ ] **Step 5: Commit**
 
 ```bash
-git add agencia-backend/src/plugins/index.ts agencia-backend/src/payload-types.ts agencia-backend/tests/int/seo-plugin.int.spec.ts
+git add agencia-backend/src/plugins/index.ts agencia-backend/src/payload-types.ts agencia-backend/src/app/\(payload\)/admin/importMap.js agencia-backend/tests/int/seo-plugin.int.spec.ts
 git commit -m "feat(seo): register @payloadcms/plugin-seo on pages and posts"
 ```
 
