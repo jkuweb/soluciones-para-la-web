@@ -1,4 +1,4 @@
-export const ECOMMERCE_TIERS = ['none', 'lite', 'standard', 'full'] as const
+export const ECOMMERCE_TIERS = ['none', 'lite', 'standard', 'full', 'custom'] as const
 export type EcommerceTier = (typeof ECOMMERCE_TIERS)[number]
 
 export const FEATURE_KEYS = [
@@ -27,6 +27,7 @@ const TIER_DEFAULTS: Record<EcommerceTier, FeatureKey[]> = {
     'wishlist',
     'taxes',
   ],
+  custom: [],
 }
 
 export const DEFAULT_FEATURES: Record<FeatureKey, boolean> = {

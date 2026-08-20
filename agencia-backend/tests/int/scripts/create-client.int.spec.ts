@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vite
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { DEFAULT_FEATURES } from '../../../scripts/lib/feature-keys'
 import {
   isValidSlug,
   isValidEmail,
@@ -102,6 +103,8 @@ describe('buildTenantData', () => {
       projectPrice: 1500,
       maintenanceFee: 79,
       blogEnabled: false,
+      ecommerceTier: 'none',
+      features: { ...DEFAULT_FEATURES },
     }
     const data = buildTenantData(input)
     expect(data).toEqual({
@@ -114,6 +117,8 @@ describe('buildTenantData', () => {
       projectPrice: 1500,
       maintenanceFee: 79,
       blogEnabled: false,
+      ecommerceTier: 'none',
+      features: { ...DEFAULT_FEATURES },
     })
   })
 
@@ -126,6 +131,8 @@ describe('buildTenantData', () => {
       frontendType: 'nextjs',
       status: 'active',
       blogEnabled: false,
+      ecommerceTier: 'none',
+      features: { ...DEFAULT_FEATURES },
     }
     const data = buildTenantData(input)
     expect(data).not.toHaveProperty('projectPrice')
@@ -418,6 +425,8 @@ describe('confirmSummary', () => {
         frontendType: 'astro',
         status: 'pending',
         blogEnabled: false,
+        ecommerceTier: 'none',
+        features: { ...DEFAULT_FEATURES },
       },
       { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' },
     )
@@ -435,6 +444,8 @@ describe('confirmSummary', () => {
         frontendType: 'astro',
         status: 'pending',
         blogEnabled: false,
+        ecommerceTier: 'none',
+        features: { ...DEFAULT_FEATURES },
       },
       { email: 'a@b.com', name: 'A', password: 'pw', role: 'tenant-admin' },
     )
@@ -487,5 +498,41 @@ describe('run orchestrator', () => {
 
     await expect(run()).rejects.toThrow('user create failed')
     expect(mockPayload.delete).toHaveBeenCalledWith({ collection: 'tenants', id: 1 })
+  })
+})
+
+describe('buildTenantData (extended)', () => {
+  it('includes ecommerceTier and features', () => {
+    const input = {
+      name: 'Acme',
+      slug: 'acme',
+      domain: 'acme.com',
+      serviceType: 'tienda-online' as const,
+      frontendType: 'nextjs' as const,
+      status: 'pending' as const,
+      blogEnabled: false,
+      ecommerceTier: 'lite' as const,
+      features: { ...DEFAULT_FEATURES, catalog: true, payments: true },
+    }
+    const data = buildTenantData(input)
+    expect(data.ecommerceTier).toBe('lite')
+    expect(data.features).toEqual({ ...DEFAULT_FEATURES, catalog: true, payments: true })
+  })
+
+  it('defaults ecommerceTier to none and all features false when input omits them', () => {
+    const input = {
+      name: 'Acme',
+      slug: 'acme',
+      domain: 'acme.com',
+      serviceType: 'web-estatica' as const,
+      frontendType: 'astro' as const,
+      status: 'pending' as const,
+      blogEnabled: false,
+      ecommerceTier: 'none' as const,
+      features: DEFAULT_FEATURES,
+    }
+    const data = buildTenantData(input)
+    expect(data.ecommerceTier).toBe('none')
+    expect(Object.values(data.features as Record<string, boolean>).every((v) => v === false)).toBe(true)
   })
 })

@@ -1,4 +1,11 @@
 import path from 'node:path'
+import {
+  EcommerceTier,
+  FeatureKey,
+  DEFAULT_FEATURES,
+  defaultFeaturesForTier,
+  isValidFeaturesObject,
+} from './lib/feature-keys'
 
 // Use import.meta.dirname (Node 20.11+), with fallback for safety
 const scriptDir = import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname)
@@ -34,6 +41,8 @@ export type TenantInput = {
   projectPrice?: number
   maintenanceFee?: number
   blogEnabled: boolean
+  ecommerceTier: EcommerceTier
+  features: Record<FeatureKey, boolean>
 }
 
 export type UserInput = {
@@ -53,6 +62,8 @@ export const buildTenantData = (input: TenantInput): Record<string, unknown> => 
     frontendType: input.frontendType,
     status: input.status,
     blogEnabled: input.blogEnabled,
+    ecommerceTier: input.ecommerceTier,
+    features: input.features,
   }
   if (input.projectPrice !== undefined) data.projectPrice = input.projectPrice
   if (input.maintenanceFee !== undefined) data.maintenanceFee = input.maintenanceFee
@@ -170,6 +181,8 @@ export const promptTenant = async (): Promise<TenantInput> => {
   })
   if (p.isCancel(blogEnabled)) process.exit(0)
 
+  const { ecommerceTier, features } = await promptEcommerceTier(serviceType)
+
   const status = (await p.select({
     message: 'Estado:',
     initialValue: 'pending' as TenantStatus,
@@ -198,6 +211,8 @@ export const promptTenant = async (): Promise<TenantInput> => {
     frontendType,
     status,
     blogEnabled: blogEnabled === true,
+    ecommerceTier,
+    features,
     projectPrice: projectPriceStr ? Number(projectPriceStr) : undefined,
     maintenanceFee: maintenanceFeeStr ? Number(maintenanceFeeStr) : undefined,
   }
@@ -235,6 +250,57 @@ export const promptUser = async (): Promise<UserInput> => {
   return { email, name: String(name), password: String(password), role }
 }
 
+/**
+ * Pregunta interactivamente el tier de ecommerce cuando serviceType === 'tienda-online'.
+ * Devuelve `{ ecommerceTier, features }` listo para meter en TenantInput.
+ * Si serviceType !== 'tienda-online', devuelve `{ ecommerceTier: 'none', features: DEFAULT_FEATURES }`.
+ */
+export const promptEcommerceTier = async (
+  serviceType: ServiceType,
+): Promise<{
+  ecommerceTier: EcommerceTier
+  features: Record<FeatureKey, boolean>
+}> => {
+  if (serviceType !== 'tienda-online') {
+    return { ecommerceTier: 'none', features: { ...DEFAULT_FEATURES } }
+  }
+
+  const tierChoice = (await p.select({
+    message: 'Tier inicial de ecommerce:',
+    options: [
+      { value: 'lite', label: 'Lite (catálogo + Stripe)' },
+      { value: 'standard', label: 'Standard (+ envíos + cupones)' },
+      { value: 'full', label: 'Full (+ reviews + wishlist + taxes)' },
+      { value: 'custom', label: 'Custom (elijo feature por feature)' },
+    ],
+  })) as EcommerceTier
+  if (p.isCancel(tierChoice)) {
+    p.cancel('Operación cancelada.')
+    process.exit(0)
+  }
+
+  if (tierChoice === 'custom') {
+    const features = { ...DEFAULT_FEATURES }
+    for (const key of Object.keys(features) as Array<keyof typeof features>) {
+      const answer = await p.confirm({
+        message: `¿Prender "${key}"?`,
+        initialValue: false,
+      })
+      if (p.isCancel(answer)) {
+        p.cancel('Operación cancelada.')
+        process.exit(0)
+      }
+      features[key] = answer === true
+    }
+    return { ecommerceTier: 'custom', features }
+  }
+
+  return {
+    ecommerceTier: tierChoice,
+    features: defaultFeaturesForTier(tierChoice),
+  }
+}
+
 // --- Output ---
 export const confirmSummary = async (tenant: TenantInput, user: UserInput): Promise<boolean> => {
   console.log('\n--- Resumen ---')
@@ -244,6 +310,13 @@ export const confirmSummary = async (tenant: TenantInput, user: UserInput): Prom
   console.log(`  frontendType: ${tenant.frontendType}`)
   console.log(`  status: ${tenant.status}`)
   console.log(`  blogEnabled: ${tenant.blogEnabled ? 'sí' : 'no'}`)
+  if (tenant.serviceType === 'tienda-online') {
+    console.log(`  ecommerceTier: ${tenant.ecommerceTier}`)
+    const enabled = Object.entries(tenant.features)
+      .filter(([, v]) => v)
+      .map(([k]) => k)
+    console.log(`  features: ${enabled.length === 0 ? '(ninguna)' : enabled.join(', ')}`)
+  }
   if (tenant.projectPrice) console.log(`  projectPrice: €${tenant.projectPrice}`)
   if (tenant.maintenanceFee) console.log(`  maintenanceFee: €${tenant.maintenanceFee}`)
   console.log(`User: ${user.email} (${user.role})`)

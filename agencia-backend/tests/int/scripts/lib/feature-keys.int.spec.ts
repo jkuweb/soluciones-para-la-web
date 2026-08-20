@@ -11,8 +11,8 @@ import {
 
 describe('feature-keys', () => {
   describe('constants', () => {
-    it('exports the four expected tiers', () => {
-      expect(ECOMMERCE_TIERS).toEqual(['none', 'lite', 'standard', 'full'])
+    it('exports the five expected tiers', () => {
+      expect(ECOMMERCE_TIERS).toEqual(['none', 'lite', 'standard', 'full', 'custom'])
     })
 
     it('exports the nine expected feature keys', () => {
