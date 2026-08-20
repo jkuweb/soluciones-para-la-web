@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  generateSeoTitle,
-  generateSeoDescription,
-  generateSeoImage,
-} from '@/plugins/seo-helpers'
+import { generateSeoTitle, generateSeoDescription, generateSeoImage } from '@/plugins/seo-helpers'
 
 describe('generateSeoTitle', () => {
   it('appends the tenant name when tenant is populated', () => {

@@ -45,11 +45,7 @@ describe('SEO plugin field injection', () => {
     for (const f of fields ?? []) {
       if (!f) continue
       if (Array.isArray(f?.fields)) {
-        if (
-          skipInsideGroup &&
-          f?.type === 'group' &&
-          f?.name === skipInsideGroup
-        ) {
+        if (skipInsideGroup && f?.type === 'group' && f?.name === skipInsideGroup) {
           // Skip recursing into this group
         } else {
           const found = findFieldByName(f.fields, targetName, skipInsideGroup)
@@ -77,30 +73,18 @@ describe('SEO plugin field injection', () => {
     const pages = payload.collections['pages']
     const meta = findMetaGroup(pages.config.fields)
     expect(meta).toBeDefined()
-    expect(namesOf(meta.fields)).toEqual(
-      expect.arrayContaining(['title', 'description', 'image']),
-    )
+    expect(namesOf(meta.fields)).toEqual(expect.arrayContaining(['title', 'description', 'image']))
   })
 
   it('adds a top-level `meta` group to `posts`', () => {
     const posts = payload.collections['posts']
     const meta = findMetaGroup(posts.config.fields)
     expect(meta).toBeDefined()
-    expect(namesOf(meta.fields)).toEqual(
-      expect.arrayContaining(['title', 'description', 'image']),
-    )
+    expect(namesOf(meta.fields)).toEqual(expect.arrayContaining(['title', 'description', 'image']))
   })
 
   it('does NOT add a `meta` group to header, footer, categories, tags, media, users, tenants', () => {
-    const outOfScope = [
-      'header',
-      'footer',
-      'categories',
-      'tags',
-      'media',
-      'users',
-      'tenants',
-    ]
+    const outOfScope = ['header', 'footer', 'categories', 'tags', 'media', 'users', 'tenants']
     for (const slug of outOfScope) {
       const collection = payload.collections[slug as keyof typeof payload.collections]
       expect(collection, `collection ${slug} should exist`).toBeDefined()
