@@ -88,3 +88,176 @@ export const validateTenantSlug = (slug: unknown): string | null => {
   }
   return null
 }
+
+// --- Handlers ---
+export const handleStatus = async (slug: string): Promise<void> => {
+  const tenant = await getTenantBySlug(slug)
+  if (!tenant) {
+    p.log.error(`Tenant "${slug}" no existe`)
+    return
+  }
+  console.log(`\n--- Tenant: ${tenant.slug} ---`)
+  console.log(`ecommerceTier: ${tenant.ecommerceTier}`)
+  const enabled = getEnabledFeatures(tenant.features)
+  console.log(`features prendidas: ${enabled.length === 0 ? '(ninguna)' : enabled.join(', ')}`)
+  console.log(`features apagadas:  ${listFeatureSlugs().filter((k) => !tenant.features[k]).join(', ') || '(ninguna)'}`)
+  console.log('---------------------------\n')
+}
+
+export const handleEnableFeature = async (
+  slug: string,
+  feature: string,
+): Promise<void> => {
+  const tenant = await getTenantBySlug(slug)
+  if (!tenant) {
+    p.log.error(`Tenant "${slug}" no existe`)
+    throw new Error(`Tenant "${slug}" no existe`)
+  }
+
+  if (!isValidFeatureName(feature)) {
+    throw new Error(
+      `Feature "${feature}" no existe. Features válidas: ${listFeatureSlugs().join(', ')}`,
+    )
+  }
+
+  const mod = getFeature(feature)!
+  if (tenant.features[feature]) {
+    p.log.warn(`Feature "${feature}" ya estaba prendida en "${slug}". No-op.`)
+    return
+  }
+
+  // Snapshot for rollback
+  const originalValue = tenant.features[feature]
+
+  // 1. Patchear el flag
+  try {
+    await setTenantFeature(tenant.id, feature, true)
+    p.log.success(`Tenant "${slug}": features.${feature} = true`)
+  } catch (err) {
+    p.log.error(`No se pudo patchear el tenant: ${(err as Error).message}`)
+    throw err
+  }
+
+  // 2. Llamar al install de la feature
+  const destDir = path.join(CLIENTS_DIR, slug)
+  try {
+    const result = await mod.install({
+      tenantSlug: slug,
+      destDir,
+      log: (msg) => p.log.info(msg),
+    })
+    if (!result.ok) {
+      // Rollback del flag
+      await setTenantFeature(tenant.id, feature, originalValue)
+      throw new Error(`Install de "${feature}" falló. Rollback del flag hecho.`)
+    }
+    p.log.success(
+      `Feature "${feature}" prendida. ${result.copiedFiles.length} archivos copiados, ${result.envKeysAdded.length} env vars agregadas.`,
+    )
+  } catch (err) {
+    await setTenantFeature(tenant.id, feature, originalValue)
+    p.log.error(`Install de "${feature}" tiró excepción. Rollback del flag hecho.`)
+    throw err
+  }
+}
+
+export const handleDisableFeature = async (
+  slug: string,
+  feature: string,
+): Promise<void> => {
+  const tenant = await getTenantBySlug(slug)
+  if (!tenant) {
+    p.log.error(`Tenant "${slug}" no existe`)
+    throw new Error(`Tenant "${slug}" no existe`)
+  }
+
+  if (!isValidFeatureName(feature)) {
+    throw new Error(
+      `Feature "${feature}" no existe. Features válidas: ${listFeatureSlugs().join(', ')}`,
+    )
+  }
+
+  if (!tenant.features[feature]) {
+    p.log.warn(`Feature "${feature}" ya estaba apagada en "${slug}". No-op.`)
+    return
+  }
+
+  const mod = getFeature(feature)!
+  const originalValue = tenant.features[feature]
+
+  // 1. Llamar al uninstall primero (puede borrar archivos)
+  const destDir = path.join(CLIENTS_DIR, slug)
+  try {
+    const result = await mod.uninstall({
+      tenantSlug: slug,
+      destDir,
+      log: (msg) => p.log.info(msg),
+    })
+    if (!result.ok) {
+      throw new Error(`Uninstall de "${feature}" falló. Flag NO modificado.`)
+    }
+  } catch (err) {
+    p.log.error(`Uninstall de "${feature}" tiró excepción. Flag NO modificado.`)
+    throw err
+  }
+
+  // 2. Patchear el flag
+  try {
+    await setTenantFeature(tenant.id, feature, false)
+    p.log.success(`Tenant "${slug}": features.${feature} = false`)
+    p.log.success(`Feature "${feature}" apagada.`)
+  } catch (err) {
+    await setTenantFeature(tenant.id, feature, originalValue)
+    p.log.error(`No se pudo patchear el flag. Rollback hecho.`)
+    throw err
+  }
+}
+
+// --- Orchestrator ---
+export const run = async (argv: string[]): Promise<void> => {
+  const args = parseArgs(argv)
+
+  // --status solo necesita --slug
+  if (args.status) {
+    if (args.filter) {
+      // Bulk status: filtrar tenants por algún criterio
+      p.log.warn(`--filter con --status no implementado todavía (Sprint futuro).`)
+      return
+    }
+    const slugError = validateTenantSlug(args.slug)
+    if (slugError) {
+      p.log.error(slugError)
+      process.exit(1)
+    }
+    await handleStatus(args.slug!)
+    return
+  }
+
+  // Enable/disable necesitan feature + slug
+  const featureError = validateFeatureName(args.feature)
+  if (featureError) {
+    p.log.error(featureError)
+    process.exit(1)
+  }
+  const slugError = validateTenantSlug(args.slug)
+  if (slugError) {
+    p.log.error(slugError)
+    process.exit(1)
+  }
+
+  if (args.remove) {
+    await handleDisableFeature(args.slug!, args.feature!)
+  } else {
+    await handleEnableFeature(args.slug!, args.feature!)
+  }
+}
+
+// Auto-invoke solo cuando se ejecuta como script principal
+// (no cuando se importa desde tests)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const argv = process.argv.slice(2)
+  run(argv).catch((err) => {
+    p.log.error((err as Error).message)
+    process.exit(1)
+  })
+}
