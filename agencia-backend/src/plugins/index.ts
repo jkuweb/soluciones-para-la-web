@@ -46,6 +46,6 @@ export const plugins: Config['plugins'] = [
     interfaceName: 'SeoMeta',
     generateTitle: generateSeoTitle,
     generateDescription: generateSeoDescription,
-    generateImage: generateSeoImage as any,
+    generateImage: generateSeoImage,
   }),
 ]

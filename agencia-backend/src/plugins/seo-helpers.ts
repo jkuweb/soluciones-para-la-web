@@ -5,6 +5,8 @@
  * directly without booting the full Payload harness.
  */
 
+import type { GenerateImage } from '@payloadcms/plugin-seo/types'
+
 export function generateSeoTitle({ doc }: { doc: Record<string, unknown> }): string {
   const title = (doc?.title as string) || ''
   const tenant =
@@ -22,9 +24,13 @@ export function generateSeoDescription({ doc }: { doc: Record<string, unknown> }
   return ''
 }
 
-export function generateSeoImage({ doc }: { doc: Record<string, unknown> }): unknown {
+export const generateSeoImage = ({
+  doc,
+}: {
+  doc: Record<string, unknown>
+}): ReturnType<GenerateImage> => {
   if (doc && 'heroImage' in doc && doc.heroImage) {
-    return doc.heroImage
+    return doc.heroImage as { id: number | string }
   }
-  return null
+  return ''
 }

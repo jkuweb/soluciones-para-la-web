@@ -63,10 +63,10 @@ describe('generateSeoImage', () => {
     expect(result).toBe(heroImage)
   })
 
-  it('returns null when there is no heroImage', () => {
+  it('returns an empty string when there is no heroImage', () => {
     const result = generateSeoImage({
       doc: { title: 'No image' } as Record<string, unknown>,
     })
-    expect(result).toBeNull()
+    expect(result).toBe('')
   })
 })
