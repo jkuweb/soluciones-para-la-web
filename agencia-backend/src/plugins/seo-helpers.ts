@@ -32,5 +32,8 @@ export const generateSeoImage = ({
   if (doc && 'heroImage' in doc && doc.heroImage) {
     return doc.heroImage as { id: number | string }
   }
+  // Empty string signals "no image" — the plugin's GenerateImage return
+  // union ({ id } | number | string | Promise<...>) does not include
+  // null or undefined, so falsy values are coerced to '' at runtime.
   return ''
 }
