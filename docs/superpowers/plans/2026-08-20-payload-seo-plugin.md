@@ -357,8 +357,60 @@ describe('SEO plugin field injection', () => {
     payload = await getPayload({ config: await config })
   }, 60000)
 
-  function findMetaGroup(fields: any[]): any | undefined {
-    return fields.find((f) => f?.name === 'meta' && f?.type === 'group')
+  function findMetaGroup(fields: any[] | undefined): any | undefined {
+    for (const f of fields ?? []) {
+      if (!f) continue
+      if (f?.name === 'meta' && f?.type === 'group') return f
+      if (Array.isArray(f?.fields)) {
+        const found = findMetaGroup(f.fields)
+        if (found) return found
+      }
+      if (Array.isArray(f?.tabs)) {
+        for (const tab of f.tabs) {
+          const found = findMetaGroup(tab?.fields)
+          if (found) return found
+        }
+      }
+    }
+    return undefined
+  }
+
+  /**
+   * Recursively find a field by `name` anywhere in the field tree.
+   * When `skipInsideGroup` is provided, recursion stops at any group
+   * whose `name` matches — useful for excluding `meta.title` when
+   * looking for the collection's own `title` field.
+   */
+  function findFieldByName(
+    fields: any[] | undefined,
+    targetName: string,
+    skipInsideGroup?: string,
+  ): any | undefined {
+    for (const f of fields ?? []) {
+      if (!f) continue
+      if (Array.isArray(f?.fields)) {
+        if (
+          skipInsideGroup &&
+          f?.type === 'group' &&
+          f?.name === skipInsideGroup
+        ) {
+          // Skip recursing into this group
+        } else {
+          const found = findFieldByName(f.fields, targetName, skipInsideGroup)
+          if (found) return found
+        }
+      }
+      if (Array.isArray(f?.tabs)) {
+        for (const tab of f.tabs) {
+          const found = findFieldByName(tab?.fields, targetName, skipInsideGroup)
+          if (found) return found
+        }
+      }
+      if (f?.name === targetName) {
+        return f
+      }
+    }
+    return undefined
   }
 
   function namesOf(fields: any[]): string[] {
@@ -404,7 +456,7 @@ describe('SEO plugin field injection', () => {
 
   it('preserves the root-level `title` field on `pages` (no shadowing)', () => {
     const pages = payload.collections['pages']
-    const rootTitle = pages.config.fields.find((f: any) => f?.name === 'title')
+    const rootTitle = findFieldByName(pages.config.fields, 'title', 'meta')
     expect(rootTitle).toBeDefined()
     expect(rootTitle?.type).toBe('text')
   })
