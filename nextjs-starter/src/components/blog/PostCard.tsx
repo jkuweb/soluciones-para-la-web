@@ -1,5 +1,6 @@
 import { getMediaUrl } from '@/lib/payload'
 import type { MediaImage } from '@/lib/types'
+import Link from 'next/link'
 import styles from './PostCard.module.css'
 
 export interface PostCardProps {
@@ -28,43 +29,48 @@ export default function PostCard({
 
   return (
     <article className={styles.card}>
-      <a href={`/blog/post/${slug}`} className={styles.link}>
-        {imageUrl && (
-          <div className={styles.imageWrapper}>
-            <img
-              src={getMediaUrl(imageUrl)}
-              alt={heroImage.alt || title}
-              className={styles.image}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-        )}
-
-        <div className={styles.body}>
-          <div className={styles.meta}>
-            <time dateTime={publishedAt} className={styles.date}>
-              {formattedDate}
-            </time>
-          </div>
-
-          <h2 className={styles.title}>{title}</h2>
-
-          {excerpt && <p className={styles.excerpt}>{excerpt}</p>}
-
-          {categories && categories.length > 0 && (
-            <ul className={styles.categories} aria-label="Categorías">
-              {categories.map((cat) => (
-                <li key={cat.id}>
-                  <a href={`/blog/category/${cat.slug}`} className={styles.categoryChip}>
-                    {cat.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+      {imageUrl && (
+        <div className={styles.imageWrapper}>
+          <img
+            src={getMediaUrl(imageUrl)}
+            alt={heroImage.alt || title}
+            className={styles.image}
+            loading="lazy"
+            decoding="async"
+          />
         </div>
-      </a>
+      )}
+
+      <div className={styles.body}>
+        <div className={styles.meta}>
+          <time dateTime={publishedAt} className={styles.date}>
+            {formattedDate}
+          </time>
+        </div>
+
+        <h2 className={styles.title}>
+          <Link href={`/blog/post/${slug}`} className={styles.titleLink}>
+            {title}
+          </Link>
+        </h2>
+
+        {excerpt && <p className={styles.excerpt}>{excerpt}</p>}
+
+        {categories && categories.length > 0 && (
+          <ul className={styles.categories} aria-label="Categorías">
+            {categories.map((cat) => (
+              <li key={cat.id}>
+                <Link
+                  href={`/blog/category/${cat.slug}`}
+                  className={styles.categoryChip}
+                >
+                  {cat.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </article>
   )
 }
