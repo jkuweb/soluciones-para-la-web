@@ -19,6 +19,7 @@
     "sync:client": "node scripts/loaders/run-with-css.mjs scripts/sync-template.ts",
     "update:client": "node scripts/loaders/run-with-css.mjs scripts/update-deps.ts",
     "audit:clients": "node scripts/loaders/run-with-css.mjs scripts/audit-clients.ts",
+    "reset:super-admin-password": "node scripts/loaders/run-with-css.mjs scripts/reset-super-admin-password.ts",
     "sync:clients": "node scripts/loaders/run-with-css.mjs scripts/sync-clients.ts",
     "update:clients": "node scripts/loaders/run-with-css.mjs scripts/update-clients.ts",
     "test": "pnpm run test:int",

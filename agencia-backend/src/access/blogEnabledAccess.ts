@@ -163,3 +163,27 @@ export const blogEnabledPostRead: Access = async ({ req }) => {
   }
   return { tenant: { in: allowedIds } }
 }
+
+/**
+ * Read access PÚBLICO (sin auth) para taxonomías (Categories y Tags).
+ *
+ * Solo retorna taxonomías de tenants con `blogEnabled: true`. Es seguro
+ * exponerlas porque el `where` filtra por tenant activo y los slugs/títulos
+ * no son datos sensibles (son los que aparecen en las URLs públicas).
+ *
+ * Sin este access, los starters de cliente no pueden hidratar las relaciones
+ * `categories`/`tags` de los posts con `depth >= 1` — Payload devuelve solo
+ * IDs y los chips quedan sin texto en el front.
+ */
+export const publicTaxonomyRead: Access = async ({ req }) => {
+  const payload = req.payload
+  const tenants = await payload.find({
+    collection: 'tenants',
+    where: { blogEnabled: { equals: true } },
+    pagination: false,
+    overrideAccess: true,
+    depth: 0,
+  })
+  const tenantIds = tenants.docs.map((t: { id: string | number }) => t.id)
+  return { tenant: { in: tenantIds } } as Where
+}

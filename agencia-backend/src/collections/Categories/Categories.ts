@@ -1,6 +1,9 @@
 import type { CollectionConfig, Condition } from 'payload'
 import { slugField } from 'payload'
-import { blogEnabledTenantAccess } from '@/access/blogEnabledAccess'
+import {
+  blogEnabledTenantAccess,
+  publicTaxonomyRead,
+} from '@/access/blogEnabledAccess'
 import { validateUniqueSlug } from '@/utilities/validateUniqueSlug'
 
 /**
@@ -24,7 +27,7 @@ export const Categories: CollectionConfig = {
     group: 'Blog',
   },
   access: {
-    read: blogEnabledTenantAccess,
+    read: publicTaxonomyRead,
     create: blogEnabledTenantAccess,
     update: blogEnabledTenantAccess,
     delete: blogEnabledTenantAccess,
