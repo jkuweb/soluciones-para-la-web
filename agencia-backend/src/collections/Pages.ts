@@ -280,22 +280,6 @@ export const Pages: CollectionConfig = {
             },
           ],
         },
-        {
-          label: 'SEO',
-          name: 'meta',
-          fields: [
-            {
-              name: 'title',
-              type: 'text',
-              label: 'Meta Title',
-            },
-            {
-              name: 'description',
-              type: 'textarea',
-              label: 'Meta Description',
-            },
-          ],
-        },
       ],
     },
   ],
