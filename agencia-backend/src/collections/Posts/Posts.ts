@@ -36,7 +36,7 @@ export const Posts: CollectionConfig = {
     title: true,
     slug: true,
     categories: true,
-    metaImage: true,
+    meta: true,
   },
   hooks: {
     beforeValidate: [generateSlug],
@@ -200,32 +200,6 @@ export const Posts: CollectionConfig = {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               relationTo: 'tags' as any,
               hasMany: true,
-            },
-          ],
-        },
-        {
-          label: 'SEO',
-          fields: [
-            {
-              name: 'metaTitle',
-              type: 'text',
-              maxLength: 60,
-              admin: {
-                description: 'Recommended: 50–60 characters for search engines.',
-              },
-            },
-            {
-              name: 'metaDescription',
-              type: 'textarea',
-              maxLength: 160,
-              admin: {
-                description: 'Recommended: 150–160 characters for search engines.',
-              },
-            },
-            {
-              name: 'metaImage',
-              type: 'upload',
-              relationTo: 'media',
             },
           ],
         },
