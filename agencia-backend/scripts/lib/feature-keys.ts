@@ -14,7 +14,7 @@ export const FEATURE_KEYS = [
 ] as const
 export type FeatureKey = (typeof FEATURE_KEYS)[number]
 
-export const TIER_DEFAULTS: Record<EcommerceTier, FeatureKey[]> = {
+const TIER_DEFAULTS: Record<EcommerceTier, FeatureKey[]> = {
   none: [],
   lite: ['catalog', 'payments'],
   standard: ['catalog', 'payments', 'shipping', 'coupons'],

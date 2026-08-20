@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   ECOMMERCE_TIERS,
   FEATURE_KEYS,
-  TIER_DEFAULTS,
   DEFAULT_FEATURES,
   isValidEcommerceTier,
   isValidFeatureName,
@@ -17,9 +16,21 @@ describe('feature-keys', () => {
     })
 
     it('exports the nine expected feature keys', () => {
-      expect(FEATURE_KEYS).toHaveLength(9)
-      expect(FEATURE_KEYS).toContain('catalog')
-      expect(FEATURE_KEYS).toContain('payments')
+      const expected = [
+        'catalog',
+        'payments',
+        'shipping',
+        'coupons',
+        'reviews',
+        'wishlist',
+        'taxes',
+        'abandonedCart',
+        'subscriptions',
+      ]
+      for (const key of expected) {
+        expect(FEATURE_KEYS).toContain(key)
+      }
+      expect(FEATURE_KEYS).toHaveLength(expected.length)
     })
 
     it('every feature key has a default of false', () => {
@@ -75,7 +86,25 @@ describe('feature-keys', () => {
 
     it('returns catalog + payments + shipping + coupons for tier "standard"', () => {
       const features = defaultFeaturesForTier('standard')
-      expect(TIER_DEFAULTS.standard.every((k) => features[k])).toBe(true)
+      expect(features.catalog).toBe(true)
+      expect(features.payments).toBe(true)
+      expect(features.shipping).toBe(true)
+      expect(features.coupons).toBe(true)
+      expect(features.reviews).toBe(false)
+      expect(features.wishlist).toBe(false)
+    })
+
+    it('returns catalog + payments + shipping + coupons + reviews + wishlist + taxes for tier "full"', () => {
+      const features = defaultFeaturesForTier('full')
+      expect(features.catalog).toBe(true)
+      expect(features.payments).toBe(true)
+      expect(features.shipping).toBe(true)
+      expect(features.coupons).toBe(true)
+      expect(features.reviews).toBe(true)
+      expect(features.wishlist).toBe(true)
+      expect(features.taxes).toBe(true)
+      expect(features.abandonedCart).toBe(false)
+      expect(features.subscriptions).toBe(false)
     })
 
     it('returns a fresh object each call (no shared mutation)', () => {
