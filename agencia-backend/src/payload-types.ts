@@ -162,6 +162,22 @@ export interface Tenant {
    * Permite al cliente crear y gestionar sus posts, categorías y etiquetas. Si está desactivado, el cliente no ve contenido del blog vía API y no puede escribir desde el admin.
    */
   blogEnabled?: boolean | null;
+  /**
+   * Pack inicial de ecommerce. Modificarlo no agrega features automáticamente — usá `pnpm add-feature` o editá `features` directo.
+   */
+  ecommerceTier: 'none' | 'lite' | 'standard' | 'full';
+  /**
+   * Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`.
+   */
+  features?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -837,6 +853,8 @@ export interface TenantsSelect<T extends boolean = true> {
   projectPrice?: T;
   paymentStatus?: T;
   blogEnabled?: T;
+  ecommerceTier?: T;
+  features?: T;
   updatedAt?: T;
   createdAt?: T;
 }

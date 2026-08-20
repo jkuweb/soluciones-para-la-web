@@ -31,6 +31,7 @@ describe('Header and Footer Collections', () => {
         serviceType: 'web-estatica',
         frontendType: 'astro',
         status: 'active',
+        ecommerceTier: 'none',
       },
       overrideAccess: true,
     })
@@ -47,6 +48,7 @@ describe('Header and Footer Collections', () => {
         serviceType: 'tienda-online',
         frontendType: 'nextjs',
         status: 'active',
+        ecommerceTier: 'none',
       },
       overrideAccess: true,
     })

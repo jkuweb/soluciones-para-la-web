@@ -117,5 +117,51 @@ export const Tenants: CollectionConfig = {
         update: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
       },
     },
+    {
+      name: 'ecommerceTier',
+      type: 'select',
+      options: [
+        { label: 'Sin ecommerce', value: 'none' },
+        { label: 'Lite (catálogo + Stripe)', value: 'lite' },
+        { label: 'Standard (+ envíos + cupones)', value: 'standard' },
+        { label: 'Full (+ reviews + wishlist + taxes)', value: 'full' },
+      ],
+      defaultValue: 'none',
+      required: true,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Pack inicial de ecommerce. Modificarlo no agrega features automáticamente — usá `pnpm add-feature` o editá `features` directo.',
+      },
+      access: {
+        create: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+        update: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+      },
+    },
+    {
+      name: 'features',
+      type: 'json',
+      defaultValue: {
+        catalog: false,
+        payments: false,
+        shipping: false,
+        coupons: false,
+        reviews: false,
+        wishlist: false,
+        taxes: false,
+        abandonedCart: false,
+        subscriptions: false,
+      },
+      admin: {
+        position: 'sidebar',
+        description:
+          'Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`.',
+      },
+      access: {
+        read: () => true,
+        create: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+        update: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
+      },
+    },
   ],
 }

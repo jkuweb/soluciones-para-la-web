@@ -37,6 +37,7 @@ describe('validateLayoutStructure', () => {
         serviceType: 'web-estatica',
         frontendType: 'astro',
         status: 'active',
+        ecommerceTier: 'none',
       },
       overrideAccess: true,
     })

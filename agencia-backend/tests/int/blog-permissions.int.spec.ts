@@ -103,6 +103,7 @@ describe('blog tenant permissions (blogEnabled flag)', () => {
         frontendType: 'astro',
         status: 'active',
         blogEnabled: true,
+        ecommerceTier: 'none',
       },
       overrideAccess: true,
     })
@@ -118,6 +119,7 @@ describe('blog tenant permissions (blogEnabled flag)', () => {
         frontendType: 'astro',
         status: 'active',
         // blogEnabled: false (default)
+        ecommerceTier: 'none',
       },
       overrideAccess: true,
     })
