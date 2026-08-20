@@ -12,6 +12,7 @@
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "generate:types:shimmed": "node scripts/loaders/run-with-css.mjs scripts/generate-types-shimmed.ts",
     "backfill:blog-enabled": "node scripts/loaders/run-with-css.mjs scripts/backfill-blog-enabled.ts",
+    "add-feature": "node scripts/loaders/run-with-css.mjs scripts/add-feature.ts",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
