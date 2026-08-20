@@ -394,7 +394,8 @@ describe('SEO plugin field injection', () => {
       'tenants',
     ]
     for (const slug of outOfScope) {
-      const collection = payload.collections[slug]
+      const collection =
+        payload.collections[slug as keyof typeof payload.collections]
       expect(collection, `collection ${slug} should exist`).toBeDefined()
       const meta = findMetaGroup(collection.config.fields)
       expect(meta, `${slug} should not have a meta group`).toBeUndefined()
@@ -405,7 +406,7 @@ describe('SEO plugin field injection', () => {
     const pages = payload.collections['pages']
     const rootTitle = pages.config.fields.find((f: any) => f?.name === 'title')
     expect(rootTitle).toBeDefined()
-    expect(rootTitle.type).toBe('text')
+    expect(rootTitle?.type).toBe('text')
   })
 })
 ```
