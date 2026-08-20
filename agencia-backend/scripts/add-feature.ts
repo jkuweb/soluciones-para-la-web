@@ -214,7 +214,7 @@ export const handleDisableFeature = async (
 }
 
 // --- Orchestrator ---
-export const run = async (argv: string[]): Promise<void> => {
+export const run = async (argv: string[] = process.argv.slice(2)): Promise<void> => {
   const args = parseArgs(argv)
 
   // --status solo necesita --slug
