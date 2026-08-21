@@ -271,28 +271,11 @@ export const promptEcommerceTier = async (
       { value: 'lite', label: 'Lite (catálogo + Stripe)' },
       { value: 'standard', label: 'Standard (+ envíos + cupones)' },
       { value: 'full', label: 'Full (+ reviews + wishlist + taxes)' },
-      { value: 'custom', label: 'Custom (elijo feature por feature)' },
     ],
   })) as EcommerceTier
   if (p.isCancel(tierChoice)) {
     p.cancel('Operación cancelada.')
     process.exit(0)
-  }
-
-  if (tierChoice === 'custom') {
-    const features = { ...DEFAULT_FEATURES }
-    for (const key of Object.keys(features) as Array<keyof typeof features>) {
-      const answer = await p.confirm({
-        message: `¿Prender "${key}"?`,
-        initialValue: false,
-      })
-      if (p.isCancel(answer)) {
-        p.cancel('Operación cancelada.')
-        process.exit(0)
-      }
-      features[key] = answer === true
-    }
-    return { ecommerceTier: 'custom', features }
   }
 
   return {
