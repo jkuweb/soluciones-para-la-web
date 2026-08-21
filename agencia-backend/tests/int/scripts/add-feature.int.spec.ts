@@ -117,3 +117,35 @@ describe('add-feature enable/disable/status', () => {
     expect(tenant?.features.welcomeBanner).toBe(false)
   })
 })
+
+describe('add-feature rollback on install failure', () => {
+  it('rolls back flag to false when install fails (no destDir)', async () => {
+    const payload = await getPayload({ config })
+    const slug = `rollback-test-${Date.now()}`
+    await payload.create({
+      collection: 'tenants',
+      data: {
+        name: `Rollback Test ${slug}`,
+        slug,
+        domain: `${slug}.test`,
+        serviceType: 'tienda-online',
+        frontendType: 'nextjs',
+        status: 'pending',
+        ecommerceTier: 'none',
+        features: { ...DEFAULT_FEATURES },
+        blogEnabled: false,
+      },
+    })
+
+    // handleEnableFeature calls install() with destDir = /home/joseba/Clientes/clientes/<slug>
+    // If that directory doesn't exist (which it won't for this fresh test slug),
+    // install returns ok:false and the flag is rolled back.
+    await expect(handleEnableFeature(slug, 'welcomeBanner')).rejects.toThrow()
+
+    const tenant = await getTenantBySlug(slug)
+    expect(tenant?.features.welcomeBanner).toBe(false)
+
+    // Cleanup
+    await payload.delete({ collection: 'tenants', where: { slug: { equals: slug } } })
+  })
+})
