@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtemp, rm, readFile, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { install } from '../../../scripts/features/welcome-banner/install'
 
 let workDir: string
@@ -75,6 +75,38 @@ describe('welcome-banner install', () => {
       const result = await install({ tenantSlug: 'test', destDir: nonExistent, log: () => {} })
       expect(result.ok).toBe(false)
       expect(result.error).toBeTruthy()
+    },
+  )
+
+  it(
+    'returns ok:false when template source is missing',
+    { timeout: 10000 },
+    async () => {
+      await rm(templateRoot, { recursive: true, force: true })
+      templateRoot = '/nonexistent'
+      // install reads TEMPLATE_PATH from process.cwd()/../nextjs-starter/...
+      // Delete that file so copyFile throws ENOENT, exercising the try/catch
+      const realTemplate = join(
+        process.cwd(),
+        '..',
+        'nextjs-starter',
+        'src',
+        'components',
+        'blocks',
+        'WelcomeBanner.tsx',
+      )
+      const backup = await readFile(realTemplate, 'utf-8').catch(() => null)
+      await rm(realTemplate, { force: true })
+      try {
+        const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+        expect(result.ok).toBe(false)
+        expect(result.error).toMatch(/template|ENOENT/)
+      } finally {
+        if (backup !== null) {
+          await mkdir(dirname(realTemplate), { recursive: true })
+          await writeFile(realTemplate, backup, 'utf-8')
+        }
+      }
     },
   )
 })

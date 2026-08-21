@@ -41,8 +41,17 @@ export const install = async (
 
   const dest = join(ctx.destDir, COMPONENT_RELATIVE)
   await mkdir(dirname(dest), { recursive: true })
-  await copyFile(TEMPLATE_PATH, dest)
-  ctx.log(`✓ Copied ${COMPONENT_RELATIVE}`)
+  try {
+    await copyFile(TEMPLATE_PATH, dest)
+    ctx.log(`✓ Copied ${COMPONENT_RELATIVE}`)
+  } catch (err) {
+    return {
+      ok: false,
+      error: `Failed to copy template: ${(err as Error).message}`,
+      copiedFiles: [],
+      envKeysAdded: [],
+    }
+  }
 
   // Append env var to .env.example (create if missing)
   const envPath = join(ctx.destDir, ENV_EXAMPLE)
