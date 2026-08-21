@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { spawn, type ChildProcess } from 'node:child_process'
-import path from 'node:path'
+import { mkdir, rm } from 'node:fs/promises'
+import path, { join } from 'node:path'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 
 const HANG_TIMEOUT_MS = 10_000
 const TEST_TIMEOUT_MS = 20_000
+const CLIENTS_DIR = '/home/joseba/Clientes/clientes'
 
 let testTenantSlug: string
 
@@ -27,6 +29,9 @@ beforeAll(async () => {
     },
   })
   testTenantSlug = slug
+  await mkdir(join(CLIENTS_DIR, slug, 'src/components/blocks'), {
+    recursive: true,
+  })
 })
 
 afterAll(async () => {
@@ -35,23 +40,17 @@ afterAll(async () => {
     collection: 'tenants',
     where: { slug: { equals: testTenantSlug } },
   })
+  await rm(join(CLIENTS_DIR, testTenantSlug), { recursive: true, force: true })
 })
 
 const runScriptAsChild = (args: string[]): Promise<number> =>
   new Promise((resolve, reject) => {
-    const loaderPath = path.resolve(
-      process.cwd(),
-      'scripts/loaders/run-with-css.mjs',
-    )
-    const scriptPath = path.resolve(
-      process.cwd(),
-      'scripts/add-feature.ts',
-    )
-    const child: ChildProcess = spawn(
-      'node',
-      [loaderPath, scriptPath, ...args],
-      { cwd: process.cwd(), stdio: 'pipe' },
-    )
+    const loaderPath = path.resolve(process.cwd(), 'scripts/loaders/run-with-css.mjs')
+    const scriptPath = path.resolve(process.cwd(), 'scripts/add-feature.ts')
+    const child: ChildProcess = spawn('node', [loaderPath, scriptPath, ...args], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    })
 
     let stderr = ''
     child.stderr?.on('data', (chunk) => {
@@ -60,11 +59,7 @@ const runScriptAsChild = (args: string[]): Promise<number> =>
 
     const killTimer = setTimeout(() => {
       child.kill('SIGKILL')
-      reject(
-        new Error(
-          `Script hung: did not exit within ${HANG_TIMEOUT_MS}ms. stderr:\n${stderr}`,
-        ),
-      )
+      reject(new Error(`Script hung: did not exit within ${HANG_TIMEOUT_MS}ms. stderr:\n${stderr}`))
     }, HANG_TIMEOUT_MS)
 
     child.on('exit', (code) => {
@@ -81,9 +76,28 @@ describe('add-feature script exits cleanly', () => {
   it(
     '--status exits with code 0 (does not hang on Payload DB pool)',
     async () => {
+      const exitCode = await runScriptAsChild(['--status', `--slug=${testTenantSlug}`])
+      expect(exitCode).toBe(0)
+    },
+    TEST_TIMEOUT_MS,
+  )
+
+  it(
+    'enable welcome-banner exits with code 0',
+    async () => {
+      const exitCode = await runScriptAsChild(['welcomeBanner', `--slug=${testTenantSlug}`])
+      expect(exitCode).toBe(0)
+    },
+    TEST_TIMEOUT_MS,
+  )
+
+  it(
+    'disable welcome-banner exits with code 0 (--remove)',
+    async () => {
       const exitCode = await runScriptAsChild([
-        '--status',
+        'welcomeBanner',
         `--slug=${testTenantSlug}`,
+        '--remove',
       ])
       expect(exitCode).toBe(0)
     },

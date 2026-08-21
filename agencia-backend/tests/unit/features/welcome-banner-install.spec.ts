@@ -1,0 +1,99 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mkdtemp, rm, readFile, mkdir, writeFile, stat } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { install } from '../../../scripts/features/welcome-banner/install'
+
+let workDir: string
+let templateRoot: string
+
+const setTemplateEnv = (p: string | undefined) => {
+  if (p === undefined) delete process.env.WELCOME_BANNER_TEMPLATE_PATH
+  else process.env.WELCOME_BANNER_TEMPLATE_PATH = p
+}
+
+beforeEach(async () => {
+  workDir = await mkdtemp(join(tmpdir(), 'welcome-banner-test-'))
+  templateRoot = await mkdtemp(join(tmpdir(), 'welcome-banner-template-'))
+  await mkdir(join(templateRoot, 'nextjs-starter', 'src', 'components', 'blocks'), {
+    recursive: true,
+  })
+  await writeFile(
+    join(templateRoot, 'nextjs-starter', 'src', 'components', 'blocks', 'WelcomeBanner.tsx'),
+    'export default function WelcomeBanner() { return <div>template</div> }',
+    'utf-8',
+  )
+  setTemplateEnv(
+    join(templateRoot, 'nextjs-starter', 'src', 'components', 'blocks', 'WelcomeBanner.tsx'),
+  )
+})
+
+afterEach(async () => {
+  await rm(workDir, { recursive: true, force: true })
+  await rm(templateRoot, { recursive: true, force: true })
+  setTemplateEnv(undefined)
+})
+
+describe('welcome-banner install', () => {
+  it(
+    'copies the component file to destDir/src/components/blocks/',
+    { timeout: 10000 },
+    async () => {
+      const result = await install({
+        tenantSlug: 'test',
+        destDir: workDir,
+        log: () => {},
+      })
+      expect(result.ok).toBe(true)
+      const copied = await readFile(
+        join(workDir, 'src', 'components', 'blocks', 'WelcomeBanner.tsx'),
+        'utf-8',
+      )
+      expect(copied).toContain('export default function WelcomeBanner')
+    },
+  )
+
+  it('appends WELCOME_BANNER_TEXT= to .env.example', { timeout: 10000 }, async () => {
+    await writeFile(join(workDir, '.env.example'), 'OTHER_VAR=foo\n', 'utf-8')
+    await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
+    expect(envContent).toContain('OTHER_VAR=foo')
+    expect(envContent).toContain('WELCOME_BANNER_TEXT=')
+  })
+
+  it('does not duplicate WELCOME_BANNER_TEXT if already present', { timeout: 10000 }, async () => {
+    await writeFile(join(workDir, '.env.example'), 'WELCOME_BANNER_TEXT=hello\n', 'utf-8')
+    await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
+    const occurrences = envContent.split('WELCOME_BANNER_TEXT=').length - 1
+    expect(occurrences).toBe(1)
+    expect(envContent).toContain('WELCOME_BANNER_TEXT=hello')
+  })
+
+  it('returns ok:false when destDir does not exist', { timeout: 10000 }, async () => {
+    const nonExistent = join(workDir, 'does-not-exist')
+    const result = await install({ tenantSlug: 'test', destDir: nonExistent, log: () => {} })
+    expect(result.ok).toBe(false)
+    expect(result.error).toBeTruthy()
+  })
+
+  it('returns ok:false when template source is missing', { timeout: 10000 }, async () => {
+    const nonexistentTemplate = join(templateRoot, 'does-not-exist.tsx')
+    setTemplateEnv(nonexistentTemplate)
+    const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    expect(result.ok).toBe(false)
+    expect(result.error).toMatch(/template|ENOENT/)
+  })
+
+  it('removes copied component file if env append fails', { timeout: 10000 }, async () => {
+    await writeFile(join(workDir, '.env.example'), 'INITIAL=value\n', 'utf-8')
+    await rm(join(workDir, '.env.example'))
+    await mkdir(join(workDir, '.env.example'))
+
+    const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    expect(result.ok).toBe(false)
+    await expect(
+      stat(join(workDir, 'src', 'components', 'blocks', 'WelcomeBanner.tsx')),
+    ).rejects.toThrow()
+  })
+})

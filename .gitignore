@@ -91,3 +91,6 @@ openspec/specs/versions-drafts-pages/
 studiocreativo.com/
 educarsano.com/
 clientes/
+
+# Git worktrees — local-only workspaces created by the orchestrator
+.worktrees/

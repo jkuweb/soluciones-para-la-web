@@ -15,7 +15,7 @@ describe('feature-keys', () => {
       expect(ECOMMERCE_TIERS).toEqual(['none', 'lite', 'standard', 'full', 'custom'])
     })
 
-    it('exports the nine expected feature keys', () => {
+    it('exports the ten expected feature keys', () => {
       const expected = [
         'catalog',
         'payments',
@@ -26,6 +26,7 @@ describe('feature-keys', () => {
         'taxes',
         'abandonedCart',
         'subscriptions',
+        'welcomeBanner',
       ]
       for (const key of expected) {
         expect(FEATURE_KEYS).toContain(key)

@@ -452,6 +452,19 @@ export interface Page {
             blockType: 'menu';
           }
         | {
+            /**
+             * Texto del banner. Si está vacío, el storefront muestra WELCOME_BANNER_TEXT (env var).
+             */
+            text?: string | null;
+            /**
+             * Switch on/off del banner.
+             */
+            enabled?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'welcome-banner';
+          }
+        | {
             name: string;
             description?: {
               root: {
@@ -1030,6 +1043,14 @@ export interface PagesSelect<T extends boolean = true> {
                     image?: T;
                     id?: T;
                   };
+              id?: T;
+              blockName?: T;
+            };
+        'welcome-banner'?:
+          | T
+          | {
+              text?: T;
+              enabled?: T;
               id?: T;
               blockName?: T;
             };
