@@ -36,7 +36,7 @@ Es un demo pequeño, deliberadamente: el valor es **probar el contrato** que tie
 
 Se agregan estas piezas:
 
-1. **Payload block `welcomeBanner`** — vive en `agencia-backend/src/blocks/WelcomeBanner.ts`. Pre-registrado en `payload.config.ts` igual que `HeroBlock` / `TextBlock`. Disponible para todas las páginas de cualquier tenant.
+1. **Payload block `welcome-banner`** — vive en `agencia-backend/src/blocks/WelcomeBanner.ts`. Pre-registrado en `payload.config.ts` igual que `HeroBlock` / `TextBlock`. Disponible para todas las páginas de cualquier tenant.
 
 2. **Componente Next.js `WelcomeBanner.tsx`** — plantilla en `nextjs-starter/src/components/blocks/WelcomeBanner.tsx`. El install lo copia a `destDir/src/components/blocks/WelcomeBanner.tsx`.
 
@@ -55,7 +55,7 @@ Lo que **no** cambia:
 
 ```ts
 export const WelcomeBannerBlock: Block = {
-  slug: 'welcomeBanner',
+  slug: 'welcome-banner',
   fields: [
     { name: 'text', type: 'text', required: false },
     { name: 'enabled', type: 'checkbox', defaultValue: true },
@@ -106,7 +106,7 @@ import { install as welcomeBannerInstall } from './welcome-banner/install'
 import { uninstall as welcomeBannerUninstall } from './welcome-banner/uninstall'
 
 welcomeBanner: {
-  slug: 'welcomeBanner',
+  slug: 'welcome-banner',
   displayName: 'Banner de bienvenida',
   description: 'Banner configurable por tenant con env var de fallback',
   install: welcomeBannerInstall,
@@ -173,9 +173,9 @@ pnpm add-feature welcome-banner --slug=acme --remove
 
 **Post-install manual del cliente** (no lo hace el script):
 
-1. Editar `BlockRenderer.tsx` → agregar `import { WelcomeBanner }` y `'welcomeBanner': WelcomeBanner` al mapa.
+1. Editar `BlockRenderer.tsx` → agregar `import { WelcomeBanner }` y `'welcome-banner': WelcomeBanner` al mapa.
 2. Setear `WELCOME_BANNER_TEXT=Bienvenido a Acme` en `.env`.
-3. En Payload admin → agregar block `welcomeBanner` a una página con texto custom.
+3. En Payload admin → agregar block `welcome-banner` a una página con texto custom.
 
 **Idempotencia**:
 
@@ -296,7 +296,7 @@ exit behavior:
 ## 4. Non-goals
 
 - **Auto-discovery en BlockRenderer**: el wiring manual queda como paso post-install documentado. Pasar a auto-discovery es decisión para Sprint futuro (afecta a otros bloques del template).
-- **Per-tenant feature gating en Payload admin**: el block `welcomeBanner` queda visible para todos los tenants (igual que HeroBlock hoy). El flag `tenant.features.welcomeBanner` afecta solo el frontend, no la disponibilidad del block en admin.
+- **Per-tenant feature gating en Payload admin**: el block `welcome-banner` queda visible para todos los tenants (igual que HeroBlock hoy). El flag `tenant.features.welcomeBanner` afecta solo el frontend, no la disponibilidad del block en admin.
 - **Soporte para Astro**: este demo solo cubre Next.js. Astro es estático y un banner de bienvenida no es prioritario ahí. Si después se necesita, es un `install.ts` adicional para el template `astro-starter/`.
 - **Implementación real de catalog, payments, etc.**: este demo valida el pipeline. La implementación real de cada feature es su propio sprint.
 
