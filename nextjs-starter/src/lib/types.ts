@@ -200,3 +200,49 @@ export interface Tag {
   title: string
   slug: string
 }
+
+// ── Catalog types ────────────────────────────────────────────────────────────
+
+export interface ProductCategory {
+  id: string
+  slug: string
+  name: string
+  description?: string
+  image?: MediaImage
+}
+
+export interface Product {
+  id: string
+  slug: string
+  title: string
+  description?: LexicalNode | { root: LexicalNode }
+  price: number
+  compareAtPrice?: number
+  currency: 'EUR' | 'USD' | 'GBP'
+  images?: { id?: string; image: MediaImage }[]
+  category?: { id: string; slug: string; name: string } | string
+  stock?: number
+  sku?: string
+  status: 'draft' | 'published' | 'archived'
+}
+
+export interface ProductGrid extends Block {
+  blockType: 'product-grid'
+  heading?: string
+  category?: { id: string; slug: string; name: string } | string
+  limit?: number
+  columns?: '2' | '3' | '4'
+}
+
+export interface FeaturedProduct extends Block {
+  blockType: 'featured-product'
+  product: Product | string
+  showPrice?: boolean
+  ctaLabel?: string
+}
+
+export interface CategoryList extends Block {
+  blockType: 'category-list'
+  heading?: string
+  layout?: 'grid' | 'list'
+}
