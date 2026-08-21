@@ -41,4 +41,16 @@ describe('welcome-banner install', () => {
       expect(copied).toContain('export default function WelcomeBanner')
     },
   )
+
+  it(
+    'appends WELCOME_BANNER_TEXT= to .env.example',
+    { timeout: 10000 },
+    async () => {
+      await writeFile(join(workDir, '.env.example'), 'OTHER_VAR=foo\n', 'utf-8')
+      await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+      const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
+      expect(envContent).toContain('OTHER_VAR=foo')
+      expect(envContent).toContain('WELCOME_BANNER_TEXT=')
+    },
+  )
 })
