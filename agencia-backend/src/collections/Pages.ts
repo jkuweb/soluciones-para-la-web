@@ -10,6 +10,11 @@ import { ProductBlock } from '@/blocks/ProductBlock'
 import { WelcomeBannerBlock as WelcomeBanner } from '@/blocks/WelcomeBanner'
 import { CartBlock } from '@/blocks/CartBlock'
 import { CourseBlock } from '@/blocks/CourseBlock'
+import {
+  ProductGridBlock,
+  FeaturedProductBlock,
+  CategoryListBlock,
+} from '@/blocks/ecommerce'
 import { RestrictedBlocksField } from '@/components/RestrictedBlocksField'
 import { generateSlug } from '@/collections/Pages/hooks/generateSlug'
 import { validateLayoutStructure } from '@/collections/Pages/hooks/validateLayoutStructure'
@@ -270,6 +275,9 @@ export const Pages: CollectionConfig = {
                 ProductBlock,
                 CartBlock,
                 CourseBlock,
+                ProductGridBlock,
+                FeaturedProductBlock,
+                CategoryListBlock,
               ],
               admin: {
                 components: {
