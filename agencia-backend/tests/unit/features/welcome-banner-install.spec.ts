@@ -66,4 +66,15 @@ describe('welcome-banner install', () => {
       expect(envContent).toContain('WELCOME_BANNER_TEXT=hello')
     },
   )
+
+  it(
+    'returns ok:false when destDir does not exist',
+    { timeout: 10000 },
+    async () => {
+      const nonExistent = join(workDir, 'does-not-exist')
+      const result = await install({ tenantSlug: 'test', destDir: nonExistent, log: () => {} })
+      expect(result.ok).toBe(false)
+      expect(result.error).toBeTruthy()
+    },
+  )
 })

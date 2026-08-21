@@ -19,6 +19,26 @@ const ENV_KEY = 'WELCOME_BANNER_TEXT'
 export const install = async (
   ctx: FeatureInstallContext,
 ): Promise<FeatureInstallResult> => {
+  // Validate destDir exists
+  try {
+    const stat = await (await import('node:fs/promises')).stat(ctx.destDir)
+    if (!stat.isDirectory()) {
+      return {
+        ok: false,
+        copiedFiles: [],
+        envKeysAdded: [],
+        error: `destDir is not a directory: ${ctx.destDir}`,
+      }
+    }
+  } catch {
+    return {
+      ok: false,
+      copiedFiles: [],
+      envKeysAdded: [],
+      error: `destDir does not exist: ${ctx.destDir}`,
+    }
+  }
+
   const dest = join(ctx.destDir, COMPONENT_RELATIVE)
   await mkdir(dirname(dest), { recursive: true })
   await copyFile(TEMPLATE_PATH, dest)
