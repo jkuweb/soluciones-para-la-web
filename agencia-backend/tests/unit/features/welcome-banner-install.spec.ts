@@ -53,4 +53,17 @@ describe('welcome-banner install', () => {
       expect(envContent).toContain('WELCOME_BANNER_TEXT=')
     },
   )
+
+  it(
+    'does not duplicate WELCOME_BANNER_TEXT if already present',
+    { timeout: 10000 },
+    async () => {
+      await writeFile(join(workDir, '.env.example'), 'WELCOME_BANNER_TEXT=hello\n', 'utf-8')
+      await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+      const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
+      const occurrences = envContent.split('WELCOME_BANNER_TEXT=').length - 1
+      expect(occurrences).toBe(1)
+      expect(envContent).toContain('WELCOME_BANNER_TEXT=hello')
+    },
+  )
 })
