@@ -122,6 +122,12 @@ export interface MenuBlock extends Block {
   items?: { name: string; description?: string; price?: number; image?: MediaImage }[]
 }
 
+export interface WelcomeBanner extends Block {
+  blockType: 'welcome-banner'
+  text?: string
+  enabled?: boolean
+}
+
 export interface Header {
   id: string
   tenant: string | { slug: string }

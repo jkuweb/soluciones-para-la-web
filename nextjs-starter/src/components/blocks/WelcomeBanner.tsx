@@ -1,4 +1,4 @@
-import type { WelcomeBanner } from '@/payload-types'
+import type { WelcomeBanner } from '@/lib/types'
 
 export default function WelcomeBannerBlock({ data }: { data: WelcomeBanner }) {
   if (!data.enabled) return null
