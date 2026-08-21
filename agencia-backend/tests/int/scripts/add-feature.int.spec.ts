@@ -1,10 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mkdir, rm } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { handleEnableFeature, handleDisableFeature, handleStatus, getTenantBySlug } from '../../../scripts/add-feature'
+import {
+  handleEnableFeature,
+  handleDisableFeature,
+  handleStatus,
+  getTenantBySlug,
+} from '../../../scripts/add-feature'
 import { DEFAULT_FEATURES } from '../../../scripts/lib/feature-keys'
 
+const CLIENTS_DIR = '/home/joseba/Clientes/clientes'
+
 let testTenantId: number
+let testSlug: string
 
 beforeEach(async () => {
   const payload = await getPayload({ config })
@@ -24,6 +34,15 @@ beforeEach(async () => {
     },
   })
   testTenantId = created.id as number
+  testSlug = slug
+
+  const destDir = join(CLIENTS_DIR, slug)
+  await mkdir(join(destDir, 'src/components/blocks'), { recursive: true })
+})
+
+afterEach(async () => {
+  const destDir = join(CLIENTS_DIR, testSlug)
+  await rm(destDir, { recursive: true, force: true })
 })
 
 describe('add-feature enable/disable/status', () => {
@@ -82,5 +101,19 @@ describe('add-feature enable/disable/status', () => {
     await handleStatus(slug)
     const after = await getTenantBySlug(slug)
     expect(after?.features).toEqual(before?.features)
+  })
+
+  it('enables welcome-banner on a tenant', async () => {
+    const slug = await resolveSlug()
+    await handleEnableFeature(slug, 'welcomeBanner')
+    const tenant = await getTenantBySlug(slug)
+    expect(tenant?.features.welcomeBanner).toBe(true)
+  })
+
+  it('disables welcome-banner (idempotent)', async () => {
+    const slug = await resolveSlug()
+    await expect(handleDisableFeature(slug, 'welcomeBanner')).resolves.toBeUndefined()
+    const tenant = await getTenantBySlug(slug)
+    expect(tenant?.features.welcomeBanner).toBe(false)
   })
 })
