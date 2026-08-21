@@ -11,6 +11,8 @@ import { Media } from './collections/Media'
 import { Categories } from './collections/Categories/Categories'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts/Posts'
+import { ProductCategories } from './collections/ProductCategories'
+import { Products } from './collections/Products'
 import { Tags } from './collections/Tags/Tags'
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
@@ -58,7 +60,7 @@ export default buildConfig({
       ],
     },
   },
-  collections: [Tenants, Users, Posts, Categories, Tags, Pages, Media, Header, Footer],
+  collections: [Tenants, Users, Posts, Categories, Tags, ProductCategories, Products, Pages, Media, Header, Footer],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
