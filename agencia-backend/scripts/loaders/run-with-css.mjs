@@ -5,7 +5,6 @@
 //
 // Usage:
 //   node scripts/loaders/run-with-css.mjs scripts/create-client.ts
-//   node scripts/loaders/run-with-css.mjs scripts/reset-admin-pw.ts
 
 import 'dotenv/config'
 
