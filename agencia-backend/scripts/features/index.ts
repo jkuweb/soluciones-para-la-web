@@ -2,6 +2,8 @@ import type { FeatureModule } from './types'
 import { installStub, uninstallStub } from './_stub'
 import { install as welcomeBannerInstall } from './welcome-banner/install'
 import { uninstall as welcomeBannerUninstall } from './welcome-banner/uninstall'
+import { install as catalogInstall } from './catalog/install'
+import { uninstall as catalogUninstall } from './catalog/uninstall'
 
 const stubFor = (slug: string, displayName: string, description: string): FeatureModule => ({
   slug,
@@ -13,11 +15,14 @@ const stubFor = (slug: string, displayName: string, description: string): Featur
 })
 
 export const FEATURES: Record<string, FeatureModule> = {
-  catalog: stubFor(
-    'catalog',
-    'Catálogo de productos',
-    'Products, Categories, /shop, /product/[slug]',
-  ),
+  catalog: {
+    slug: 'catalog',
+    displayName: 'Catálogo de productos',
+    description: 'Products, ProductCategories, /shop, /shop/category/[slug], /product/[slug]',
+    install: catalogInstall,
+    uninstall: catalogUninstall,
+    envKeysRequired: ['NEXT_PUBLIC_TENANT_FEATURES'],
+  },
   payments: stubFor(
     'payments',
     'Pagos con Stripe',
