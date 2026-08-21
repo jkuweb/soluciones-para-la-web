@@ -1,7 +1,7 @@
 import type { Block } from 'payload'
 
 export const WelcomeBannerBlock: Block = {
-  slug: 'welcomeBanner',
+  slug: 'welcome-banner',
   labels: {
     singular: 'Welcome Banner',
     plural: 'Welcome Banners',
@@ -12,7 +12,7 @@ export const WelcomeBannerBlock: Block = {
       type: 'text',
       required: false,
       admin: {
-        description: 'Texto del banner. Si está vacío, usa WELCOME_BANNER_TEXT.',
+        description: 'Texto del banner. Si está vacío, el storefront muestra WELCOME_BANNER_TEXT (env var).',
       },
     },
     {
