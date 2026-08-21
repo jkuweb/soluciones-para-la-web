@@ -11,6 +11,7 @@ export const FEATURE_KEYS = [
   'taxes',
   'abandonedCart',
   'subscriptions',
+  'welcomeBanner',
 ] as const
 export type FeatureKey = (typeof FEATURE_KEYS)[number]
 
@@ -40,6 +41,7 @@ export const DEFAULT_FEATURES: Record<FeatureKey, boolean> = {
   taxes: false,
   abandonedCart: false,
   subscriptions: false,
+  welcomeBanner: false,
 }
 
 export const isValidEcommerceTier = (value: unknown): value is EcommerceTier =>
