@@ -253,11 +253,15 @@ export const run = async (argv: string[] = process.argv.slice(2)): Promise<void>
 }
 
 // Auto-invoke solo cuando se ejecuta como script principal
-// (no cuando se importa desde tests)
+// (no cuando se importa desde tests).
+// Payload mantiene conexiones DB/pool abiertas; sin un exit explícito
+// el proceso queda colgado hasta timeout externo. El script es one-shot.
 if (import.meta.url === `file://${process.argv[1]}`) {
   const argv = process.argv.slice(2)
-  run(argv).catch((err) => {
-    p.log.error((err as Error).message)
-    process.exit(1)
-  })
+  run(argv)
+    .then(() => process.exit(0))
+    .catch((err) => {
+      p.log.error((err as Error).message)
+      process.exit(1)
+    })
 }

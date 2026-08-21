@@ -39,6 +39,9 @@ const mod = await import(targetPath)
 
 if (typeof mod.run === 'function') {
   await mod.run()
+  // Payload keeps DB/pool connections open; without an explicit exit the
+  // event loop stays alive and the wrapper hangs after a successful run.
+  process.exit(0)
 } else {
   console.error(`Script ${targetArg} does not export a "run" function.`)
   process.exit(1)
