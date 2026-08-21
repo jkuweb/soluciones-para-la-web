@@ -6,9 +6,11 @@ import { getFeature, listFeatureSlugs } from './features'
 import * as p from '@clack/prompts'
 import { cp } from 'node:fs/promises'
 
+// Re-export from lib/monorepo so existing callers (e.g. welcome-banner/install.ts)
+// that import from '../../add-feature' keep working.
+export { MONOREPO_ROOT, FEATURES_DIR, TEMPLATES_DIR } from './lib/monorepo'
+
 // --- Constants ---
-export const MONOREPO_ROOT = path.resolve(import.meta.dirname ?? __dirname, '../../')
-export const FEATURES_DIR = path.join(MONOREPO_ROOT, 'agencia-backend/scripts/features')
 export const CLIENTS_DIR = '/home/joseba/Clientes/clientes'
 
 // --- Pure: arg parsing ---

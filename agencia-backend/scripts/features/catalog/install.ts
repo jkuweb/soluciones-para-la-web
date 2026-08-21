@@ -1,7 +1,7 @@
 import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 
-import { MONOREPO_ROOT } from '../../add-feature'
+import { MONOREPO_ROOT } from '../../lib/monorepo'
 import type { FeatureInstallContext, FeatureInstallResult } from '../types'
 
 const TEMPLATE_ROOT =
