@@ -6,6 +6,7 @@
 ## Qué hace
 
 Agrega un block de Payload `welcome-banner` con dos campos:
+
 - `text` (string opcional) — texto del banner. Override por admin.
 - `enabled` (checkbox, default `true`) — switch on/off del banner.
 
@@ -38,6 +39,7 @@ pnpm add-feature --status --slug=<tenant-slug>
 Después de `pnpm add-feature welcome-banner --slug=<slug>` el cliente debe:
 
 1. **Wire el block en `BlockRenderer.tsx`** — abrir `nextjs-starter/src/components/BlockRenderer.tsx` y agregar:
+
    ```tsx
    import WelcomeBanner from '@/components/blocks/WelcomeBanner'
    // ...
@@ -48,6 +50,7 @@ Después de `pnpm add-feature welcome-banner --slug=<slug>` el cliente debe:
    ```
 
 2. **Setear `WELCOME_BANNER_TEXT`** en `.env` (no `.env.example`):
+
    ```
    WELCOME_BANNER_TEXT=Bienvenido a Mi Tienda
    ```

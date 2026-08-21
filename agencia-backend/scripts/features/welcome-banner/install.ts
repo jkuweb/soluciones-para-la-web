@@ -16,9 +16,7 @@ const COMPONENT_RELATIVE = 'src/components/blocks/WelcomeBanner.tsx'
 const ENV_EXAMPLE = '.env.example'
 const ENV_KEY = 'WELCOME_BANNER_TEXT'
 
-export const install = async (
-  ctx: FeatureInstallContext,
-): Promise<FeatureInstallResult> => {
+export const install = async (ctx: FeatureInstallContext): Promise<FeatureInstallResult> => {
   // Validate destDir exists
   try {
     const stat = await (await import('node:fs/promises')).stat(ctx.destDir)

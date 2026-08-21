@@ -45,19 +45,12 @@ afterAll(async () => {
 
 const runScriptAsChild = (args: string[]): Promise<number> =>
   new Promise((resolve, reject) => {
-    const loaderPath = path.resolve(
-      process.cwd(),
-      'scripts/loaders/run-with-css.mjs',
-    )
-    const scriptPath = path.resolve(
-      process.cwd(),
-      'scripts/add-feature.ts',
-    )
-    const child: ChildProcess = spawn(
-      'node',
-      [loaderPath, scriptPath, ...args],
-      { cwd: process.cwd(), stdio: 'pipe' },
-    )
+    const loaderPath = path.resolve(process.cwd(), 'scripts/loaders/run-with-css.mjs')
+    const scriptPath = path.resolve(process.cwd(), 'scripts/add-feature.ts')
+    const child: ChildProcess = spawn('node', [loaderPath, scriptPath, ...args], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    })
 
     let stderr = ''
     child.stderr?.on('data', (chunk) => {
@@ -66,11 +59,7 @@ const runScriptAsChild = (args: string[]): Promise<number> =>
 
     const killTimer = setTimeout(() => {
       child.kill('SIGKILL')
-      reject(
-        new Error(
-          `Script hung: did not exit within ${HANG_TIMEOUT_MS}ms. stderr:\n${stderr}`,
-        ),
-      )
+      reject(new Error(`Script hung: did not exit within ${HANG_TIMEOUT_MS}ms. stderr:\n${stderr}`))
     }, HANG_TIMEOUT_MS)
 
     child.on('exit', (code) => {
@@ -87,10 +76,7 @@ describe('add-feature script exits cleanly', () => {
   it(
     '--status exits with code 0 (does not hang on Payload DB pool)',
     async () => {
-      const exitCode = await runScriptAsChild([
-        '--status',
-        `--slug=${testTenantSlug}`,
-      ])
+      const exitCode = await runScriptAsChild(['--status', `--slug=${testTenantSlug}`])
       expect(exitCode).toBe(0)
     },
     TEST_TIMEOUT_MS,
@@ -99,10 +85,7 @@ describe('add-feature script exits cleanly', () => {
   it(
     'enable welcome-banner exits with code 0',
     async () => {
-      const exitCode = await runScriptAsChild([
-        'welcomeBanner',
-        `--slug=${testTenantSlug}`,
-      ])
+      const exitCode = await runScriptAsChild(['welcomeBanner', `--slug=${testTenantSlug}`])
       expect(exitCode).toBe(0)
     },
     TEST_TIMEOUT_MS,

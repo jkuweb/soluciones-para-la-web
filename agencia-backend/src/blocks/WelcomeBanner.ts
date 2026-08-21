@@ -12,7 +12,8 @@ export const WelcomeBannerBlock: Block = {
       type: 'text',
       required: false,
       admin: {
-        description: 'Texto del banner. Si está vacío, el storefront muestra WELCOME_BANNER_TEXT (env var).',
+        description:
+          'Texto del banner. Si está vacío, el storefront muestra WELCOME_BANNER_TEXT (env var).',
       },
     },
     {

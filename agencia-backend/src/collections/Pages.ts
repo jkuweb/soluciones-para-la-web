@@ -106,12 +106,16 @@ export const Pages: CollectionConfig = {
       if (user?.roles?.includes('super-admin')) return true
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const constraints: any = user
-        ? { tenant: { in: user?.tenants?.map((t) => {
-            const tenant = t.tenant
-            if (typeof tenant === 'string') return tenant
-            if (typeof tenant === 'number') return String(tenant)
-            return tenant.id
-          }) } }
+        ? {
+            tenant: {
+              in: user?.tenants?.map((t) => {
+                const tenant = t.tenant
+                if (typeof tenant === 'string') return tenant
+                if (typeof tenant === 'number') return String(tenant)
+                return tenant.id
+              }),
+            },
+          }
         : { _status: { equals: 'published' } }
       return constraints
     },
@@ -120,12 +124,16 @@ export const Pages: CollectionConfig = {
     },
     update: ({ req: { user } }) => {
       if (user?.roles?.includes('super-admin')) return true
-      return { tenant: { in: user?.tenants?.map((t) => {
-        const tenant = t.tenant
-        if (typeof tenant === 'string') return tenant
-        if (typeof tenant === 'number') return String(tenant)
-        return tenant.id
-      }) } }
+      return {
+        tenant: {
+          in: user?.tenants?.map((t) => {
+            const tenant = t.tenant
+            if (typeof tenant === 'string') return tenant
+            if (typeof tenant === 'number') return String(tenant)
+            return tenant.id
+          }),
+        },
+      }
     },
     delete: ({ req: { user } }) => {
       return user?.roles?.includes('super-admin') ?? false
@@ -157,21 +165,14 @@ export const Pages: CollectionConfig = {
         const expected = process.env.PREVIEW_SECRET
         const provided = req.query.secret
         if (!expected || provided !== expected) {
-          return Response.json(
-            { error: 'Invalid preview secret' },
-            { status: 403 },
-          )
+          return Response.json({ error: 'Invalid preview secret' }, { status: 403 })
         }
 
         const slug = typeof req.query.slug === 'string' ? req.query.slug : ''
-        const tenantSlug =
-          typeof req.query.tenantSlug === 'string' ? req.query.tenantSlug : ''
+        const tenantSlug = typeof req.query.tenantSlug === 'string' ? req.query.tenantSlug : ''
 
         if (!slug || !tenantSlug) {
-          return Response.json(
-            { error: 'Missing slug or tenantSlug' },
-            { status: 400 },
-          )
+          return Response.json({ error: 'Missing slug or tenantSlug' }, { status: 400 })
         }
 
         const result = await req.payload.find({
@@ -182,10 +183,7 @@ export const Pages: CollectionConfig = {
           overrideAccess: true,
           depth: 1,
           where: {
-            and: [
-              { slug: { equals: slug } },
-              { 'tenant.slug': { equals: tenantSlug } },
-            ],
+            and: [{ slug: { equals: slug } }, { 'tenant.slug': { equals: tenantSlug } }],
           },
         })
 

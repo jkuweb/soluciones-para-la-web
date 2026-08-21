@@ -10,7 +10,9 @@ let templateRoot: string
 beforeEach(async () => {
   workDir = await mkdtemp(join(tmpdir(), 'welcome-banner-test-'))
   templateRoot = await mkdtemp(join(tmpdir(), 'welcome-banner-template-'))
-  await mkdir(join(templateRoot, 'nextjs-starter', 'src', 'components', 'blocks'), { recursive: true })
+  await mkdir(join(templateRoot, 'nextjs-starter', 'src', 'components', 'blocks'), {
+    recursive: true,
+  })
   await writeFile(
     join(templateRoot, 'nextjs-starter', 'src', 'components', 'blocks', 'WelcomeBanner.tsx'),
     'export default function WelcomeBanner() { return <div>template</div> }',
@@ -42,88 +44,68 @@ describe('welcome-banner install', () => {
     },
   )
 
-  it(
-    'appends WELCOME_BANNER_TEXT= to .env.example',
-    { timeout: 10000 },
-    async () => {
-      await writeFile(join(workDir, '.env.example'), 'OTHER_VAR=foo\n', 'utf-8')
-      await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
-      const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
-      expect(envContent).toContain('OTHER_VAR=foo')
-      expect(envContent).toContain('WELCOME_BANNER_TEXT=')
-    },
-  )
+  it('appends WELCOME_BANNER_TEXT= to .env.example', { timeout: 10000 }, async () => {
+    await writeFile(join(workDir, '.env.example'), 'OTHER_VAR=foo\n', 'utf-8')
+    await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
+    expect(envContent).toContain('OTHER_VAR=foo')
+    expect(envContent).toContain('WELCOME_BANNER_TEXT=')
+  })
 
-  it(
-    'does not duplicate WELCOME_BANNER_TEXT if already present',
-    { timeout: 10000 },
-    async () => {
-      await writeFile(join(workDir, '.env.example'), 'WELCOME_BANNER_TEXT=hello\n', 'utf-8')
-      await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
-      const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
-      const occurrences = envContent.split('WELCOME_BANNER_TEXT=').length - 1
-      expect(occurrences).toBe(1)
-      expect(envContent).toContain('WELCOME_BANNER_TEXT=hello')
-    },
-  )
+  it('does not duplicate WELCOME_BANNER_TEXT if already present', { timeout: 10000 }, async () => {
+    await writeFile(join(workDir, '.env.example'), 'WELCOME_BANNER_TEXT=hello\n', 'utf-8')
+    await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    const envContent = await readFile(join(workDir, '.env.example'), 'utf-8')
+    const occurrences = envContent.split('WELCOME_BANNER_TEXT=').length - 1
+    expect(occurrences).toBe(1)
+    expect(envContent).toContain('WELCOME_BANNER_TEXT=hello')
+  })
 
-  it(
-    'returns ok:false when destDir does not exist',
-    { timeout: 10000 },
-    async () => {
-      const nonExistent = join(workDir, 'does-not-exist')
-      const result = await install({ tenantSlug: 'test', destDir: nonExistent, log: () => {} })
-      expect(result.ok).toBe(false)
-      expect(result.error).toBeTruthy()
-    },
-  )
+  it('returns ok:false when destDir does not exist', { timeout: 10000 }, async () => {
+    const nonExistent = join(workDir, 'does-not-exist')
+    const result = await install({ tenantSlug: 'test', destDir: nonExistent, log: () => {} })
+    expect(result.ok).toBe(false)
+    expect(result.error).toBeTruthy()
+  })
 
-  it(
-    'returns ok:false when template source is missing',
-    { timeout: 10000 },
-    async () => {
-      await rm(templateRoot, { recursive: true, force: true })
-      templateRoot = '/nonexistent'
-      // install reads TEMPLATE_PATH from process.cwd()/../nextjs-starter/...
-      // Delete that file so copyFile throws ENOENT, exercising the try/catch
-      const realTemplate = join(
-        process.cwd(),
-        '..',
-        'nextjs-starter',
-        'src',
-        'components',
-        'blocks',
-        'WelcomeBanner.tsx',
-      )
-      const backup = await readFile(realTemplate, 'utf-8').catch(() => null)
-      await rm(realTemplate, { force: true })
-      try {
-        const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
-        expect(result.ok).toBe(false)
-        expect(result.error).toMatch(/template|ENOENT/)
-      } finally {
-        if (backup !== null) {
-          await mkdir(dirname(realTemplate), { recursive: true })
-          await writeFile(realTemplate, backup, 'utf-8')
-        }
-      }
-    },
-  )
-
-  it(
-    'removes copied component file if env append fails',
-    { timeout: 10000 },
-    async () => {
-      await writeFile(join(workDir, '.env.example'), 'INITIAL=value\n', 'utf-8')
-      await rm(join(workDir, '.env.example'))
-      await mkdir(join(workDir, '.env.example'))
-
+  it('returns ok:false when template source is missing', { timeout: 10000 }, async () => {
+    await rm(templateRoot, { recursive: true, force: true })
+    templateRoot = '/nonexistent'
+    // install reads TEMPLATE_PATH from process.cwd()/../nextjs-starter/...
+    // Delete that file so copyFile throws ENOENT, exercising the try/catch
+    const realTemplate = join(
+      process.cwd(),
+      '..',
+      'nextjs-starter',
+      'src',
+      'components',
+      'blocks',
+      'WelcomeBanner.tsx',
+    )
+    const backup = await readFile(realTemplate, 'utf-8').catch(() => null)
+    await rm(realTemplate, { force: true })
+    try {
       const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
       expect(result.ok).toBe(false)
-      const { stat } = await import('node:fs/promises')
-      await expect(
-        stat(join(workDir, 'src', 'components', 'blocks', 'WelcomeBanner.tsx')),
-      ).rejects.toThrow()
-    },
-  )
+      expect(result.error).toMatch(/template|ENOENT/)
+    } finally {
+      if (backup !== null) {
+        await mkdir(dirname(realTemplate), { recursive: true })
+        await writeFile(realTemplate, backup, 'utf-8')
+      }
+    }
+  })
+
+  it('removes copied component file if env append fails', { timeout: 10000 }, async () => {
+    await writeFile(join(workDir, '.env.example'), 'INITIAL=value\n', 'utf-8')
+    await rm(join(workDir, '.env.example'))
+    await mkdir(join(workDir, '.env.example'))
+
+    const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    expect(result.ok).toBe(false)
+    const { stat } = await import('node:fs/promises')
+    await expect(
+      stat(join(workDir, 'src', 'components', 'blocks', 'WelcomeBanner.tsx')),
+    ).rejects.toThrow()
+  })
 })

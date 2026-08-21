@@ -4,9 +4,7 @@ import type { FeatureInstallContext, FeatureInstallResult } from '../types'
 
 const COMPONENT_RELATIVE = 'src/components/blocks/WelcomeBanner.tsx'
 
-export const uninstall = async (
-  ctx: FeatureInstallContext,
-): Promise<FeatureInstallResult> => {
+export const uninstall = async (ctx: FeatureInstallContext): Promise<FeatureInstallResult> => {
   const target = join(ctx.destDir, COMPONENT_RELATIVE)
   try {
     await rm(target)
