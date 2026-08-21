@@ -1,5 +1,7 @@
 import type { FeatureModule } from './types'
 import { installStub, uninstallStub } from './_stub'
+import { install as welcomeBannerInstall } from './welcome-banner/install'
+import { uninstall as welcomeBannerUninstall } from './welcome-banner/uninstall'
 
 const stubFor = (slug: string, displayName: string, description: string): FeatureModule => ({
   slug,
@@ -36,6 +38,14 @@ export const FEATURES: Record<string, FeatureModule> = {
     'Suscripciones',
     'Productos recurrentes (Stripe Subscriptions API)',
   ),
+  welcomeBanner: {
+    slug: 'welcomeBanner',
+    displayName: 'Banner de bienvenida',
+    description: 'Banner configurable por tenant con env var de fallback',
+    install: welcomeBannerInstall,
+    uninstall: welcomeBannerUninstall,
+    envKeysRequired: ['WELCOME_BANNER_TEXT'],
+  },
 }
 
 export const getFeature = (slug: string): FeatureModule | undefined => FEATURES[slug]
