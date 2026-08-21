@@ -32,4 +32,22 @@ describe('welcome-banner uninstall', () => {
       ).rejects.toThrow()
     },
   )
+
+  it(
+    'removes WELCOME_BANNER_TEXT line from .env.example',
+    { timeout: 10000 },
+    async () => {
+      await writeFile(
+        join(workDir, '.env.example'),
+        'OTHER_VAR=foo\nWELCOME_BANNER_TEXT=hello\nOTHER_VAR2=bar\n',
+        'utf-8',
+      )
+      await uninstall({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+      const { readFile } = await import('node:fs/promises')
+      const content = await readFile(join(workDir, '.env.example'), 'utf-8')
+      expect(content).toContain('OTHER_VAR=foo')
+      expect(content).toContain('OTHER_VAR2=bar')
+      expect(content).not.toContain('WELCOME_BANNER_TEXT')
+    },
+  )
 })
