@@ -1,4 +1,5 @@
 import { getPageBySlug, normalizePage } from '@/lib/payload'
+import { getTenantFeatures } from '@/lib/tenant'
 import BlockRenderer from '@/components/BlockRenderer'
 
 export async function generateMetadata() {
@@ -22,5 +23,5 @@ export default async function HomePage() {
     )
   }
 
-  return <BlockRenderer hero={page.hero} layout={page.layout} />
+  return <BlockRenderer hero={page.hero} layout={page.layout} features={getTenantFeatures()} />
 }

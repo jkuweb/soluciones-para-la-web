@@ -1,4 +1,5 @@
 import { getPages, getPageBySlug, normalizePage } from '@/lib/payload'
+import { getTenantFeatures } from '@/lib/tenant'
 import BlockRenderer from '@/components/BlockRenderer'
 
 export async function generateStaticParams() {
@@ -46,5 +47,5 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     )
   }
 
-  return <BlockRenderer hero={page.hero} layout={page.layout} />
+  return <BlockRenderer hero={page.hero} layout={page.layout} features={getTenantFeatures()} />
 }
