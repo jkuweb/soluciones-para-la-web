@@ -8,6 +8,8 @@ import type {
   ImageBlock,
   ProductBlock,
   MenuBlock,
+  Product,
+  ProductCategory,
 } from './types'
 import type { Post, Category, Tag } from './types'
 
@@ -353,4 +355,79 @@ export async function getPostBySlugDraft(slug: string, secret: string): Promise<
     cache: 'no-store',
   })
   return res.ok ? res.json() : null
+}
+
+// ── Catalog query helpers ────────────────────────────────────────────────────
+
+function normalizeProductCategory(c: ProductCategory | string): ProductCategory | string {
+  if (typeof c === 'string') return c
+  return { ...c, image: toAbsoluteMedia(c.image) }
+}
+
+function normalizeProduct(p: Product): Product {
+  return {
+    ...p,
+    images: p.images?.map((item) => ({
+      ...item,
+      image: toAbsoluteMedia(item.image) ?? item.image,
+    })),
+  }
+}
+
+const catalogQ = <T>(path: string, qs = ''): Promise<T | null> =>
+  fetch(`${PAYLOAD_API_URL}${path}?where[tenant.slug][equals]=${TENANT_SLUG}${qs}`, {
+    headers: { 'Content-Type': 'application/json' },
+    next: { revalidate: 60 },
+  })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch((e: Error) => {
+      console.warn(`[payload] ${path} — ${e.message}`)
+      return null
+    })
+
+export const getProducts = async (
+  page = 1,
+  limit = 12,
+  categorySlug?: string,
+): Promise<{ docs: Product[]; totalPages: number; page: number }> => {
+  const cat = categorySlug
+    ? `&where[category.slug][equals]=${encodeURIComponent(categorySlug)}`
+    : ''
+  const data = await catalogQ<{ docs: Product[]; totalPages: number; page: number }>(
+    '/products',
+    `&where[status][equals]=published&sort=-updatedAt&limit=${limit}&page=${page}&depth=2${cat}`,
+  )
+  const result = data ?? { docs: [], totalPages: 0, page }
+  return {
+    ...result,
+    docs: result.docs.map(normalizeProduct),
+  }
+}
+
+export const getProductBySlug = async (slug: string): Promise<Product | null> => {
+  const data = await catalogQ<{ docs: Product[] }>(
+    '/products',
+    `&where[slug][equals]=${encodeURIComponent(slug)}&where[status][equals]=published&limit=1&depth=2`,
+  )
+  const doc = data?.docs?.[0]
+  return doc ? normalizeProduct(doc) : null
+}
+
+export const getProductCategories = async (): Promise<ProductCategory[]> => {
+  const data = await catalogQ<{ docs: ProductCategory[] }>(
+    '/product-categories',
+    '&sort=name&depth=1',
+  )
+  return (data?.docs ?? []).map((c) => normalizeProductCategory(c) as ProductCategory)
+}
+
+export const getProductCategoryBySlug = async (
+  slug: string,
+): Promise<ProductCategory | null> => {
+  const data = await catalogQ<{ docs: ProductCategory[] }>(
+    '/product-categories',
+    `&where[slug][equals]=${encodeURIComponent(slug)}&limit=1&depth=1`,
+  )
+  const doc = data?.docs?.[0]
+  return doc ? (normalizeProductCategory(doc) as ProductCategory) : null
 }
