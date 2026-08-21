@@ -1,26 +1,21 @@
-import { appendFile, copyFile, mkdir, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { MONOREPO_ROOT } from '../../add-feature'
 import type { FeatureInstallContext, FeatureInstallResult } from '../types'
-
-const TEMPLATE_PATH = join(
-  process.cwd(),
-  '..',
-  'nextjs-starter',
-  'src',
-  'components',
-  'blocks',
-  'WelcomeBanner.tsx',
-)
 
 const COMPONENT_RELATIVE = 'src/components/blocks/WelcomeBanner.tsx'
 const ENV_EXAMPLE = '.env.example'
 const ENV_KEY = 'WELCOME_BANNER_TEXT'
 
+const resolveTemplatePath = (): string =>
+  process.env.WELCOME_BANNER_TEMPLATE_PATH ??
+  join(MONOREPO_ROOT, 'nextjs-starter', 'src', 'components', 'blocks', 'WelcomeBanner.tsx')
+
 export const install = async (ctx: FeatureInstallContext): Promise<FeatureInstallResult> => {
   // Validate destDir exists
   try {
-    const stat = await (await import('node:fs/promises')).stat(ctx.destDir)
-    if (!stat.isDirectory()) {
+    const destStat = await stat(ctx.destDir)
+    if (!destStat.isDirectory()) {
       return {
         ok: false,
         copiedFiles: [],
@@ -40,7 +35,7 @@ export const install = async (ctx: FeatureInstallContext): Promise<FeatureInstal
   const dest = join(ctx.destDir, COMPONENT_RELATIVE)
   await mkdir(dirname(dest), { recursive: true })
   try {
-    await copyFile(TEMPLATE_PATH, dest)
+    await copyFile(resolveTemplatePath(), dest)
     ctx.log(`✓ Copied ${COMPONENT_RELATIVE}`)
   } catch (err) {
     return {
@@ -56,7 +51,7 @@ export const install = async (ctx: FeatureInstallContext): Promise<FeatureInstal
   try {
     let existing = ''
     try {
-      existing = await (await import('node:fs/promises')).readFile(envPath, 'utf-8')
+      existing = await readFile(envPath, 'utf-8')
     } catch {
       // file does not exist — will create
     }
@@ -67,7 +62,7 @@ export const install = async (ctx: FeatureInstallContext): Promise<FeatureInstal
       } catch (err) {
         // Cleanup: remove the copied component file before returning
         try {
-          await (await import('node:fs/promises')).rm(dest)
+          await rm(dest)
           ctx.log(`(cleanup) Removed ${COMPONENT_RELATIVE} after env append failure`)
         } catch {
           // Best-effort cleanup

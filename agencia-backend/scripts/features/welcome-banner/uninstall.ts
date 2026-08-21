@@ -1,4 +1,4 @@
-import { rm } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { FeatureInstallContext, FeatureInstallResult } from '../types'
 
@@ -23,10 +23,10 @@ export const uninstall = async (ctx: FeatureInstallContext): Promise<FeatureInst
   // Remove WELCOME_BANNER_TEXT from .env.example (no-op if missing)
   const envPath = join(ctx.destDir, '.env.example')
   try {
-    const content = await (await import('node:fs/promises')).readFile(envPath, 'utf-8')
+    const content = await readFile(envPath, 'utf-8')
     const lines = content.split('\n')
     const filtered = lines.filter((line) => !line.startsWith('WELCOME_BANNER_TEXT='))
-    await (await import('node:fs/promises')).writeFile(envPath, filtered.join('\n'), 'utf-8')
+    await writeFile(envPath, filtered.join('\n'), 'utf-8')
     if (lines.length !== filtered.length) {
       ctx.log(`✓ Removed WELCOME_BANNER_TEXT from .env.example`)
     }

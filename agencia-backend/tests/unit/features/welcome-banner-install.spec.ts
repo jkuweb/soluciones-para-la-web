@@ -1,11 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtemp, rm, readFile, mkdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, readFile, mkdir, writeFile, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 import { install } from '../../../scripts/features/welcome-banner/install'
 
 let workDir: string
 let templateRoot: string
+
+const setTemplateEnv = (p: string | undefined) => {
+  if (p === undefined) delete process.env.WELCOME_BANNER_TEMPLATE_PATH
+  else process.env.WELCOME_BANNER_TEMPLATE_PATH = p
+}
 
 beforeEach(async () => {
   workDir = await mkdtemp(join(tmpdir(), 'welcome-banner-test-'))
@@ -18,11 +23,15 @@ beforeEach(async () => {
     'export default function WelcomeBanner() { return <div>template</div> }',
     'utf-8',
   )
+  setTemplateEnv(
+    join(templateRoot, 'nextjs-starter', 'src', 'components', 'blocks', 'WelcomeBanner.tsx'),
+  )
 })
 
 afterEach(async () => {
   await rm(workDir, { recursive: true, force: true })
   await rm(templateRoot, { recursive: true, force: true })
+  setTemplateEnv(undefined)
 })
 
 describe('welcome-banner install', () => {
@@ -69,31 +78,11 @@ describe('welcome-banner install', () => {
   })
 
   it('returns ok:false when template source is missing', { timeout: 10000 }, async () => {
-    await rm(templateRoot, { recursive: true, force: true })
-    templateRoot = '/nonexistent'
-    // install reads TEMPLATE_PATH from process.cwd()/../nextjs-starter/...
-    // Delete that file so copyFile throws ENOENT, exercising the try/catch
-    const realTemplate = join(
-      process.cwd(),
-      '..',
-      'nextjs-starter',
-      'src',
-      'components',
-      'blocks',
-      'WelcomeBanner.tsx',
-    )
-    const backup = await readFile(realTemplate, 'utf-8').catch(() => null)
-    await rm(realTemplate, { force: true })
-    try {
-      const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
-      expect(result.ok).toBe(false)
-      expect(result.error).toMatch(/template|ENOENT/)
-    } finally {
-      if (backup !== null) {
-        await mkdir(dirname(realTemplate), { recursive: true })
-        await writeFile(realTemplate, backup, 'utf-8')
-      }
-    }
+    const nonexistentTemplate = join(templateRoot, 'does-not-exist.tsx')
+    setTemplateEnv(nonexistentTemplate)
+    const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+    expect(result.ok).toBe(false)
+    expect(result.error).toMatch(/template|ENOENT/)
   })
 
   it('removes copied component file if env append fails', { timeout: 10000 }, async () => {
@@ -103,7 +92,6 @@ describe('welcome-banner install', () => {
 
     const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
     expect(result.ok).toBe(false)
-    const { stat } = await import('node:fs/promises')
     await expect(
       stat(join(workDir, 'src', 'components', 'blocks', 'WelcomeBanner.tsx')),
     ).rejects.toThrow()
