@@ -109,4 +109,21 @@ describe('welcome-banner install', () => {
       }
     },
   )
+
+  it(
+    'removes copied component file if env append fails',
+    { timeout: 10000 },
+    async () => {
+      await writeFile(join(workDir, '.env.example'), 'INITIAL=value\n', 'utf-8')
+      await rm(join(workDir, '.env.example'))
+      await mkdir(join(workDir, '.env.example'))
+
+      const result = await install({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+      expect(result.ok).toBe(false)
+      const { stat } = await import('node:fs/promises')
+      await expect(
+        stat(join(workDir, 'src', 'components', 'blocks', 'WelcomeBanner.tsx')),
+      ).rejects.toThrow()
+    },
+  )
 })

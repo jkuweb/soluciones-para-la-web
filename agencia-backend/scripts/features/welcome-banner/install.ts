@@ -55,15 +55,40 @@ export const install = async (
 
   // Append env var to .env.example (create if missing)
   const envPath = join(ctx.destDir, ENV_EXAMPLE)
-  let existing = ''
   try {
-    existing = await (await import('node:fs/promises')).readFile(envPath, 'utf-8')
-  } catch {
-    // file does not exist — will create
-  }
-  if (!existing.includes(`${ENV_KEY}=`)) {
-    await writeFile(envPath, existing ? `${existing}${ENV_KEY}=\n` : `${ENV_KEY}=\n`, 'utf-8')
-    ctx.log(`✓ Appended ${ENV_KEY}= to ${ENV_EXAMPLE}`)
+    let existing = ''
+    try {
+      existing = await (await import('node:fs/promises')).readFile(envPath, 'utf-8')
+    } catch {
+      // file does not exist — will create
+    }
+    if (!existing.includes(`${ENV_KEY}=`)) {
+      try {
+        await writeFile(envPath, existing ? `${existing}${ENV_KEY}=\n` : `${ENV_KEY}=\n`, 'utf-8')
+        ctx.log(`✓ Appended ${ENV_KEY}= to ${ENV_EXAMPLE}`)
+      } catch (err) {
+        // Cleanup: remove the copied component file before returning
+        try {
+          await (await import('node:fs/promises')).rm(dest)
+          ctx.log(`(cleanup) Removed ${COMPONENT_RELATIVE} after env append failure`)
+        } catch {
+          // Best-effort cleanup
+        }
+        return {
+          ok: false,
+          copiedFiles: [],
+          envKeysAdded: [],
+          error: `Failed to append env var: ${(err as Error).message}`,
+        }
+      }
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      copiedFiles: [],
+      envKeysAdded: [],
+      error: `Env handling failed: ${(err as Error).message}`,
+    }
   }
 
   return {
