@@ -50,4 +50,37 @@ describe('welcome-banner uninstall', () => {
       expect(content).not.toContain('WELCOME_BANNER_TEXT')
     },
   )
+
+  it(
+    'no-ops gracefully if component file missing',
+    { timeout: 10000 },
+    async () => {
+      const emptyDir = await mkdtemp(join(tmpdir(), 'welcome-banner-empty-'))
+      try {
+        const result = await uninstall({ tenantSlug: 'test', destDir: emptyDir, log: () => {} })
+        expect(result.ok).toBe(true)
+      } finally {
+        await rm(emptyDir, { recursive: true, force: true })
+      }
+    },
+  )
+
+  it(
+    'no-ops gracefully if .env.example missing',
+    { timeout: 10000 },
+    async () => {
+      const result = await uninstall({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+      expect(result.ok).toBe(true)
+    },
+  )
+
+  it(
+    'no-ops gracefully if WELCOME_BANNER_TEXT not present in .env.example',
+    { timeout: 10000 },
+    async () => {
+      await writeFile(join(workDir, '.env.example'), 'FOO=bar\n', 'utf-8')
+      const result = await uninstall({ tenantSlug: 'test', destDir: workDir, log: () => {} })
+      expect(result.ok).toBe(true)
+    },
+  )
 })
