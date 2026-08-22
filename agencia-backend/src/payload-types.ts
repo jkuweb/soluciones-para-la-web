@@ -171,7 +171,7 @@ export interface Tenant {
    */
   ecommerceTier: 'none' | 'lite' | 'standard' | 'full';
   /**
-   * Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`.
+   * Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`. Incluye también `stripeAccountId` (acct_... de Stripe Connect, null hasta OAuth) y `stripeAccountStatus` (none/pending/active/restricted/rejected).
    */
   features?:
     | {
@@ -603,6 +603,36 @@ export interface Page {
             id?: string | null;
             blockName?: string | null;
             blockType: 'course';
+          }
+        | {
+            /**
+             * Título visible encima de la cuadrícula (opcional).
+             */
+            heading?: string | null;
+            /**
+             * Si se establece, filtra los productos por esta categoría. Si está vacío, muestra todos.
+             */
+            category?: (number | null) | ProductCategory;
+            limit?: number | null;
+            columns?: ('2' | '3' | '4') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'product-grid';
+          }
+        | {
+            product: number | Product;
+            showPrice?: boolean | null;
+            ctaLabel?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featured-product';
+          }
+        | {
+            heading?: string | null;
+            layout?: ('grid' | 'list') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'category-list';
           }
       )[]
     | null;
@@ -1214,6 +1244,33 @@ export interface PagesSelect<T extends boolean = true> {
                     description?: T;
                     id?: T;
                   };
+              id?: T;
+              blockName?: T;
+            };
+        'product-grid'?:
+          | T
+          | {
+              heading?: T;
+              category?: T;
+              limit?: T;
+              columns?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'featured-product'?:
+          | T
+          | {
+              product?: T;
+              showPrice?: T;
+              ctaLabel?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'category-list'?:
+          | T
+          | {
+              heading?: T;
+              layout?: T;
               id?: T;
               blockName?: T;
             };
