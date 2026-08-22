@@ -18,13 +18,6 @@ export const Orders: CollectionConfig = {
   },
   fields: [
     {
-      name: 'tenant',
-      type: 'relationship',
-      relationTo: 'tenants',
-      required: true,
-      index: true,
-    },
-    {
       name: 'customerEmail',
       type: 'email',
       required: true,

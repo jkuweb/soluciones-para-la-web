@@ -17,6 +17,7 @@ export const plugins: Config['plugins'] = [
       tags: {},
       products: {},
       'product-categories': {},
+      orders: {},
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     tenantsSlug: 'tenants',

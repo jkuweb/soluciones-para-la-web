@@ -76,6 +76,7 @@ export interface Config {
     products: Product;
     pages: Page;
     media: Media;
+    orders: Order;
     header: Header;
     footer: Footer;
     'payload-kv': PayloadKv;
@@ -95,6 +96,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -642,6 +644,53 @@ export interface Page {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Órdenes generadas por checkout. Snapshot inmutable de items.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  customerEmail: string;
+  items: {
+    /**
+     * ID del Product en el momento del checkout.
+     */
+    productId: string;
+    variantId?: string | null;
+    name: string;
+    /**
+     * Precio unitario en centavos (evita floats).
+     */
+    unitPrice: number;
+    quantity: number;
+    imageUrl?: string | null;
+    id?: string | null;
+  }[];
+  /**
+   * Suma de unitPrice * quantity, en centavos.
+   */
+  subtotal: number;
+  /**
+   * ISO 4217 (ej: "USD", "EUR", "ARS").
+   */
+  currency: string;
+  /**
+   * cs_... de Stripe Checkout. Único por sesión.
+   */
+  stripeSessionId?: string | null;
+  /**
+   * pi_... confirmado en el webhook.
+   */
+  stripePaymentIntentId?: string | null;
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  failedReason?: string | null;
+  paidAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header".
  */
@@ -909,6 +958,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null)
     | ({
         relationTo: 'header';
@@ -1332,6 +1385,34 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  tenant?: T;
+  customerEmail?: T;
+  items?:
+    | T
+    | {
+        productId?: T;
+        variantId?: T;
+        name?: T;
+        unitPrice?: T;
+        quantity?: T;
+        imageUrl?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  currency?: T;
+  stripeSessionId?: T;
+  stripePaymentIntentId?: T;
+  status?: T;
+  failedReason?: T;
+  paidAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

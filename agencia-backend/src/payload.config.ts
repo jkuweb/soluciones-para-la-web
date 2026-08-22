@@ -8,6 +8,7 @@ import sharp from 'sharp'
 import { Footer } from './collections/Footer'
 import { Header } from './collections/Header'
 import { Media } from './collections/Media'
+import { Orders } from './collections/Orders'
 import { Categories } from './collections/Categories/Categories'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts/Posts'
@@ -60,7 +61,7 @@ export default buildConfig({
       ],
     },
   },
-  collections: [Tenants, Users, Posts, Categories, Tags, ProductCategories, Products, Pages, Media, Header, Footer],
+  collections: [Tenants, Users, Posts, Categories, Tags, ProductCategories, Products, Pages, Media, Orders, Header, Footer],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
