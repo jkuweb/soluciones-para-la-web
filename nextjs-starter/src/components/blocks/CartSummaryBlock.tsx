@@ -1,11 +1,11 @@
 'use client'
-import type { CartBlock } from '@/lib/types'
+import type { CartSummaryBlock } from '@/lib/types'
 
-interface CartBlockProps {
-  data: CartBlock
+interface CartSummaryBlockProps {
+  data: CartSummaryBlock
 }
 
-export default function CartBlock({ data }: CartBlockProps) {
+export default function CartSummaryBlock({ data }: CartSummaryBlockProps) {
   return (
     <div className="cart-block">
       <p>{data.emptyMessage || 'Tu carrito está vacío'}</p>

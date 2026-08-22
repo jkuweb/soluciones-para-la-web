@@ -1,7 +1,7 @@
 import { Block } from 'payload'
 
-export const CartBlock: Block = {
-  slug: 'cart',
+export const CartSummaryBlock: Block = {
+  slug: 'cart-summary',
   fields: [
     {
       name: 'emptyMessage',

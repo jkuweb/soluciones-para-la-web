@@ -8,7 +8,7 @@ import { ContactBlock } from '@/blocks/ContactBlock'
 import { MenuBlock } from '@/blocks/MenuBlock'
 import { ProductBlock } from '@/blocks/ProductBlock'
 import { WelcomeBannerBlock as WelcomeBanner } from '@/blocks/WelcomeBanner'
-import { CartBlock } from '@/blocks/CartBlock'
+import { CartSummaryBlock } from '@/blocks/CartSummaryBlock'
 import { CourseBlock } from '@/blocks/CourseBlock'
 import {
   ProductGridBlock,
@@ -273,7 +273,7 @@ export const Pages: CollectionConfig = {
                 MenuBlock,
                 WelcomeBanner,
                 ProductBlock,
-                CartBlock,
+                CartSummaryBlock,
                 CourseBlock,
                 ProductGridBlock,
                 FeaturedProductBlock,

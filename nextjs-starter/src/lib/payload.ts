@@ -257,8 +257,8 @@ export function renderBlock(block: Block) {
       return { component: 'MenuBlock', props: block }
     case 'product':
       return { component: 'ProductBlock', props: block }
-    case 'cart':
-      return { component: 'CartBlock', props: block }
+    case 'cart-summary':
+      return { component: 'CartSummaryBlock', props: block }
     case 'course':
       return { component: 'CourseBlock', props: block }
     default:

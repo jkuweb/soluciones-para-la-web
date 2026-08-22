@@ -93,8 +93,8 @@ export interface ProductBlock extends Block {
   category?: string
 }
 
-export interface CartBlock extends Block {
-  blockType: 'cart'
+export interface CartSummaryBlock extends Block {
+  blockType: 'cart-summary'
   emptyMessage?: string
   checkoutButton?: string
 }
