@@ -3,7 +3,7 @@ import HeroBlock from '@/components/HeroBlock'
 import TextBlock from '@/components/blocks/TextBlock'
 import ImageBlock from '@/components/blocks/ImageBlock'
 import ProductBlock from '@/components/blocks/ProductBlock'
-import CartBlock from '@/components/blocks/CartBlock'
+import CartSummaryBlock from '@/components/blocks/CartSummaryBlock'
 import CourseBlock from '@/components/blocks/CourseBlock'
 import MenuBlock from '@/components/blocks/MenuBlock'
 import ContactBlock from '@/components/blocks/ContactBlock'
@@ -35,6 +35,7 @@ const BLOCK_FEATURE_REQUIREMENT: Record<string, string> = {
   'product-grid': 'catalog',
   'featured-product': 'catalog',
   'category-list': 'catalog',
+  'cart-summary': 'payments',
 }
 
 const components: Record<string, React.ComponentType<{ data: any }>> = {
@@ -42,7 +43,7 @@ const components: Record<string, React.ComponentType<{ data: any }>> = {
   text: TextBlock,
   image: ImageBlock,
   product: ProductBlock,
-  cart: CartBlock,
+  'cart-summary': CartSummaryBlock,
   course: CourseBlock,
   menu: MenuBlock,
   contact: ContactBlock,

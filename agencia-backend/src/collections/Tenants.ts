@@ -151,11 +151,13 @@ export const Tenants: CollectionConfig = {
         taxes: false,
         abandonedCart: false,
         subscriptions: false,
+        stripeAccountId: null,
+        stripeAccountStatus: 'none',
       },
       admin: {
         position: 'sidebar',
         description:
-          'Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`.',
+          'Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`. Incluye también `stripeAccountId` (acct_... de Stripe Connect, null hasta OAuth) y `stripeAccountStatus` (none/pending/active/restricted/rejected).',
       },
       access: {
         read: () => true,

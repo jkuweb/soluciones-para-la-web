@@ -30,6 +30,12 @@
       ],
       "@lib/*": [
         "./src/lib/*"
+      ],
+      "payload": [
+        "./tests/stubs/payload.ts"
+      ],
+      "@payload-config": [
+        "./tests/stubs/payload-config.ts"
       ]
     },
     "target": "ES2017"

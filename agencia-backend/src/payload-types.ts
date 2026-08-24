@@ -76,6 +76,7 @@ export interface Config {
     products: Product;
     pages: Page;
     media: Media;
+    orders: Order;
     header: Header;
     footer: Footer;
     'payload-kv': PayloadKv;
@@ -95,6 +96,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -171,7 +173,7 @@ export interface Tenant {
    */
   ecommerceTier: 'none' | 'lite' | 'standard' | 'full';
   /**
-   * Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`.
+   * Flags individuales de cada feature. Para extender: `pnpm add-feature <feature> --slug=<cliente>`. Incluye también `stripeAccountId` (acct_... de Stripe Connect, null hasta OAuth) y `stripeAccountStatus` (none/pending/active/restricted/rejected).
    */
   features?:
     | {
@@ -604,12 +606,89 @@ export interface Page {
             blockName?: string | null;
             blockType: 'course';
           }
+        | {
+            /**
+             * Título visible encima de la cuadrícula (opcional).
+             */
+            heading?: string | null;
+            /**
+             * Si se establece, filtra los productos por esta categoría. Si está vacío, muestra todos.
+             */
+            category?: (number | null) | ProductCategory;
+            limit?: number | null;
+            columns?: ('2' | '3' | '4') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'product-grid';
+          }
+        | {
+            product: number | Product;
+            showPrice?: boolean | null;
+            ctaLabel?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featured-product';
+          }
+        | {
+            heading?: string | null;
+            layout?: ('grid' | 'list') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'category-list';
+          }
       )[]
     | null;
   meta?: SeoMeta;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Órdenes generadas por checkout. Snapshot inmutable de items.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  customerEmail: string;
+  items: {
+    /**
+     * ID del Product en el momento del checkout.
+     */
+    productId: string;
+    variantId?: string | null;
+    name: string;
+    /**
+     * Precio unitario en centavos (evita floats).
+     */
+    unitPrice: number;
+    quantity: number;
+    imageUrl?: string | null;
+    id?: string | null;
+  }[];
+  /**
+   * Suma de unitPrice * quantity, en centavos.
+   */
+  subtotal: number;
+  /**
+   * ISO 4217 (ej: "USD", "EUR", "ARS").
+   */
+  currency: string;
+  /**
+   * cs_... de Stripe Checkout. Único por sesión.
+   */
+  stripeSessionId?: string | null;
+  /**
+   * pi_... confirmado en el webhook.
+   */
+  stripePaymentIntentId?: string | null;
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  failedReason?: string | null;
+  paidAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -879,6 +958,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null)
     | ({
         relationTo: 'header';
@@ -1217,6 +1300,33 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        'product-grid'?:
+          | T
+          | {
+              heading?: T;
+              category?: T;
+              limit?: T;
+              columns?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'featured-product'?:
+          | T
+          | {
+              product?: T;
+              showPrice?: T;
+              ctaLabel?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'category-list'?:
+          | T
+          | {
+              heading?: T;
+              layout?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   meta?: T | SeoMetaSelect<T>;
   updatedAt?: T;
@@ -1275,6 +1385,34 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  tenant?: T;
+  customerEmail?: T;
+  items?:
+    | T
+    | {
+        productId?: T;
+        variantId?: T;
+        name?: T;
+        unitPrice?: T;
+        quantity?: T;
+        imageUrl?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  currency?: T;
+  stripeSessionId?: T;
+  stripePaymentIntentId?: T;
+  status?: T;
+  failedReason?: T;
+  paidAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

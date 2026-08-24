@@ -10,6 +10,8 @@ import type {
   MenuBlock,
   Product,
   ProductCategory,
+  Order,
+  OrderItem,
 } from './types'
 import type { Post, Category, Tag } from './types'
 
@@ -88,6 +90,10 @@ function normalizeBlock(block: Block): Block {
           image: toAbsoluteMedia(item.image),
         })),
       }
+    }
+    case 'cart-summary': {
+      // cart-summary has no media to normalize
+      return block
     }
     default:
       return block
@@ -257,8 +263,8 @@ export function renderBlock(block: Block) {
       return { component: 'MenuBlock', props: block }
     case 'product':
       return { component: 'ProductBlock', props: block }
-    case 'cart':
-      return { component: 'CartBlock', props: block }
+    case 'cart-summary':
+      return { component: 'CartSummaryBlock', props: block }
     case 'course':
       return { component: 'CourseBlock', props: block }
     default:
@@ -430,4 +436,136 @@ export const getProductCategoryBySlug = async (
   )
   const doc = data?.docs?.[0]
   return doc ? (normalizeProductCategory(doc) as ProductCategory) : null
+}
+
+// ---------------------------------------------------------------------------
+// Orders helpers
+// ---------------------------------------------------------------------------
+
+const ORDERS_BASE = `${API_BASE_URL}/api/orders`
+
+export async function findOrderById(id: string): Promise<Order | null> {
+  const url = `${ORDERS_BASE}/${encodeURIComponent(id)}?depth=0`
+  try {
+    const res = await fetch(url, { next: { revalidate: 0 } })
+    if (!res.ok) return null
+    const data = (await res.json()) as Order
+    return data
+  } catch {
+    return null
+  }
+}
+
+export async function findOrderBySessionId(sessionId: string): Promise<Order | null> {
+  const url = `${ORDERS_BASE}?where[stripeSessionId][equals]=${encodeURIComponent(sessionId)}&depth=0`
+  try {
+    const res = await fetch(url, { next: { revalidate: 0 } })
+    if (!res.ok) return null
+    const data = (await res.json()) as { docs: Order[] }
+    return data.docs?.[0] ?? null
+  } catch {
+    return null
+  }
+}
+
+export async function getProductById(id: string): Promise<Product | null> {
+  const url = `${API_BASE_URL}/api/products/${encodeURIComponent(id)}?depth=0`
+  try {
+    const res = await fetch(url, { next: { revalidate: 0 } })
+    if (!res.ok) return null
+    return (await res.json()) as Product
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Server-side price recalculation. Returns the server's view of the cart
+ * (with prices and names from the Products collection, never the client).
+ * Throws an Error with `.code` for known error cases.
+ */
+export async function recalculateCart(
+  items: { productId: string; quantity: number; variantId?: string }[],
+  tenantSlug: string,
+): Promise<{
+  items: OrderItem[]
+  subtotal: number
+  currency: string
+}> {
+  if (items.length === 0) {
+    throw Object.assign(new Error('Cart is empty'), { code: 'invalid_cart' })
+  }
+  const productIds = items.map((i) => i.productId)
+  const url =
+    `${API_BASE_URL}/api/products?where[id][in]=${productIds.join(',')}&depth=0&limit=100`
+  const res = await fetch(url, { next: { revalidate: 0 } })
+  if (!res.ok) {
+    throw Object.assign(new Error('Failed to fetch products'), { code: 'product_fetch_failed' })
+  }
+  const data = (await res.json()) as { docs: Product[] }
+  const byId = new Map(data.docs.map((p) => [String(p.id), p]))
+
+  const out: OrderItem[] = []
+  let currency: string | null = null
+  let subtotal = 0
+
+  for (const item of items) {
+    const product = byId.get(String(item.productId))
+    if (!product) {
+      throw Object.assign(new Error(`Product not found: ${item.productId}`), {
+        code: 'invalid_product',
+        productId: item.productId,
+      })
+    }
+    if (!currency) currency = product.currency
+    else if (currency !== product.currency) {
+      throw Object.assign(
+        new Error(`Currency mismatch in cart (${currency} vs ${product.currency})`),
+        { code: 'currency_mismatch' },
+      )
+    }
+    if (product.stock !== undefined && product.stock < item.quantity) {
+      throw Object.assign(
+        new Error(`Insufficient stock for ${product.title}`),
+        { code: 'insufficient_stock' },
+      )
+    }
+    out.push({
+      productId: String(product.id),
+      name: product.title,
+      unitPrice: product.price,
+      quantity: item.quantity,
+      imageUrl: Array.isArray(product.images) && product.images[0] ? product.images[0].image?.url : undefined,
+    })
+    subtotal += product.price * item.quantity
+  }
+  return { items: out, subtotal, currency: currency ?? 'USD' }
+}
+
+// ---------------------------------------------------------------------------
+// Tenant lookup helpers
+// ---------------------------------------------------------------------------
+
+export interface TenantLite {
+  id: string | number
+  slug: string
+  name: string
+  features?: {
+    payments?: boolean
+    stripeAccountStatus?: string
+    stripeAccountId?: string | null
+    [key: string]: unknown
+  }
+}
+
+export async function findTenantBySlug(slug: string): Promise<TenantLite | null> {
+  const url = `${API_BASE_URL}/api/tenants?where[slug][equals]=${encodeURIComponent(slug)}&depth=0&limit=1`
+  try {
+    const res = await fetch(url, { next: { revalidate: 0 } })
+    if (!res.ok) return null
+    const data = (await res.json()) as { docs: TenantLite[] }
+    return data.docs?.[0] ?? null
+  } catch {
+    return null
+  }
 }

@@ -93,8 +93,8 @@ export interface ProductBlock extends Block {
   category?: string
 }
 
-export interface CartBlock extends Block {
-  blockType: 'cart'
+export interface CartSummaryBlock extends Block {
+  blockType: 'cart-summary'
   emptyMessage?: string
   checkoutButton?: string
 }
@@ -246,3 +246,36 @@ export interface CategoryList extends Block {
   heading?: string
   layout?: 'grid' | 'list'
 }
+
+// ── Payments / Orders types ───────────────────────────────────────────────────
+
+export interface OrderItem {
+  productId: string
+  variantId?: string
+  name: string
+  unitPrice: number
+  quantity: number
+  imageUrl?: string
+}
+
+export interface Order {
+  id: string
+  tenant: string | { id: string }
+  customerEmail: string
+  items: OrderItem[]
+  subtotal: number
+  currency: string
+  status: 'pending' | 'paid' | 'failed' | 'refunded'
+  stripeSessionId?: string
+  stripePaymentIntentId?: string
+  paidAt?: string
+  failedReason?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// NOTE: `CartItem` is defined in `@/store/cart` (Task 7). Do NOT redefine
+// it here — adding a duplicate `CartItem` in this file causes a type
+// collision when both modules are imported. If you need a "Cart-shaped"
+// type in code that doesn't import from the store, import it as:
+//   import type { CartItem } from '@/store/cart'

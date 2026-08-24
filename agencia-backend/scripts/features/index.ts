@@ -4,6 +4,8 @@ import { install as welcomeBannerInstall } from './welcome-banner/install'
 import { uninstall as welcomeBannerUninstall } from './welcome-banner/uninstall'
 import { install as catalogInstall } from './catalog/install'
 import { uninstall as catalogUninstall } from './catalog/uninstall'
+import { install as paymentsInstall } from './payments/install'
+import { uninstall as paymentsUninstall } from './payments/uninstall'
 
 const stubFor = (slug: string, displayName: string, description: string): FeatureModule => ({
   slug,
@@ -23,11 +25,14 @@ export const FEATURES: Record<string, FeatureModule> = {
     uninstall: catalogUninstall,
     envKeysRequired: ['NEXT_PUBLIC_TENANT_FEATURES'],
   },
-  payments: stubFor(
-    'payments',
-    'Pagos con Stripe',
-    'Stripe checkout, webhooks, /cart, /checkout',
-  ),
+  payments: {
+    slug: 'payments',
+    displayName: 'Pagos con Stripe',
+    description: 'Stripe Checkout hosted + Connect per-tenant. /cart, /checkout, /admin/pagos, webhook backend.',
+    install: paymentsInstall,
+    uninstall: paymentsUninstall,
+    envKeysRequired: ['STRIPE_SECRET_KEY', 'STRIPE_CLIENT_ID', 'STRIPE_OAUTH_STATE_SECRET'],
+  },
   shipping: stubFor('shipping', 'Envíos', 'Zonas geográficas + métodos de envío'),
   coupons: stubFor('coupons', 'Cupones', 'Códigos de descuento'),
   reviews: stubFor('reviews', 'Reviews', 'Ratings + comentarios en productos'),
