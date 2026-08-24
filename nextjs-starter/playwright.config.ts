@@ -29,6 +29,16 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      // Gated on STRIPE_SECRET_KEY (the same var each spec's internal skip
+      // uses) so operator env vars and CI gating stay in sync. When the var is
+      // unset the project matches a non-existent path and discovers zero tests.
+      // The glob covers happy-path and cancel-path (both added in payments-
+      // sprint-2) and is forward-compatible with future checkout-*.spec.ts.
+      name: 'stripe-required',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: process.env.STRIPE_SECRET_KEY ? '**/checkout-*.spec.ts' : '**/_skip/**',
+    },
   ],
   webServer: process.env.CI
     ? undefined

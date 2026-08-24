@@ -32,6 +32,14 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], channel: 'chromium' },
     },
+    {
+      // Gated on STRIPE_WEBHOOK_SECRET (the same var the spec's internal skip
+      // uses) so operator env vars and CI gating stay in sync. When the var is
+      // unset the project matches a non-existent path and discovers zero tests.
+      name: 'stripe-webhook',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: process.env.STRIPE_WEBHOOK_SECRET ? '**/stripe-webhook*.spec.ts' : '**/_skip/**',
+    },
   ],
   // webServer disabled: no E2E tests currently. Re-enable when adding E2E tests.
   // webServer: {
