@@ -5,8 +5,13 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
  * Single Stripe instance. Pinned to a specific API version (NOT 'latest')
  * to avoid silent breaking changes. Update this string deliberately when
  * testing against a new SDK.
+ *
+ * NOTE: stripe@22.5.0 only accepts `"2026-07-29.dahlia"` (it strict-types
+ * `apiVersion` as `typeof ApiVersion`). Older API version strings like
+ * `"2024-12-18.acacia"` will fail typecheck. Bump this in lockstep with the
+ * SDK in package.json.
  */
-const STRIPE_API_VERSION = '2024-12-18.acacia'
+const STRIPE_API_VERSION = '2026-07-29.dahlia'
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? 'sk_test_placeholder', {
   apiVersion: STRIPE_API_VERSION,
@@ -146,5 +151,8 @@ export async function exchangeOAuthCode(code: string): Promise<{ stripeUserId: s
     grant_type: 'authorization_code',
     code,
   })
+  if (!response.stripe_user_id) {
+    throw new Error('Stripe OAuth token response missing stripe_user_id')
+  }
   return { stripeUserId: response.stripe_user_id }
 }
