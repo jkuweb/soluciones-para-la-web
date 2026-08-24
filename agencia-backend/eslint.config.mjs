@@ -34,11 +34,12 @@ const eslintConfig = [
   },
   {
     name: 'agencia/tests',
-    // Tests de integración usan `as any` intencionalmente para sortear
+    // Tests de integración y E2E usan `as any` intencionalmente para sortear
     // el tipo estricto de Payload en casos como `user: { id, roles, tenants }`
     // (no son instancias completas de User, solo campos suficientes para
-    // los access checks que queremos verificar).
-    files: ['tests/int/**/*.int.spec.ts'],
+    // los access checks que queremos verificar). E2E tests también seedan
+    // datos vía Local API con tipos parciales.
+    files: ['tests/int/**/*.int.spec.ts', 'tests/e2e/**/*.spec.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
     },
