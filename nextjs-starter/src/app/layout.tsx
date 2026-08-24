@@ -4,6 +4,7 @@ import './styles/global.css'
 import { SITE_CONFIG } from '@/content/site.config'
 import Link from '@/components/Link'
 import FooterBlock from '@/components/FooterBlock'
+import CartProvider from '@/components/cart/CartProvider'
 import { getHeader, getFooter, getMediaUrl } from '@/lib/payload'
 
 export const metadata: Metadata = {
@@ -92,12 +93,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             )}
           </header>
         )}
-        <main>{children}</main>
-        <FooterBlock
-          navItems={footer?.navItems}
-          copyright={footer?.copyright}
-          socialLinks={footer?.socialLinks}
-        />
+        <CartProvider>
+          <main>{children}</main>
+          <FooterBlock
+            navItems={footer?.navItems}
+            copyright={footer?.copyright}
+            socialLinks={footer?.socialLinks}
+          />
+        </CartProvider>
       </body>
     </html>
   )

@@ -91,6 +91,10 @@ function normalizeBlock(block: Block): Block {
         })),
       }
     }
+    case 'cart-summary': {
+      // cart-summary has no media to normalize
+      return block
+    }
     default:
       return block
   }

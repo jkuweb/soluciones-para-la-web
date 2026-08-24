@@ -35,6 +35,7 @@ const BLOCK_FEATURE_REQUIREMENT: Record<string, string> = {
   'product-grid': 'catalog',
   'featured-product': 'catalog',
   'category-list': 'catalog',
+  'cart-summary': 'payments',
 }
 
 const components: Record<string, React.ComponentType<{ data: any }>> = {
