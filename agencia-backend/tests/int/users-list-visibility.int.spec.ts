@@ -1,6 +1,7 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
+import { seedUser, seedTenant } from '../helpers/db'
 
 /**
  * Regression test for the multi-tenant users-list bug.
@@ -20,39 +21,46 @@ describe('Users list visibility with multi-tenant cookie', () => {
   let superAdmin: any
   let tenantAdmin: any
 
+  const SUPER_ADMIN_EMAIL = 'test-super-admin@agencia.test'
+  const TENANT_ADMIN_EMAIL = 'test-tenant-admin@agencia.test'
+  // Use a timestamp suffix so re-runs (or parallel test files that also
+  // seed a tenant) don't collide on the unique slug.
+  const TENANT_SLUG = `tenant-admin-test-${Date.now()}`
+
   beforeAll(async () => {
     payload = await getPayload({ config })
 
-    // Reset super-admin password for the test session.
-    await payload.update({
+    // Find or seed a super-admin. Don't hardcode id=1 — the shared test
+    // DB may not have any super-admin, and the id is not stable.
+    const existingSuper = await payload.find({
       collection: 'users',
-      id: 1,
-      data: { password: 'super-admin-pw-test' },
+      where: { email: { equals: SUPER_ADMIN_EMAIL } },
       overrideAccess: true,
+      limit: 1,
     })
-    superAdmin = await payload.findByID({
-      collection: 'users',
-      id: 1,
-      overrideAccess: true,
-      depth: 2,
-    })
+    superAdmin =
+      existingSuper.docs[0] ??
+      (await seedUser(payload, { email: SUPER_ADMIN_EMAIL, roles: 'super-admin' }))
 
-    // Ensure tenant 1 exists and pepe is assigned to it as tenant-admin.
-    const pepe = await payload.find({
-      collection: 'users',
-      where: { email: { equals: 'pepe@example.com' } },
-      overrideAccess: true,
-      depth: 0,
+    // Make the test self-contained: seed a tenant + tenant-admin instead
+    // of depending on external seed state (pepe@example.com, tenant 1).
+    const tenant = await seedTenant(payload, {
+      slug: TENANT_SLUG,
+      name: 'Tenant Admin Test',
     })
-    if (pepe.docs.length === 0) {
-      throw new Error('Expected seed user pepe@example.com to exist')
-    }
-    tenantAdmin = await payload.update({
+    const existingAdmin = await payload.find({
       collection: 'users',
-      id: pepe.docs[0].id,
-      data: { password: 'tenant-admin-pw-test' },
+      where: { email: { equals: TENANT_ADMIN_EMAIL } },
       overrideAccess: true,
+      limit: 1,
     })
+    tenantAdmin =
+      existingAdmin.docs[0] ??
+      (await seedUser(payload, {
+        email: TENANT_ADMIN_EMAIL,
+        roles: 'tenant-admin',
+        tenants: [tenant.id],
+      }))
   })
 
   afterAll(async () => {

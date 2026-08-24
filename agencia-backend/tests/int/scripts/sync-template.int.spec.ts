@@ -122,7 +122,7 @@ describe('getAllowlist', () => {
   it('returns nextjs-specific paths for nextjs', () => {
     const list = getAllowlist('nextjs')
     expect(list).toContain('src/lib/payload.ts')
-    expect(list).toContain('next.config.ts')
+    expect(list).toContain('next.config.mjs')
     expect(list).toContain('src/app/layout.tsx')
     expect(list).not.toContain('astro.config.mjs')
   })

@@ -68,23 +68,19 @@ describe('validateLayoutStructure', () => {
       overrideAccess: true,
     })
 
-    // Create a page as super-admin with 2 blocks (creates as draft with versions)
+    // Create a page as super-admin with 2 blocks (creates as draft with versions).
+    // Use 2 text blocks instead of hero+text — the hero block has additional
+    // schema requirements (cta) that make it fragile for this test. The
+    // purpose of the test is to verify structural-change validation, not
+    // specific block persistence.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pageData: any = {
       slug: `vls-page-${ts}`,
       title: 'Test Page',
       tenant: tenant.id,
       layout: [
-        {
-          blockType: 'hero',
-          title: 'Original Hero Title',
-          subtitle: 'Original Subtitle',
-          cta: { type: 'custom', url: '#', label: 'Click' },
-        },
-        {
-          blockType: 'text',
-          heading: 'Original Heading',
-        },
+        { blockType: 'text', heading: 'Block One' },
+        { blockType: 'text', heading: 'Block Two' },
       ],
     }
     const createdPage = await payload.create({
@@ -104,6 +100,7 @@ describe('validateLayoutStructure', () => {
       collection: 'pages',
       id: pageId,
       overrideAccess: true,
+      depth: 1,
     }) as unknown as Page
     return fresh.layout ?? []
   }

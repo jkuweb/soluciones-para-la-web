@@ -34,11 +34,14 @@ describe('API', () => {
     })
     tenantId = tenant.id
 
-    // Create a published page (_status is a Payload internal field not in Page type)
+    // Create a published page (_status is a Payload internal field not in Page type).
+    // NOTE: Pages' slug is auto-generated from `title` via slugField — passing
+    // `data.slug` is ignored. Use unique titles so slugField produces unique
+    // slugs, and capture the ACTUAL slug from the create response, not the
+    // intended one.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const publishedPageData: any = {
-      slug: `api-public-${ts}`,
-      title: 'Public Page',
+      title: `API Public Page ${ts}`,
       tenant: tenant.id,
       layout: [],
       _status: 'published',
@@ -49,7 +52,7 @@ describe('API', () => {
       overrideAccess: true,
     })
     publishedPageId = publishedPage.id
-    publishedSlug = publishedPageData.slug
+    publishedSlug = (publishedPage as any).slug
     // Payload 3 with versions.drafts may create as draft even with _status: 'published'.
     // Ensure it's truly published so unauthenticated reads can find it.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,8 +71,7 @@ describe('API', () => {
     // Create a draft page (Payload auto-creates as draft with versions)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const draftPageData: any = {
-      slug: `api-draft-${ts}`,
-      title: 'Draft Page',
+      title: `API Draft Page ${ts}`,
       tenant: tenant.id,
       layout: [],
     }
@@ -79,7 +81,7 @@ describe('API', () => {
       overrideAccess: true,
     })
     draftPageId = draftPage.id
-    draftSlug = draftPageData.slug
+    draftSlug = (draftPage as any).slug
   })
 
   afterAll(async () => {
