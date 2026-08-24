@@ -537,3 +537,31 @@ export async function recalculateCart(
   }
   return { items: out, subtotal, currency: currency ?? 'USD' }
 }
+
+// ---------------------------------------------------------------------------
+// Tenant lookup helpers
+// ---------------------------------------------------------------------------
+
+export interface TenantLite {
+  id: string | number
+  slug: string
+  name: string
+  features?: {
+    payments?: boolean
+    stripeAccountStatus?: string
+    stripeAccountId?: string | null
+    [key: string]: unknown
+  }
+}
+
+export async function findTenantBySlug(slug: string): Promise<TenantLite | null> {
+  const url = `${API_BASE_URL}/api/tenants?where[slug][equals]=${encodeURIComponent(slug)}&depth=0&limit=1`
+  try {
+    const res = await fetch(url, { next: { revalidate: 0 } })
+    if (!res.ok) return null
+    const data = (await res.json()) as { docs: TenantLite[] }
+    return data.docs?.[0] ?? null
+  } catch {
+    return null
+  }
+}
