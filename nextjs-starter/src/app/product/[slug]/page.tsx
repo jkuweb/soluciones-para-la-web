@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getTenantFeatures } from '@/lib/tenant'
-import { getProductBySlug, getMediaUrl } from '@/lib/payload'
+import { getProductBySlug, getMediaUrl, TENANT_SLUG } from '@/lib/payload'
+import AddToCartButton from '@/components/cart/AddToCartButton'
 
 function formatPrice(cents: number, currency: string): string {
   const value = cents / 100
@@ -90,12 +91,16 @@ export default async function ProductPage({
 
         {product.sku && <p className="product__sku">SKU: {product.sku}</p>}
 
-        <button type="button" className="product__add-to-cart" disabled>
-          Añadir al carrito
-        </button>
-        <p className="product__add-to-cart-hint">
-          (El carrito llega en el feature `payments`).
-        </p>
+        <AddToCartButton
+          product={{
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            currency: product.currency,
+            images: product.images?.map((item) => ({ url: item.image?.url })),
+          }}
+          tenantSlug={TENANT_SLUG}
+        />
       </div>
     </main>
   )

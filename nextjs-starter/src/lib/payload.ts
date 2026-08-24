@@ -16,7 +16,7 @@ import type {
 import type { Post, Category, Tag } from './types'
 
 const PAYLOAD_API_URL = process.env.PAYLOAD_API_URL || 'http://localhost:3000/api'
-const TENANT_SLUG = process.env.TENANT_SLUG || 'mi-tienda'
+export const TENANT_SLUG = process.env.TENANT_SLUG || 'mi-tienda'
 
 const API_BASE_URL = PAYLOAD_API_URL.replace(/\/api\/?$/, '')
 
