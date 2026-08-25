@@ -1,8 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import { getPayload } from 'payload'
+import config from '@/payload.config'
 import {
   adaptSmokeProduct,
   buildFeatures,
+  findCategoryBySlug,
   productToData,
+  upsertCategory,
+  TENANT_SLUG,
   type SneakerProduct,
 } from '../../../scripts/seed-mood-full'
 
@@ -125,5 +130,81 @@ describe('adaptSmokeProduct', () => {
     )
 
     expect(result.sku).toBe('SMOKE-EUR')
+  })
+})
+
+describe('findCategoryBySlug + upsertCategory (integration)', () => {
+  let payload: Awaited<ReturnType<typeof getPayload>>
+  let tenantId: number
+
+  beforeAll(async () => {
+    payload = await getPayload({ config })
+    // Self-contained seed: re-use an existing mood tenant if present,
+    // otherwise create the bare minimum needed for the helpers under test.
+    const existing = await payload.find({
+      collection: 'tenants',
+      where: { slug: { equals: TENANT_SLUG } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (existing.totalDocs > 0) {
+      tenantId = (existing.docs[0] as { id: number }).id
+      return
+    }
+    const created = await payload.create({
+      collection: 'tenants',
+      data: {
+        slug: TENANT_SLUG,
+        name: 'Mood',
+        domain: 'mood.localhost',
+        serviceType: 'tienda-online',
+        frontendType: 'nextjs',
+        status: 'active',
+        ecommerceTier: 'none',
+        features: { catalog: true, payments: true },
+      },
+      overrideAccess: true,
+    })
+    tenantId = (created as { id: number }).id
+  })
+
+  it('returns null when the category does not exist', async () => {
+    const result = await findCategoryBySlug(payload, tenantId, 'no-such-category')
+    expect(result).toBeNull()
+  })
+
+  it('upsertCategory creates when missing and returns "created"', async () => {
+    const unique = `running-${Date.now()}`
+    const action = await upsertCategory(payload, tenantId, {
+      name: 'Running',
+      slug: unique,
+    })
+
+    expect(action).toBe('created')
+    const found = await findCategoryBySlug(payload, tenantId, unique)
+    expect(found).not.toBeNull()
+  })
+
+  it('upsertCategory updates when present and returns "updated" (idempotent)', async () => {
+    const unique = `casual-${Date.now()}`
+    const first = await upsertCategory(payload, tenantId, { name: 'Casual', slug: unique })
+    const second = await upsertCategory(payload, tenantId, {
+      name: 'Casual Renamed',
+      slug: unique,
+      description: 'Updated desc',
+    })
+
+    expect(first).toBe('created')
+    expect(second).toBe('updated')
+
+    const found = await findCategoryBySlug(payload, tenantId, unique)
+    expect(found).not.toBeNull()
+    const doc = await payload.findByID({
+      collection: 'product-categories',
+      id: found!.id,
+      overrideAccess: true,
+    })
+    expect((doc as { name: string }).name).toBe('Casual Renamed')
+    expect((doc as { description?: string }).description).toBe('Updated desc')
   })
 })

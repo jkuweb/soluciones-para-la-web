@@ -14,11 +14,12 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import {
-  TENANT_SLUG,
   resolveStripeAccountId,
   SMOKE_PRODUCTS,
   type SmokeProduct,
 } from './seed-mood-payments'
+
+export { TENANT_SLUG } from './seed-mood-payments'
 
 // --- Types ---
 
@@ -192,6 +193,54 @@ export const adaptSmokeProduct = (
   status: 'published',
   tenant: tenantId,
 })
+
+// --- DB ops ---
+
+export const findCategoryBySlug = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  tenantId: number,
+  slug: string,
+): Promise<{ id: number } | null> => {
+  const result = await payload.find({
+    collection: 'product-categories',
+    where: {
+      and: [{ slug: { equals: slug } }, { tenant: { equals: tenantId } }],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  if (result.totalDocs === 0) return null
+  return result.docs[0] as { id: number }
+}
+
+export const upsertCategory = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  tenantId: number,
+  category: CategorySeed,
+): Promise<'created' | 'updated'> => {
+  const existing = await findCategoryBySlug(payload, tenantId, category.slug)
+  const data = {
+    name: category.name,
+    slug: category.slug,
+    ...(category.description !== undefined ? { description: category.description } : {}),
+    tenant: tenantId,
+  }
+  if (existing) {
+    await payload.update({
+      collection: 'product-categories',
+      id: existing.id,
+      data,
+      overrideAccess: true,
+    })
+    return 'updated'
+  }
+  await payload.create({
+    collection: 'product-categories',
+    data,
+    overrideAccess: true,
+  })
+  return 'created'
+}
 
 // (More helpers added in later tasks.)
 
