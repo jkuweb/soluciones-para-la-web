@@ -260,7 +260,7 @@ Create `agencia-backend/tests/int/scripts/seed-mood-full.int.spec.ts` with:
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import { buildFeatures } from '@/scripts/seed-mood-full'
+import { buildFeatures } from '../../../scripts/seed-mood-full'
 
 describe('buildFeatures', () => {
   it('returns an object with payments, catalog, stripeAccountStatus, and stripeAccountId set', () => {
@@ -348,7 +348,7 @@ git commit -m "feat(seed): add buildFeatures with catalog flag"
 Add a new `describe` block at the end of the spec file:
 
 ```ts
-import { productToData, type SneakerProduct } from '@/scripts/seed-mood-full'
+import { productToData, type SneakerProduct } from '../../../scripts/seed-mood-full'
 
 describe('productToData', () => {
   const sampleSneaker: SneakerProduct = {
@@ -461,7 +461,7 @@ git commit -m "feat(seed): add productToData helper"
 Add a new `describe` block at the end of the spec file:
 
 ```ts
-import { adaptSmokeProduct } from '@/scripts/seed-mood-full'
+import { adaptSmokeProduct } from '../../../scripts/seed-mood-full'
 
 describe('adaptSmokeProduct', () => {
   it('adapts a USD smoke product to the generic shape with stock 100 and a generated SKU', () => {
@@ -553,7 +553,7 @@ import {
   findCategoryBySlug,
   upsertCategory,
   TENANT_SLUG,
-} from '@/scripts/seed-mood-full'
+} from '../../../scripts/seed-mood-full'
 
 describe('findCategoryBySlug + upsertCategory (integration)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
@@ -697,7 +697,7 @@ git commit -m "feat(seed): add upsertCategory with idempotent find-or-create"
 Add a new `describe` block at the end of the spec file:
 
 ```ts
-import { upsertProduct, productToData } from '@/scripts/seed-mood-full'
+import { upsertProduct, productToData } from '../../../scripts/seed-mood-full'
 
 describe('upsertProduct (integration)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
@@ -1034,7 +1034,7 @@ git commit -m "feat(seed): wire run() orchestrator end-to-end"
 Add a final `describe` block at the end of the spec file:
 
 ```ts
-import { run } from '@/scripts/seed-mood-full'
+import { run } from '../../../scripts/seed-mood-full'
 
 describe('run() end-to-end (integration)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
