@@ -141,6 +141,17 @@ export const makeRichText = (text: string) => ({
   },
 })
 
+export const buildFeatures = (
+  currentFeatures: Record<string, unknown>,
+  stripeAccountId: string,
+): Record<string, unknown> => ({
+  ...currentFeatures,
+  payments: true,
+  catalog: true,
+  stripeAccountStatus: 'active',
+  stripeAccountId,
+})
+
 // (More helpers added in later tasks.)
 
 // --- Orchestrator (placeholder) ---
