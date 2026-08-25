@@ -14,12 +14,13 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import {
+  TENANT_SLUG,
   resolveStripeAccountId,
   SMOKE_PRODUCTS,
   type SmokeProduct,
 } from './seed-mood-payments'
 
-export { TENANT_SLUG } from './seed-mood-payments'
+export { TENANT_SLUG }
 
 // --- Types ---
 
@@ -282,7 +283,64 @@ export const upsertProduct = async (
   return 'created'
 }
 
-// (More helpers added in later tasks.)
+// --- Output helpers ---
+
+export const printBanner = (): void => {
+  console.log('\n=== seed:mood-full ===')
+  console.log(`Tenant target: ${TENANT_SLUG}`)
+  console.log('')
+}
+
+export const printFeatureUpdate = (tenantId: number, stripeAccountId: string): void => {
+  console.log(`✓ Tenant "${TENANT_SLUG}" (id ${tenantId}) features updated:`)
+  console.log('    features.payments           = true')
+  console.log('    features.catalog            = true')
+  console.log("    features.stripeAccountStatus = 'active'")
+  console.log(`    features.stripeAccountId    = ${stripeAccountId}`)
+}
+
+export const printCategoryUpserted = (
+  category: CategorySeed,
+  action: 'created' | 'updated',
+): void => {
+  console.log(`  ${action === 'created' ? '+' : '~'} Category: ${category.name} (${category.slug})`)
+}
+
+export const printProductUpserted = (
+  product: { title: string; slug: string; currency: string; price: number },
+  action: 'created' | 'updated',
+): void => {
+  const verb = action === 'created' ? '+' : '~'
+  console.log(`  ${verb} Product: ${product.title} [${product.currency}] (${product.slug})`)
+}
+
+export const printSummary = (stats: { categories: number; products: number }): void => {
+  console.log('')
+  console.log(`Summary: ${stats.categories} categories, ${stats.products} products`)
+}
+
+export const printNextSteps = (stripeAccountId: string): void => {
+  console.log('\n=== Setup complete ===')
+  console.log(`Tenant "${TENANT_SLUG}" listo para la verificación E2E de Task 25.`)
+  if (stripeAccountId === 'acct_smoke_mood_placeholder') {
+    console.log(`\n⚠ Estás usando el placeholder de Stripe. Para el E2E real:`)
+    console.log(`    export STRIPE_ACCOUNT_ID_MOOD=acct_test_...`)
+    console.log(`    cd agencia-backend && pnpm seed:mood-full`)
+  }
+  console.log('\nPróximos pasos:')
+  console.log('  1. Verificá en admin: http://localhost:3000/admin/collections/products')
+  console.log('  2. Cuando hagas el E2E de Task 25, usá los productos seedeados.')
+  console.log('=============================\n')
+}
+
+export const printTenantMissing = (): void => {
+  console.error(`\n✗ Tenant "${TENANT_SLUG}" no existe.`)
+  console.error(`\nAntes de correr este script, creá el tenant con:`)
+  console.error(`  cd agencia-backend && pnpm create-client`)
+  console.error(`\nRespondé "${TENANT_SLUG}" cuando te pida el slug. Después:`)
+  console.error(`  pnpm seed:mood-full`)
+  console.error('')
+}
 
 // --- Orchestrator (placeholder) ---
 
