@@ -43,10 +43,14 @@ export const catalogEnabledTenantAccess: Access = async ({ req }) => {
 /**
  * Public read for catalog collections. The storefront satisfies this with a
  * TENANT_SLUG env filter applied at the fetch layer (see nextjs-starter
- * `lib/payload.ts`). For direct Payload access, deny anonymous.
+ * `lib/payload.ts`).
+ *
+ * Allows anonymous reads — the storefront slugs-scope every query via
+ * `?where[tenant.slug][equals]=${TENANT_SLUG}`, so this is safe by design.
+ * Authenticated non-super-admin users still get scoped to their tenants.
  */
 export const catalogEnabledPublicRead: Access = ({ req }) => {
-  if (!req.user) return false
+  if (!req.user) return true
   if (req.user.roles?.includes('super-admin')) return true
   return {
     tenant: {

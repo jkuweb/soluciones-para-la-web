@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { slugField } from 'payload'
 
-import { catalogEnabledTenantAccess } from '@/access/catalogEnabled'
+import { catalogEnabledPublicRead, catalogEnabledTenantAccess } from '@/access/catalogEnabled'
 
 export const ProductCategories: CollectionConfig = {
   slug: 'product-categories',
@@ -11,7 +11,7 @@ export const ProductCategories: CollectionConfig = {
     group: 'Catálogo',
   },
   access: {
-    read: catalogEnabledTenantAccess,
+    read: catalogEnabledPublicRead,
     create: catalogEnabledTenantAccess,
     update: catalogEnabledTenantAccess,
     delete: ({ req: { user } }) => user?.roles?.includes('super-admin') ?? false,
