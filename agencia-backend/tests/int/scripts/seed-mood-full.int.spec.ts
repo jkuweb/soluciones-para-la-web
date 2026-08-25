@@ -99,7 +99,8 @@ describe('productToData', () => {
 
   it('wraps description via makeRichText', () => {
     const result = productToData(sampleSneaker, 7, 11)
-    const children = (result.description as { root: { children: Array<{ text: string }> } }).root.children
+    const children = (result.description as { root: { children: Array<{ text: string }> } }).root
+      .children
 
     expect(children).toHaveLength(1)
     expect(children[0].text).toBe('A test shoe.')
@@ -325,10 +326,7 @@ describe('run() end-to-end (integration)', () => {
     const existingProducts = await payload.find({
       collection: 'products',
       where: {
-        and: [
-          { slug: { in: seedProductSlugs } },
-          { tenant: { equals: tenantId } },
-        ],
+        and: [{ slug: { in: seedProductSlugs } }, { tenant: { equals: tenantId } }],
       },
       overrideAccess: true,
       limit: 100,
@@ -345,10 +343,7 @@ describe('run() end-to-end (integration)', () => {
     const existingCategories = await payload.find({
       collection: 'product-categories',
       where: {
-        and: [
-          { slug: { in: seedCategorySlugs } },
-          { tenant: { equals: tenantId } },
-        ],
+        and: [{ slug: { in: seedCategorySlugs } }, { tenant: { equals: tenantId } }],
       },
       overrideAccess: true,
       limit: 100,
