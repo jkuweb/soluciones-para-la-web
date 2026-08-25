@@ -181,7 +181,7 @@ describe('findCategoryBySlug + upsertCategory (integration)', () => {
 
   it('upsertCategory creates when missing and returns "created"', async () => {
     const unique = `running-${Date.now()}`
-    const action = await upsertCategory(payload, tenantId, {
+    const { action } = await upsertCategory(payload, tenantId, {
       name: 'Running',
       slug: unique,
     })
@@ -200,8 +200,8 @@ describe('findCategoryBySlug + upsertCategory (integration)', () => {
       description: 'Updated desc',
     })
 
-    expect(first).toBe('created')
-    expect(second).toBe('updated')
+    expect(first.action).toBe('created')
+    expect(second.action).toBe('updated')
 
     const found = await findCategoryBySlug(payload, tenantId, unique)
     expect(found).not.toBeNull()
@@ -253,7 +253,7 @@ describe('upsertProduct (integration)', () => {
       tenantId,
     )
 
-    const action = await upsertProduct(payload, tenantId, data)
+    const { action } = await upsertProduct(payload, tenantId, data)
     expect(action).toBe('created')
   })
 
@@ -278,8 +278,8 @@ describe('upsertProduct (integration)', () => {
     const updatedData = { ...baseData, stock: 50, price: 19999 }
     const second = await upsertProduct(payload, tenantId, updatedData)
 
-    expect(first).toBe('created')
-    expect(second).toBe('updated')
+    expect(first.action).toBe('created')
+    expect(second.action).toBe('updated')
 
     const found = await payload.find({
       collection: 'products',

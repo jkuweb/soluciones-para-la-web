@@ -325,7 +325,7 @@ export const upsertCategory = async (
   payload: Awaited<ReturnType<typeof getPayload>>,
   tenantId: number,
   category: CategorySeed,
-): Promise<'created' | 'updated'> => {
+): Promise<{ id: number; action: 'created' | 'updated' }> => {
   const existing = await findCategoryBySlug(payload, tenantId, category.slug)
   const data = {
     name: category.name,
@@ -340,14 +340,14 @@ export const upsertCategory = async (
       data,
       overrideAccess: true,
     })
-    return 'updated'
+    return { id: existing.id, action: 'updated' }
   }
-  await payload.create({
+  const created = await payload.create({
     collection: 'product-categories',
     data,
     overrideAccess: true,
   })
-  return 'created'
+  return { id: created.id as number, action: 'created' }
 }
 
 export const findProductBySlug = async (
@@ -371,7 +371,7 @@ export const upsertProduct = async (
   payload: Awaited<ReturnType<typeof getPayload>>,
   tenantId: number,
   data: PayloadProductData,
-): Promise<'created' | 'updated'> => {
+): Promise<{ id: number; action: 'created' | 'updated' }> => {
   const existing = await findProductBySlug(payload, tenantId, data.slug)
   if (existing) {
     await payload.update({
@@ -380,14 +380,14 @@ export const upsertProduct = async (
       data,
       overrideAccess: true,
     })
-    return 'updated'
+    return { id: existing.id, action: 'updated' }
   }
-  await payload.create({
+  const created = await payload.create({
     collection: 'products',
     data,
     overrideAccess: true,
   })
-  return 'created'
+  return { id: created.id as number, action: 'created' }
 }
 
 // --- Output helpers ---
@@ -483,13 +483,9 @@ export const run = async (): Promise<void> => {
   console.log('\nUpserting categories:')
   const categoryIds = new Map<string, number>()
   for (const category of CATEGORIES) {
-    await upsertCategory(payload, tenantDoc.id, category)
-    const found = await findCategoryBySlug(payload, tenantDoc.id, category.slug)
-    if (!found) {
-      throw new Error(`Internal: missing category ${category.slug} after upsert`)
-    }
-    categoryIds.set(category.slug, found.id)
-    printCategoryUpserted(category, 'created')
+    const { id, action } = await upsertCategory(payload, tenantDoc.id, category)
+    categoryIds.set(category.slug, id)
+    printCategoryUpserted(category, action)
   }
   console.log(`  ${CATEGORIES.length} categories processed.`)
 
@@ -501,8 +497,8 @@ export const run = async (): Promise<void> => {
       throw new Error(`Internal: missing category ${product.categorySlug}`)
     }
     const data = productToData(product, categoryId, tenantDoc.id)
-    await upsertProduct(payload, tenantDoc.id, data)
-    printProductUpserted(product, 'created')
+    const { action } = await upsertProduct(payload, tenantDoc.id, data)
+    printProductUpserted(product, action)
   }
   console.log(`  ${SNEAKER_PRODUCTS.length} sneaker products processed.`)
 
@@ -510,8 +506,8 @@ export const run = async (): Promise<void> => {
   console.log('\nUpserting smoke products:')
   for (const product of SMOKE_PRODUCTS) {
     const data = adaptSmokeProduct(product, tenantDoc.id)
-    await upsertProduct(payload, tenantDoc.id, data)
-    printProductUpserted(product, 'created')
+    const { action } = await upsertProduct(payload, tenantDoc.id, data)
+    printProductUpserted(product, action)
   }
   console.log(`  ${SMOKE_PRODUCTS.length} smoke products processed.`)
 
