@@ -342,8 +342,79 @@ export const printTenantMissing = (): void => {
   console.error('')
 }
 
-// --- Orchestrator (placeholder) ---
+// --- Orchestrator ---
 
 export const run = async (): Promise<void> => {
-  throw new Error('Not implemented yet')
+  printBanner()
+  const payload = await getPayload({ config })
+
+  // 1. Find tenant (fail with instructions if missing)
+  const tenant = await payload.find({
+    collection: 'tenants',
+    where: { slug: { equals: TENANT_SLUG } },
+    limit: 1,
+    overrideAccess: true,
+  })
+  if (tenant.totalDocs === 0) {
+    printTenantMissing()
+    process.exit(1)
+  }
+  const tenantDoc = tenant.docs[0] as { id: number; features?: Record<string, unknown> }
+
+  // 2. Build and write the combined features object
+  const stripeAccountId = resolveStripeAccountId()
+  const features = buildFeatures(tenantDoc.features ?? {}, stripeAccountId)
+  await payload.update({
+    collection: 'tenants',
+    id: tenantDoc.id,
+    data: { features },
+    overrideAccess: true,
+  })
+  printFeatureUpdate(tenantDoc.id, stripeAccountId)
+
+  // 3. Upsert categories, build a slug → id map
+  console.log('\nUpserting categories:')
+  const categoryIds = new Map<string, number>()
+  for (const category of CATEGORIES) {
+    await upsertCategory(payload, tenantDoc.id, category)
+    const found = await findCategoryBySlug(payload, tenantDoc.id, category.slug)
+    if (!found) {
+      throw new Error(`Internal: missing category ${category.slug} after upsert`)
+    }
+    categoryIds.set(category.slug, found.id)
+    printCategoryUpserted(category, 'created')
+  }
+  console.log(`  ${CATEGORIES.length} categories processed.`)
+
+  // 4. Upsert sneaker products
+  console.log('\nUpserting sneaker products:')
+  for (const product of SNEAKER_PRODUCTS) {
+    const categoryId = categoryIds.get(product.categorySlug)
+    if (!categoryId) {
+      throw new Error(`Internal: missing category ${product.categorySlug}`)
+    }
+    const data = productToData(product, categoryId, tenantDoc.id)
+    await upsertProduct(payload, tenantDoc.id, data)
+    printProductUpserted(product, 'created')
+  }
+  console.log(`  ${SNEAKER_PRODUCTS.length} sneaker products processed.`)
+
+  // 5. Upsert smoke products (imported, adapted to generic shape)
+  console.log('\nUpserting smoke products:')
+  for (const product of SMOKE_PRODUCTS) {
+    const data = adaptSmokeProduct(product, tenantDoc.id)
+    await upsertProduct(payload, tenantDoc.id, data)
+    printProductUpserted(product, 'created')
+  }
+  console.log(`  ${SMOKE_PRODUCTS.length} smoke products processed.`)
+
+  // 6. Print summary + next steps
+  printSummary({
+    categories: CATEGORIES.length,
+    products: SNEAKER_PRODUCTS.length + SMOKE_PRODUCTS.length,
+  })
+  printNextSteps(stripeAccountId)
+
+  // Payload keeps DB connections open; explicit exit prevents the wrapper hanging.
+  process.exit(0)
 }
