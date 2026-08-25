@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  adaptSmokeProduct,
   buildFeatures,
   productToData,
   type SneakerProduct,
@@ -92,5 +93,37 @@ describe('productToData', () => {
 
     expect(children).toHaveLength(1)
     expect(children[0].text).toBe('A test shoe.')
+  })
+})
+
+describe('adaptSmokeProduct', () => {
+  it('adapts a USD smoke product to the generic shape with stock 100 and a generated SKU', () => {
+    const result = adaptSmokeProduct(
+      { title: 'Smoke USD', slug: 'smoke-usd', price: 1999, currency: 'USD' },
+      11,
+    )
+
+    expect(result).toMatchObject({
+      title: 'Smoke USD',
+      slug: 'smoke-usd',
+      price: 1999,
+      currency: 'USD',
+      images: [],
+      category: undefined,
+      stock: 100,
+      sku: 'SMOKE-USD',
+      status: 'published',
+      tenant: 11,
+    })
+    expect(result.description).toMatchObject({ root: expect.any(Object) })
+  })
+
+  it('generates SKU using the currency', () => {
+    const result = adaptSmokeProduct(
+      { title: 'Smoke EUR', slug: 'smoke-eur', price: 1999, currency: 'EUR' },
+      11,
+    )
+
+    expect(result.sku).toBe('SMOKE-EUR')
   })
 })

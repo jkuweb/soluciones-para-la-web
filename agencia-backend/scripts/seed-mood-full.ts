@@ -176,6 +176,23 @@ export const productToData = (
   return data
 }
 
+export const adaptSmokeProduct = (
+  product: SmokeProduct,
+  tenantId: number,
+): PayloadProductData => ({
+  title: product.title,
+  slug: product.slug,
+  description: makeRichText(`Smoke test product for ${product.currency} currency validation.`),
+  price: product.price,
+  currency: product.currency,
+  images: [],
+  category: undefined,
+  stock: 100,
+  sku: `SMOKE-${product.currency}`,
+  status: 'published',
+  tenant: tenantId,
+})
+
 // (More helpers added in later tasks.)
 
 // --- Orchestrator (placeholder) ---
