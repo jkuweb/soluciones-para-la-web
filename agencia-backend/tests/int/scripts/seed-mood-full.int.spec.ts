@@ -1,16 +1,20 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import {
   adaptSmokeProduct,
   buildFeatures,
+  CATEGORIES,
   findCategoryBySlug,
   productToData,
+  run,
+  SNEAKER_PRODUCTS,
   upsertCategory,
   upsertProduct,
   TENANT_SLUG,
   type SneakerProduct,
 } from '../../../scripts/seed-mood-full'
+import { SMOKE_PRODUCTS } from '../../../scripts/seed-mood-payments'
 
 describe('buildFeatures', () => {
   it('returns an object with payments, catalog, stripeAccountStatus, and stripeAccountId set', () => {
@@ -289,4 +293,120 @@ describe('upsertProduct (integration)', () => {
     expect(doc.stock).toBe(50)
     expect(doc.price).toBe(19999)
   })
+})
+
+describe('run() end-to-end (integration)', () => {
+  let payload: Awaited<ReturnType<typeof getPayload>>
+  let initialProductCount: number
+  let initialCategoryCount: number
+  let tenantId: number
+
+  beforeAll(async () => {
+    payload = await getPayload({ config })
+    const moodTenant = await payload.find({
+      collection: 'tenants',
+      where: { slug: { equals: TENANT_SLUG } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (moodTenant.totalDocs === 0) {
+      throw new Error(`Test requires tenant "${TENANT_SLUG}"`)
+    }
+    tenantId = (moodTenant.docs[0] as { id: number }).id
+
+    // Clean up any pre-existing seed data so this test is re-runnable on the same
+    // DB. run() is idempotent, so without cleanup a second test run would see the
+    // docs created by the first run and report a delta of 0 instead of 4 + 14.
+    // Delete products first to avoid FK constraint issues with categories.
+    const seedProductSlugs = [
+      ...SNEAKER_PRODUCTS.map((p) => p.slug),
+      ...SMOKE_PRODUCTS.map((p) => p.slug),
+    ]
+    const existingProducts = await payload.find({
+      collection: 'products',
+      where: {
+        and: [
+          { slug: { in: seedProductSlugs } },
+          { tenant: { equals: tenantId } },
+        ],
+      },
+      overrideAccess: true,
+      limit: 100,
+    })
+    for (const doc of existingProducts.docs) {
+      await payload.delete({
+        collection: 'products',
+        id: (doc as { id: number }).id,
+        overrideAccess: true,
+      })
+    }
+
+    const seedCategorySlugs = CATEGORIES.map((c) => c.slug)
+    const existingCategories = await payload.find({
+      collection: 'product-categories',
+      where: {
+        and: [
+          { slug: { in: seedCategorySlugs } },
+          { tenant: { equals: tenantId } },
+        ],
+      },
+      overrideAccess: true,
+      limit: 100,
+    })
+    for (const doc of existingCategories.docs) {
+      await payload.delete({
+        collection: 'product-categories',
+        id: (doc as { id: number }).id,
+        overrideAccess: true,
+      })
+    }
+
+    // Snapshot current counts (after cleanup, so seed slugs are gone).
+    const productsBefore = await payload.find({
+      collection: 'products',
+      where: { tenant: { equals: tenantId } },
+      overrideAccess: true,
+      limit: 0,
+    })
+    const categoriesBefore = await payload.find({
+      collection: 'product-categories',
+      where: { tenant: { equals: tenantId } },
+      overrideAccess: true,
+      limit: 0,
+    })
+    initialProductCount = productsBefore.totalDocs
+    initialCategoryCount = categoriesBefore.totalDocs
+  })
+
+  it('upserts all 4 categories and 14 products, and is idempotent on re-run', async () => {
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
+      throw new Error('process.exit called')
+    }) as never)
+
+    try {
+      await expect(run()).rejects.toThrow('process.exit called')
+      await expect(run()).rejects.toThrow('process.exit called')
+    } finally {
+      exitSpy.mockRestore()
+    }
+
+    const productsAfter = await payload.find({
+      collection: 'products',
+      where: { tenant: { equals: tenantId } },
+      overrideAccess: true,
+      limit: 0,
+    })
+    const categoriesAfter = await payload.find({
+      collection: 'product-categories',
+      where: { tenant: { equals: tenantId } },
+      overrideAccess: true,
+      limit: 0,
+    })
+
+    const newCategories = categoriesAfter.totalDocs - initialCategoryCount
+    const newProducts = productsAfter.totalDocs - initialProductCount
+
+    expect(newCategories).toBe(4)
+    expect(newProducts).toBe(14)
+  }, 60_000)
 })
