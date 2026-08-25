@@ -22,7 +22,7 @@ export const TENANT_SLUG = 'mood'
 export const STRIPE_ACCOUNT_ID_ENV = 'STRIPE_ACCOUNT_ID_MOOD'
 export const STRIPE_ACCOUNT_ID_PLACEHOLDER = 'acct_smoke_mood_placeholder'
 
-type SmokeProduct = {
+export type SmokeProduct = {
   title: string
   slug: string
   price: number
