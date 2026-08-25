@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { buildFeatures } from '../../../scripts/seed-mood-full'
+import {
+  buildFeatures,
+  productToData,
+  type SneakerProduct,
+} from '../../../scripts/seed-mood-full'
 
 describe('buildFeatures', () => {
   it('returns an object with payments, catalog, stripeAccountStatus, and stripeAccountId set', () => {
@@ -36,5 +40,57 @@ describe('buildFeatures', () => {
     expect(result.catalog).toBe(true)
     expect(result.stripeAccountStatus).toBe('active')
     expect(result.stripeAccountId).toBe('acct_new')
+  })
+})
+
+describe('productToData', () => {
+  const sampleSneaker: SneakerProduct = {
+    title: 'Test Shoe',
+    slug: 'test-shoe',
+    description: 'A test shoe.',
+    price: 9999,
+    currency: 'USD',
+    categorySlug: 'running',
+    stock: 42,
+    sku: 'TEST-1',
+  }
+
+  it('maps a sneaker to the Payload data shape with all required fields', () => {
+    const result = productToData(sampleSneaker, 7, 11)
+
+    expect(result).toMatchObject({
+      title: 'Test Shoe',
+      slug: 'test-shoe',
+      price: 9999,
+      currency: 'USD',
+      images: [],
+      category: 7,
+      stock: 42,
+      sku: 'TEST-1',
+      status: 'published',
+      tenant: 11,
+    })
+    expect(result.description).toMatchObject({ root: expect.any(Object) })
+  })
+
+  it('includes compareAtPrice when defined', () => {
+    const onSale = { ...sampleSneaker, compareAtPrice: 12999 }
+    const result = productToData(onSale, 7, 11)
+
+    expect(result.compareAtPrice).toBe(12999)
+  })
+
+  it('omits compareAtPrice when undefined', () => {
+    const result = productToData(sampleSneaker, 7, 11)
+
+    expect('compareAtPrice' in result).toBe(false)
+  })
+
+  it('wraps description via makeRichText', () => {
+    const result = productToData(sampleSneaker, 7, 11)
+    const children = (result.description as { root: { children: Array<{ text: string }> } }).root.children
+
+    expect(children).toHaveLength(1)
+    expect(children[0].text).toBe('A test shoe.')
   })
 })

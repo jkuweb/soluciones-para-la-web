@@ -28,7 +28,7 @@ type CategorySeed = {
   description?: string
 }
 
-type SneakerProduct = {
+export type SneakerProduct = {
   title: string
   slug: string
   description: string
@@ -151,6 +151,30 @@ export const buildFeatures = (
   stripeAccountStatus: 'active',
   stripeAccountId,
 })
+
+export const productToData = (
+  product: SneakerProduct,
+  categoryId: number,
+  tenantId: number,
+): PayloadProductData => {
+  const data: PayloadProductData = {
+    title: product.title,
+    slug: product.slug,
+    description: makeRichText(product.description),
+    price: product.price,
+    currency: product.currency,
+    images: [],
+    category: categoryId,
+    stock: product.stock,
+    sku: product.sku,
+    status: 'published',
+    tenant: tenantId,
+  }
+  if (product.compareAtPrice !== undefined) {
+    data.compareAtPrice = product.compareAtPrice
+  }
+  return data
+}
 
 // (More helpers added in later tasks.)
 
