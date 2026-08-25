@@ -7,6 +7,7 @@ import {
   findCategoryBySlug,
   productToData,
   upsertCategory,
+  upsertProduct,
   TENANT_SLUG,
   type SneakerProduct,
 } from '../../../scripts/seed-mood-full'
@@ -206,5 +207,86 @@ describe('findCategoryBySlug + upsertCategory (integration)', () => {
     })
     expect((doc as { name: string }).name).toBe('Casual Renamed')
     expect((doc as { description?: string }).description).toBe('Updated desc')
+  })
+})
+
+describe('upsertProduct (integration)', () => {
+  let payload: Awaited<ReturnType<typeof getPayload>>
+  let tenantId: number
+  let runningCategoryId: number
+
+  beforeAll(async () => {
+    payload = await getPayload({ config })
+    const tenant = await payload.find({
+      collection: 'tenants',
+      where: { slug: { equals: TENANT_SLUG } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    tenantId = (tenant.docs[0] as { id: number }).id
+
+    const unique = `running-upsert-${Date.now()}`
+    await upsertCategory(payload, tenantId, { name: 'Running', slug: unique })
+    const found = await findCategoryBySlug(payload, tenantId, unique)
+    runningCategoryId = found!.id
+  })
+
+  it('creates a product when slug is absent and returns "created"', async () => {
+    const unique = `nike-pegasus-test-${Date.now()}`
+    const data = productToData(
+      {
+        title: 'Nike Test',
+        slug: unique,
+        description: 'Test product',
+        price: 14999,
+        currency: 'USD',
+        categorySlug: 'running',
+        stock: 10,
+        sku: `TEST-${Date.now()}`,
+      },
+      runningCategoryId,
+      tenantId,
+    )
+
+    const action = await upsertProduct(payload, tenantId, data)
+    expect(action).toBe('created')
+  })
+
+  it('updates the product when slug is present and returns "updated" (idempotent)', async () => {
+    const unique = `nike-pegasus-update-${Date.now()}`
+    const baseData = productToData(
+      {
+        title: 'Nike Test',
+        slug: unique,
+        description: 'Test product',
+        price: 14999,
+        currency: 'USD',
+        categorySlug: 'running',
+        stock: 10,
+        sku: `TEST-${Date.now()}`,
+      },
+      runningCategoryId,
+      tenantId,
+    )
+
+    const first = await upsertProduct(payload, tenantId, baseData)
+    const updatedData = { ...baseData, stock: 50, price: 19999 }
+    const second = await upsertProduct(payload, tenantId, updatedData)
+
+    expect(first).toBe('created')
+    expect(second).toBe('updated')
+
+    const found = await payload.find({
+      collection: 'products',
+      where: {
+        and: [{ slug: { equals: unique } }, { tenant: { equals: tenantId } }],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+    expect(found.totalDocs).toBe(1)
+    const doc = found.docs[0] as { stock: number; price: number }
+    expect(doc.stock).toBe(50)
+    expect(doc.price).toBe(19999)
   })
 })

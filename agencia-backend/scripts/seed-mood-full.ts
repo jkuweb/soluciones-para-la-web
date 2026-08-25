@@ -242,6 +242,46 @@ export const upsertCategory = async (
   return 'created'
 }
 
+export const findProductBySlug = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  tenantId: number,
+  slug: string,
+): Promise<{ id: number } | null> => {
+  const result = await payload.find({
+    collection: 'products',
+    where: {
+      and: [{ slug: { equals: slug } }, { tenant: { equals: tenantId } }],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  if (result.totalDocs === 0) return null
+  return result.docs[0] as { id: number }
+}
+
+export const upsertProduct = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  tenantId: number,
+  data: PayloadProductData,
+): Promise<'created' | 'updated'> => {
+  const existing = await findProductBySlug(payload, tenantId, data.slug)
+  if (existing) {
+    await payload.update({
+      collection: 'products',
+      id: existing.id,
+      data,
+      overrideAccess: true,
+    })
+    return 'updated'
+  }
+  await payload.create({
+    collection: 'products',
+    data,
+    overrideAccess: true,
+  })
+  return 'created'
+}
+
 // (More helpers added in later tasks.)
 
 // --- Orchestrator (placeholder) ---
