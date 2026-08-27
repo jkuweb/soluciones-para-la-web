@@ -315,9 +315,9 @@ redirect(url)
 
 **Activación real**: el account pasa a `active` cuando Stripe confirma `charges_enabled && payouts_enabled`. Eso llega vía webhook `account.updated`, NO vía OAuth response (que solo da `stripe_user_id`).
 
-#### 3.4.3 Webhook handler — POST `/api/stripe/webhook`
+#### 3.4.3 Webhook handler — POST `/api/payments/webhook`
 
-Ubicación: `agencia-backend/src/app/(payload)/api/stripe/webhook/route.ts` (custom route en Payload, no API route de nextjs).
+Ubicación: `agencia-backend/src/app/api/payments/webhook/route.ts` (custom route en Payload, no API route de nextjs).
 
 ```ts
 const sig = req.headers.get('stripe-signature')
@@ -400,7 +400,7 @@ function computeAccountStatus(acct: Stripe.Account): 'active' | 'restricted' | '
 | `src/collections/Orders/index.ts` | Barrel export. |
 | `src/collections/Orders/access.ts` | `read`, `create`, `update`, `delete` con `paymentsEnabled` + tenant guard. |
 | `src/access/paymentsEnabled.ts` | Helper `paymentsEnabledTenantAccess` (§3.2.3). |
-| `src/app/(payload)/api/stripe/webhook/route.ts` | Webhook handler (§3.4.3). |
+| `src/app/api/payments/webhook/route.ts` | Webhook handler (§3.4.3). |
 | `src/blocks/CartSummaryBlock.ts` | Rename de `CartBlock.ts` (slug `cart` → `cart-summary`). |
 | `scripts/features/payments/install.ts` | Install real (mirror de catalog/install.ts). |
 | `scripts/features/payments/uninstall.ts` | Uninstall real. |
@@ -466,7 +466,7 @@ Mirror del catalog. Pasos:
 5. Editar `nextjs-starter/src/components/BlockRenderer.tsx` (case `cart-summary`).
 6. Appender env vars a `.env.example` (skip si ya están).
 7. Correr `payload generate:types` para regenerar `Order`, `CartItem` types.
-8. **Imprimir el comando `stripe listen --forward-to localhost:3000/api/stripe/webhook`** (dev friction es el #1 killer).
+8. **Imprimir el comando `stripe listen --forward-to localhost:3000/api/payments/webhook`** (dev friction es el #1 killer).
 9. Retornar `{ ok: true, copiedFiles: [...], envKeysAdded: [...] }`.
 
 **Update path post-install**: el install copia archivos al client repo la primera vez. Para updates posteriores de template a cliente, separar en dos categorías según `sync:client` blocklist:
@@ -553,7 +553,7 @@ Convención de paths del proyecto: `*.int.spec.ts` flat o agrupados en subdirs (
 
 #### 3.7.2 E2E tests (Playwright)
 
-**Setup global** (`setup.ts`): seedea un tenant de prueba con `stripeAccountStatus='active'` y un `acct_test_...` real de Stripe test mode. Levanta `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
+**Setup global** (`setup.ts`): seedea un tenant de prueba con `stripeAccountStatus='active'` y un `acct_test_...` real de Stripe test mode. Levanta `stripe listen --forward-to localhost:3000/api/payments/webhook`.
 
 **Storefront e2e** (`nextjs-starter/tests/e2e/`):
 

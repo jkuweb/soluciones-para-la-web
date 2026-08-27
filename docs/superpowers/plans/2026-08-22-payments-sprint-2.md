@@ -30,7 +30,7 @@ agencia/                                ← MONOREPO_ROOT
 │   │   │   ├── Tenants.ts              ← MODIFICAR (Task 2)
 │   │   │   └── ... (existente)
 │   │   ├── app/
-│   │   │   └── (payload)/api/stripe/webhook/route.ts  ← NUEVO (Task 5)
+│   │   │   └── api/payments/webhook/route.ts  ← NUEVO (Task 5)
 │   │   ├── payload.config.ts           ← MODIFICAR (Task 4)
 │   │   └── plugins/index.ts            ← MODIFICAR (Task 4)
 │   └── scripts/features/payments/      ← Feature module (install/uninstall real)
@@ -95,7 +95,7 @@ Resto: test-after (UI, install/uninstall, e2e).
 - `agencia-backend/src/collections/Orders/access.ts` — `read`, `create`, `update`, `delete` con `paymentsEnabled` + tenant guard
 - `agencia-backend/src/collections/Orders/index.ts` — barrel export
 - `agencia-backend/src/access/paymentsEnabled.ts` — access helper (§3.2.3 spec)
-- `agencia-backend/src/app/(payload)/api/stripe/webhook/route.ts` — webhook handler (§3.4.3 spec)
+- `agencia-backend/src/app/api/payments/webhook/route.ts` — webhook handler (§3.4.3 spec)
 - `agencia-backend/src/blocks/CartSummaryBlock.ts` — rename de `CartBlock.ts` (slug `cart` → `cart-summary`)
 - `agencia-backend/scripts/features/payments/install.ts` — install real
 - `agencia-backend/scripts/features/payments/uninstall.ts` — uninstall real
@@ -805,7 +805,7 @@ git commit -m "feat(orders): register Orders collection in payload config and mu
 ## Task 5: Stripe webhook handler (STRICT TDD)
 
 **Files:**
-- Create: `agencia-backend/src/app/(payload)/api/stripe/webhook/route.ts`
+- Create: `agencia-backend/src/app/api/payments/webhook/route.ts`
 - Create: `agencia-backend/src/lib/stripe-webhook.ts` (helpers `computeAccountStatus`, etc.)
 - Create: `agencia-backend/tests/int/webhooks/stripe-webhook.int.spec.ts`
 
@@ -882,7 +882,7 @@ vi.mock('stripe', () => {
 // Mock the route module under test
 let POST: (req: Request) => Promise<Response>
 
-describe('POST /api/stripe/webhook', () => {
+describe(`POST /api/payments/webhook', () => {
   let payload: Payload
   let tenant: { id: string | number; slug: string }
 
@@ -891,7 +891,7 @@ describe('POST /api/stripe/webhook', () => {
     payload = await getPayload({ config })
 
     // Dynamic import AFTER mocks are set
-    const mod = await import('@/app/(payload)/api/stripe/webhook/route')
+    const mod = await import('@/app/api/payments/webhook/route')
     POST = mod.POST
 
     tenant = await seedTenant(payload, {
@@ -907,7 +907,7 @@ describe('POST /api/stripe/webhook', () => {
 
   const call = (body: string, signature: string | null) =>
     POST(
-      new Request('http://localhost:3000/api/stripe/webhook', {
+      new Request('http://localhost:3000/api/payments/webhook', {
         method: 'POST',
         body,
         headers: signature ? { 'stripe-signature': signature } : {},
@@ -1119,11 +1119,11 @@ describe('POST /api/stripe/webhook', () => {
 - [ ] **Step 4: Run test to verify it fails**
 
 Run: `cd agencia-backend && pnpm test:int -- stripe-webhook`
-Expected: FAIL with `Cannot find module '@/app/(payload)/api/stripe/webhook/route'`.
+Expected: FAIL with `Cannot find module '@/app/api/payments/webhook/route'`.
 
 - [ ] **Step 5: Create the webhook route**
 
-Create `agencia-backend/src/app/(payload)/api/stripe/webhook/route.ts`:
+Create `agencia-backend/src/app/api/payments/webhook/route.ts`:
 
 ```ts
 import { headers } from 'next/headers'
@@ -1260,7 +1260,7 @@ Expected: PASS.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add agencia-backend/src/app/\(payload\)/api/stripe/webhook/route.ts agencia-backend/src/lib/stripe-webhook.ts agencia-backend/package.json pnpm-lock.yaml agencia-backend/tests/int/webhooks/stripe-webhook.int.spec.ts
+git add agencia-backend/src/app/api/payments/webhook/route.ts agencia-backend/src/lib/stripe-webhook.ts agencia-backend/package.json pnpm-lock.yaml agencia-backend/tests/int/webhooks/stripe-webhook.int.spec.ts
 git commit -m "feat(webhook): add Stripe webhook handler with idempotency (TDD)"
 ```
 
@@ -3592,7 +3592,7 @@ Edit `agencia-backend/.env.example`. Find the existing `# Stripe (optional - for
 # Stripe — required for the payments feature (Sprint 2)
 # Get keys from https://dashboard.stripe.com/test/apikeys
 STRIPE_SECRET_KEY=sk_test_...
-# Webhook secret from `stripe listen --forward-to localhost:3000/api/stripe/webhook`
+# Webhook secret from `stripe listen --forward-to localhost:3000/api/payments/webhook`
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
@@ -3906,7 +3906,7 @@ export const install = async (ctx: FeatureInstallContext): Promise<FeatureInstal
   // 5. Print the stripe listen command (dev friction killer)
   ctx.log('')
   ctx.log('  Para desarrollo, corré el webhook listener en otra terminal:')
-  ctx.log('  stripe listen --forward-to localhost:3000/api/stripe/webhook')
+  ctx.log('  stripe listen --forward-to localhost:3000/api/payments/webhook')
   ctx.log('  (cambiá el puerto si tu storefront usa otro)')
   ctx.log('')
 
@@ -4523,7 +4523,7 @@ Create `agencia-backend/tests/e2e/stripe-webhook-idempotency.spec.ts`:
 ```ts
 import { test, expect } from '@playwright/test'
 
-const WEBHOOK_URL = process.env.STRIPE_WEBHOOK_URL ?? 'http://localhost:3000/api/stripe/webhook'
+const WEBHOOK_URL = process.env.STRIPE_WEBHOOK_URL ?? 'http://localhost:3000/api/payments/webhook'
 
 test('replay of same checkout.session.completed event does not double-update', async ({ request }) => {
   // Assume a paid order exists from a previous test run OR seed it via API
@@ -4944,7 +4944,7 @@ async function main() {
   console.log('  1. In Stripe dashboard, create a Connect test account or use an existing one.')
   console.log('  2. Set SEED_STRIPE_ACCOUNT_ID=acct_... in your shell and re-run this script.')
   console.log('  3. Run `pnpm dev` for both backend and storefront.')
-  console.log('  4. Run `stripe listen --forward-to localhost:3000/api/stripe/webhook` in another terminal.')
+  console.log('  4. Run `stripe listen --forward-to localhost:3000/api/payments/webhook` in another terminal.')
   console.log('  5. Run the E2E tests: `cd nextjs-starter && pnpm test:e2e`.')
 }
 
@@ -4993,7 +4993,7 @@ Reemplaza el stub con un loop end-to-end de cobro con Stripe Checkout hosted + S
 ## ¿Qué hace?
 
 - **Storefront** (`/cart`, `/checkout`, `/checkout/success`, `/checkout/cancel`): el visitante agrega productos, completa email, paga via Stripe Checkout hosted (redirect, sin PCI scope).
-- **Backend webhook** (`POST /api/stripe/webhook`): confirma el pago, marca la Order como `paid` con `stripePaymentIntentId`. Idempotente.
+- **Backend webhook** (`POST /api/payments/webhook`): confirma el pago, marca la Order como `paid` con `stripePaymentIntentId`. Idempotente.
 - **Self-service Connect** (`/admin/pagos`): el tenant-admin click "Conectar con Stripe", hace OAuth, su `Tenant.features.stripeAccountId` se actualiza. Activación real viene del webhook `account.updated`.
 - **Cart store** (Zustand + persist): un cart independiente por tenant en `localStorage`. Guards: tenant mismatch, currency mismatch.
 
@@ -5012,7 +5012,7 @@ Reemplaza el stub con un loop end-to-end de cobro con Stripe Checkout hosted + S
 | Var | Dónde obtenerla |
 |---|---|
 | `STRIPE_SECRET_KEY` | https://dashboard.stripe.com/test/apikeys → Secret key (comienza con `sk_test_...`) |
-| `STRIPE_WEBHOOK_SECRET` | Output de `stripe listen --forward-to localhost:3000/api/stripe/webhook` (comienza con `whsec_...`) |
+| `STRIPE_WEBHOOK_SECRET` | Output de `stripe listen --forward-to localhost:3000/api/payments/webhook` (comienza con `whsec_...`) |
 
 ### Storefront (`nextjs-starter/.env`)
 
@@ -5032,7 +5032,7 @@ brew install stripe/stripe-cli/stripe
 stripe login
 
 # 3. Levantar el webhook listener (deja esto corriendo en otra terminal)
-stripe listen --forward-to localhost:3000/api/stripe/webhook
+stripe listen --forward-to localhost:3000/api/payments/webhook
 # Output: > Ready! Your webhook signing secret is whsec_... (copialo a STRIPE_WEBHOOK_SECRET en agencia-backend/.env)
 
 # 4. Crear un Connect test account (o usar uno existente)
@@ -5190,7 +5190,7 @@ cd agencia-backend && pnpm dev
 cd /home/joseba/Clientes/clientes/mood && pnpm dev
 
 # Terminal 3: stripe listen
-stripe listen --forward-to localhost:3000/api/stripe/webhook
+stripe listen --forward-to localhost:3000/api/payments/webhook
 ```
 
 Wait for all three to be ready.
