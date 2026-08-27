@@ -156,3 +156,38 @@ export async function exchangeOAuthCode(code: string): Promise<{ stripeUserId: s
   }
   return { stripeUserId: response.stripe_user_id }
 }
+
+// ---------------------------------------------------------------------------
+// v2 recipient configuration
+// ---------------------------------------------------------------------------
+
+/**
+ * Ensures the given connected account has the `recipient` v2 configuration
+ * with `stripe_balance.stripe_transfers` capability. Required for
+ * destination charges under Stripe API version `2026-07-29.dahlia`.
+ *
+ * Idempotent: safe to call multiple times; Stripe ignores the update if
+ * the configuration is already present.
+ *
+ * Failures are logged but do not throw — the caller should still save the
+ * stripeAccountId and let `account.updated` webhook drive the rest of the
+ * onboarding. The recipient configuration can be re-attempted later.
+ */
+export async function ensureRecipientConfiguration(stripeAccountId: string): Promise<void> {
+  try {
+    await stripe.v2.core.accounts.update(stripeAccountId, {
+      configuration: {
+        recipient: {
+          capabilities: {
+            stripe_balance: {
+              stripe_transfers: { requested: true },
+            },
+          },
+        },
+      },
+    })
+    console.log(`[stripe] Recipient configuration ensured for ${stripeAccountId}`)
+  } catch (err) {
+    console.warn(`[stripe] Failed to ensure recipient configuration for ${stripeAccountId}:`, err)
+  }
+}

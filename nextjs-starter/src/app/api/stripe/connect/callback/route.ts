@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { verifyOAuthState, exchangeOAuthCode } from '@/lib/stripe'
+import { verifyOAuthState, exchangeOAuthCode, ensureRecipientConfiguration } from '@/lib/stripe'
 
 /**
  * GET /api/stripe/connect/callback?code=...&state=...
  *
  * Verifies the `state` JWT, exchanges the code for an acct_... via Stripe,
  * and updates the Tenant with `stripeAccountId` and
- * `stripeAccountStatus: 'pending'`. Final activation comes from the
- * `account.updated` webhook (Task 5).
+ * `stripeAccountStatus: 'pending'`. After the tenant update succeeds,
+ * requests the `recipient` v2 configuration on the account so destination
+ * charges work under Stripe API version `2026-07-29.dahlia`. Final
+ * activation comes from the `account.updated` webhook (Task 5).
  */
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -52,6 +54,11 @@ export async function GET(req: Request) {
     console.error('[stripe-connect-callback] Failed to update tenant:', err)
     return NextResponse.json({ error: 'tenant_update_failed' }, { status: 500 })
   }
+
+  // Fire-and-forget: add the recipient v2 configuration so destination
+  // charges work on first checkout. The helper logs and swallows errors
+  // so this never blocks the OAuth completion redirect.
+  void ensureRecipientConfiguration(stripeUserId)
 
   const redirectUrl = new URL('/admin/pagos', url.origin)
   redirectUrl.searchParams.set('status', 'connected')

@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
 
 const mockToken = vi.fn()
+const mockEnsureRecipientConfiguration = vi.fn()
 vi.mock('@/lib/stripe', () => ({
   exchangeOAuthCode: vi.fn(async (code: string) => mockToken(code)),
   verifyOAuthState: vi.fn(),
   signOAuthState: vi.fn(),
+  ensureRecipientConfiguration: (...args: unknown[]) => mockEnsureRecipientConfiguration(...args),
 }))
 
 const mockUpdate = vi.fn()
@@ -65,6 +67,7 @@ describe('GET /api/stripe/connect/callback', () => {
     })
     ;(exchangeOAuthCode as any).mockResolvedValueOnce({ stripeUserId: 'acct_test_xyz' })
     mockUpdate.mockResolvedValueOnce({})
+    mockEnsureRecipientConfiguration.mockResolvedValueOnce(undefined)
 
     const res = await GET(
       new Request('http://localhost:3000/api/stripe/connect/callback?code=abc&state=good'),
@@ -77,6 +80,27 @@ describe('GET /api/stripe/connect/callback', () => {
         where: { slug: { equals: 'mood' } },
       }),
     )
+    expect(mockEnsureRecipientConfiguration).toHaveBeenCalledWith('acct_test_xyz')
+  })
+
+  it('still redirects to /admin/pagos?status=connected when ensureRecipientConfiguration throws', async () => {
+    const { verifyOAuthState, exchangeOAuthCode } = await import('@/lib/stripe')
+    ;(verifyOAuthState as any).mockReturnValueOnce({
+      tenantSlug: 'mood',
+      userId: 1,
+      nonce: 'n',
+      iat: 0,
+      exp: Date.now() / 1000 + 600,
+    })
+    ;(exchangeOAuthCode as any).mockResolvedValueOnce({ stripeUserId: 'acct_test_throw' })
+    mockUpdate.mockResolvedValueOnce({})
+    mockEnsureRecipientConfiguration.mockRejectedValueOnce(new Error('Stripe v2 update failed'))
+
+    const res = await GET(
+      new Request('http://localhost:3000/api/stripe/connect/callback?code=abc&state=good'),
+    )
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/admin/pagos?status=connected')
   })
 
   // Security test (spec §3.7.3 point 4): OAuth state JWT CSRF.
