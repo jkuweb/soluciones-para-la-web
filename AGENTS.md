@@ -285,8 +285,8 @@ pnpm typecheck   # TypeScript
 pnpm prettier --check .   # Format check
 
 # Payload
-pnpm payload generate:types
-pnpm payload generate:importmap
+pnpm generate:types
+pnpm generate:importmap   # ⚠️ latent bug: fails with "Payload component must be an object or a string" on collections/Pages.ts (RestrictedBlocksField). Only matters if admin UI components change; the existing importMap.json stays valid until then.
 
 # Client management (run from agencia-backend)
 pnpm create-client                                   # Bootstrap a new client (interactive)
