@@ -2,8 +2,10 @@ import { findTenantBySlug } from '@/lib/payload'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 
+type SearchParams = Promise<{ status?: string; error?: string }>
+
 interface PageProps {
-  searchParams: { status?: string; error?: string }
+  searchParams: SearchParams
 }
 
 async function getUserFromCookie(): Promise<{
@@ -22,6 +24,7 @@ async function getUserFromCookie(): Promise<{
 }
 
 export default async function AdminPagosPage({ searchParams }: PageProps) {
+  const params = await searchParams
   const user = await getUserFromCookie()
   if (!user) {
     return (
@@ -58,12 +61,12 @@ export default async function AdminPagosPage({ searchParams }: PageProps) {
       <h1>Pagos</h1>
       <p>Conectá tu cuenta de Stripe para empezar a recibir pagos online.</p>
 
-      {searchParams.status === 'connected' && (
+      {params.status === 'connected' && (
         <p style={{ color: 'green' }}>
           ¡Cuenta conectada! Estamos verificando los datos. Te avisaremos cuando esté activa.
         </p>
       )}
-      {searchParams.error === 'connection_failed' && (
+      {params.error === 'connection_failed' && (
         <p style={{ color: 'crimson' }}>
           No se pudo conectar con Stripe. Reintentá o contactanos.
         </p>
