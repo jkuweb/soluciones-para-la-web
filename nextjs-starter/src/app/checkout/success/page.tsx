@@ -1,22 +1,25 @@
-import { findOrderById } from '@/lib/payload'
+import { findOrderBySessionId } from '@/lib/payload'
 import Link from 'next/link'
 
+type SearchParams = Promise<{ session_id?: string }>
+
 interface PageProps {
-  searchParams: { order_id?: string }
+  searchParams: SearchParams
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
-  const orderId = searchParams.order_id
-  if (!orderId) {
+  const params = await searchParams
+  const sessionId = params.session_id
+  if (!sessionId) {
     return (
       <main style={{ padding: '2rem' }}>
-        <h1>Pedido sin ID</h1>
-        <p>No se pudo identificar el pedido. Contactanos si creés que es un error.</p>
+        <h1>Sesión sin ID</h1>
+        <p>No se pudo identificar la sesión de pago. Contactanos si creés que es un error.</p>
       </main>
     )
   }
 
-  const order = await findOrderById(orderId)
+  const order = await findOrderBySessionId(sessionId)
 
   return (
     <main style={{ padding: '2rem', textAlign: 'center' }}>
