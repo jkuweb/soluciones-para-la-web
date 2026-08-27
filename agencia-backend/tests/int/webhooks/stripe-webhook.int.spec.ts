@@ -173,6 +173,33 @@ describe('Stripe webhook handler', () => {
       })
       expect(updated.status).toBe('paid') // unchanged
     })
+
+    // The new (no metadata.orderId) path used to swallow payload.create()
+    // errors and return 200, so Stripe thought the delivery succeeded and
+    // never retried — leaving the order missing without anyone noticing.
+    // The fix is to return 500 so Stripe retries; this test guards against
+    // regressing to the silent-failure shape.
+    it('returns 500 when order creation fails (so Stripe retries)', async () => {
+      const ts = Date.now()
+      await seedTenant(payload, {
+        slug: `webhook-500-${ts}`,
+        name: `Webhook 500 ${ts}`,
+        features: { payments: true, stripeAccountStatus: 'active' },
+      })
+
+      const event = makeEvent('checkout.session.completed', {
+        id: `cs_test_500_${ts}`,
+        metadata: { tenantSlug: `webhook-500-${ts}` },
+        // Invalid email format — fails the `email` field validation in
+        // payload.create(), which is what we want the test to trigger.
+        customer_details: { email: 'not-a-valid-email' },
+        payment_intent: `pi_test_500_${ts}`,
+      })
+
+      const req = makeRequest(event)
+      const res = await POST(req as any)
+      expect(res.status).toBe(500)
+    })
   })
 
   describe('checkout.session.expired', () => {
