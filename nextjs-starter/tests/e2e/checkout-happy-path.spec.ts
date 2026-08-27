@@ -9,7 +9,7 @@ import { test, expect, request } from '@playwright/test'
  *   - /api/checkout/session happy path: recalculateCart + Stripe session create
  *   - Real Stripe-hosted Checkout redirect + test card payment
  *   - Stripe webhook (via stripe listen) flips the order to `paid`
- *   - /checkout/success?order_id=… renders "¡Gracias por tu compra!" + #orderId
+ *   - /checkout/success?session_id=… renders "¡Gracias por tu compra!" + #orderId
  *
  * Why we seed the cart via addInitScript instead of clicking "Agregar al
  * carrito": the product page's AddToCartButton is intentionally hardcoded
@@ -165,8 +165,9 @@ test.describe('Checkout happy path', () => {
     //    flip the order to `paid`, so we wait generously.
     await page.waitForURL(/\/checkout\/success/, { timeout: 60_000 })
     await expect(page.getByText(/gracias por tu compra/i)).toBeVisible()
-    // The success page renders the order id as "#<id>" once findOrderById
-    // returns the order (which requires the webhook to have landed).
+    // The success page renders the order id as "#<id>" once
+    // findOrderBySessionId returns the order (which requires the webhook to
+    // have landed and written the session id back to the order).
     await expect(page.getByText(/#\d+/)).toBeVisible({ timeout: 30_000 })
   })
 })

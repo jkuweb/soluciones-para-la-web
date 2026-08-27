@@ -128,7 +128,13 @@ export async function createCheckoutSession(input: CreateCheckoutSessionInput) {
     payment_method_types: ['card'],
     line_items: lineItems,
     customer_email: input.customerEmail,
-    success_url: `${input.origin}/checkout/success?order_id=${input.orderId}`,
+    // Use Stripe's {CHECKOUT_SESSION_ID} template so the success page can
+    // look the order up by `session_id` (the new path — single source of
+    // truth is the webhook, which writes `stripeSessionId` on every order).
+    // The local /api/checkout/session route also persists this same session
+    // id on the order's `stripeSessionId` field, so findOrderBySessionId
+    // returns the order once Stripe has redirected the user back.
+    success_url: `${input.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${input.origin}/checkout/cancel?order_id=${input.orderId}`,
     payment_intent_data: {
       transfer_data: { destination: input.stripeAccountId },
