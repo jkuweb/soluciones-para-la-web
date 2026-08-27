@@ -573,7 +573,7 @@ export interface Page {
             checkoutButton?: string | null;
             id?: string | null;
             blockName?: string | null;
-            blockType: 'cart';
+            blockType: 'cart-summary';
           }
         | {
             title: string;
@@ -655,9 +655,9 @@ export interface Order {
   customerEmail: string;
   items: {
     /**
-     * ID del Product en el momento del checkout.
+     * ID del Product al momento del checkout. Puede ser el ID de Payload o el ID de Stripe (prod_xxx) cuando el storefront usa price_data inline.
      */
-    productId: string;
+    productId?: string | null;
     variantId?: string | null;
     name: string;
     /**
@@ -1274,7 +1274,7 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
-        cart?:
+        'cart-summary'?:
           | T
           | {
               emptyMessage?: T;

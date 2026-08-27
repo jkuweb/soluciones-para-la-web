@@ -36,8 +36,11 @@ export const Orders: CollectionConfig = {
         {
           name: 'productId',
           type: 'text',
-          required: true,
-          admin: { description: 'ID del Product en el momento del checkout.' },
+          required: false,
+          admin: {
+            description:
+              'ID del Product al momento del checkout. Puede ser el ID de Payload o el ID de Stripe (prod_xxx) cuando el storefront usa price_data inline.',
+          },
         },
         {
           name: 'variantId',
